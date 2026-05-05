@@ -449,6 +449,7 @@ img {
 .lead-form input,
 .lead-form textarea,
 .admin-form input,
+.admin-form select,
 .admin-form textarea,
 .cart-item textarea {
   width: 100%;
@@ -463,16 +464,22 @@ img {
 .catalog-toolbar input,
 .catalog-toolbar select,
 .lead-form input,
-.admin-form input {
+.admin-form input,
+.admin-form select {
   min-height: 44px;
   padding: 0 12px;
 }
 
 .lead-form textarea,
+.admin-form select[multiple],
 .admin-form textarea,
 .cart-item textarea {
   padding: 12px;
   resize: vertical;
+}
+
+.admin-form select[multiple] {
+  min-height: 112px;
 }
 
 .search-field {
@@ -1006,6 +1013,71 @@ img {
   display: grid;
   gap: 14px;
   align-content: start;
+}
+
+.admin-inline-actions,
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-inline-actions button,
+.row-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.admin-list-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.admin-list-card div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-list-card strong {
+  color: var(--surface-ink);
+}
+
+.admin-list-card span {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.admin-list-card small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.checkbox-row {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-row input {
+  width: 18px;
+  min-height: 18px;
+}
+
+.form-note {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-strong);
+  color: var(--surface-ink);
+  font-weight: 800;
 }
 
 .category-admin-list {

@@ -1,5 +1,5 @@
-import { GripVertical, Plus } from "lucide-react";
-import { categories } from "@/data/demo-catalog";
+import { Plus } from "lucide-react";
+import { AdminCategoryManager } from "@/components/admin/admin-category-manager";
 
 export default function AdminCategoriesPage() {
   return (
@@ -15,20 +15,7 @@ export default function AdminCategoriesPage() {
         </button>
       </div>
 
-      <section className="admin-panel">
-        <div className="category-admin-list">
-          {categories.map((category) => (
-            <article key={category.id}>
-              <GripVertical aria-hidden="true" size={18} />
-              <div>
-                <h2>{category.name}</h2>
-                <p>{category.description}</p>
-              </div>
-              <button type="button">Editar</button>
-            </article>
-          ))}
-        </div>
-      </section>
+      <AdminCategoryManager />
     </div>
   );
 }

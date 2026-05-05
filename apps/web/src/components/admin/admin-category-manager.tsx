@@ -1,0 +1,191 @@
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+import { GripVertical, Plus, Save, Trash2 } from "lucide-react";
+import { adminApiFetch } from "@/lib/api/admin";
+
+type AdminCategory = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  sort_order: number;
+  is_active: boolean;
+};
+
+type CategoryFormState = {
+  id?: string;
+  name: string;
+  slug: string;
+  description: string;
+  sort_order: string;
+  is_active: boolean;
+};
+
+const emptyForm: CategoryFormState = {
+  name: "",
+  slug: "",
+  description: "",
+  sort_order: "0",
+  is_active: true
+};
+
+export function AdminCategoryManager() {
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [form, setForm] = useState<CategoryFormState>(emptyForm);
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  async function loadCategories() {
+    setIsLoading(true);
+    const payload = await adminApiFetch<{ categories: AdminCategory[] }>("/admin/categories");
+    setCategories(payload.categories);
+    setIsLoading(false);
+  }
+
+  useEffect(() => {
+    void loadCategories().catch((error: Error) => {
+      setMessage(error.message);
+      setIsLoading(false);
+    });
+  }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    setIsSaving(true);
+
+    try {
+      const payload = {
+        name: form.name,
+        slug: form.slug || undefined,
+        description: form.description,
+        sort_order: Number(form.sort_order),
+        is_active: form.is_active
+      };
+
+      await adminApiFetch(form.id ? `/admin/categories/${form.id}` : "/admin/categories", {
+        method: form.id ? "PATCH" : "POST",
+        body: JSON.stringify(payload)
+      });
+
+      setForm(emptyForm);
+      setMessage("Categoria salva.");
+      await loadCategories();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel salvar.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDelete(category: AdminCategory) {
+    setMessage("");
+    try {
+      await adminApiFetch(`/admin/categories/${category.id}`, { method: "DELETE" });
+      setMessage("Categoria apagada.");
+      await loadCategories();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel apagar.");
+    }
+  }
+
+  return (
+    <section className="admin-panel split-panel">
+      <form className="admin-form" onSubmit={handleSubmit}>
+        <h2>{form.id ? "Editar categoria" : "Nova categoria"}</h2>
+        <label>
+          Nome
+          <input
+            onChange={(event) => setForm({ ...form, name: event.target.value })}
+            placeholder="Ex.: Presentes"
+            required
+            value={form.name}
+          />
+        </label>
+        <label>
+          Slug
+          <input
+            onChange={(event) => setForm({ ...form, slug: event.target.value })}
+            placeholder="Gerado pelo backend se ficar vazio"
+            value={form.slug}
+          />
+        </label>
+        <label>
+          Descricao
+          <textarea
+            onChange={(event) => setForm({ ...form, description: event.target.value })}
+            rows={3}
+            value={form.description}
+          />
+        </label>
+        <div className="form-grid">
+          <label>
+            Ordem
+            <input
+              min="0"
+              onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
+              type="number"
+              value={form.sort_order}
+            />
+          </label>
+          <label className="checkbox-row">
+            <input
+              checked={form.is_active}
+              onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
+              type="checkbox"
+            />
+            Categoria ativa
+          </label>
+        </div>
+        {message ? <p className="form-note">{message}</p> : null}
+        <div className="admin-inline-actions">
+          <button className="button button-primary" disabled={isSaving} type="submit">
+            {form.id ? <Save aria-hidden="true" size={18} /> : <Plus aria-hidden="true" size={18} />}
+            {isSaving ? "Salvando..." : "Salvar"}
+          </button>
+          {form.id ? (
+            <button className="button button-secondary" type="button" onClick={() => setForm(emptyForm)}>
+              Cancelar
+            </button>
+          ) : null}
+        </div>
+      </form>
+
+      <div className="category-admin-list">
+        <h2>Categorias cadastradas</h2>
+        {isLoading ? <p>Carregando categorias...</p> : null}
+        {categories.map((category) => (
+          <article key={category.id}>
+            <GripVertical aria-hidden="true" size={18} />
+            <div>
+              <h2>{category.name}</h2>
+              <p>{category.description || category.slug}</p>
+            </div>
+            <div className="row-actions">
+              <button
+                type="button"
+                onClick={() =>
+                  setForm({
+                    id: category.id,
+                    name: category.name,
+                    slug: category.slug,
+                    description: category.description ?? "",
+                    sort_order: String(category.sort_order),
+                    is_active: category.is_active
+                  })
+                }
+              >
+                Editar
+              </button>
+              <button type="button" aria-label="Apagar categoria" onClick={() => void handleDelete(category)}>
+                <Trash2 aria-hidden="true" size={16} />
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
