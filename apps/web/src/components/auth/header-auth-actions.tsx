@@ -5,6 +5,7 @@ import { ShoppingCart, User, UserCog } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
+import { CART_UPDATED_EVENT, getCartItemCount } from "@/lib/cart/cart-storage";
 
 type AuthState = {
   isSignedIn: boolean;
@@ -13,6 +14,7 @@ type AuthState = {
 
 export function HeaderAuthActions() {
   const [authState, setAuthState] = useState<AuthState>({ isSignedIn: false, role: null });
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,6 +65,21 @@ export function HeaderAuthActions() {
     };
   }, []);
 
+  useEffect(() => {
+    function syncCartCount() {
+      setCartCount(getCartItemCount());
+    }
+
+    syncCartCount();
+    window.addEventListener(CART_UPDATED_EVENT, syncCartCount);
+    window.addEventListener("storage", syncCartCount);
+
+    return () => {
+      window.removeEventListener(CART_UPDATED_EVENT, syncCartCount);
+      window.removeEventListener("storage", syncCartCount);
+    };
+  }, []);
+
   return (
     <div className="header-actions">
       {isOwnerRole(authState.role) ? (
@@ -75,7 +92,7 @@ export function HeaderAuthActions() {
       </Link>
       <Link href="/carrinho" className="button button-primary">
         <ShoppingCart aria-hidden="true" size={18} />
-        Carrinho
+        Carrinho{cartCount > 0 ? ` (${cartCount})` : ""}
       </Link>
     </div>
   );

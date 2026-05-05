@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, CheckCircle2, MessageCircle, ShieldCheck, Truck } from "lucide-react";
+import { CheckCircle2, MessageCircle, ShieldCheck, Truck } from "lucide-react";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { ProductCard } from "@/components/product-card";
 import {
   getPublicCategories,
@@ -83,10 +84,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </dl>
 
             <div className="purchase-panel">
-              <button className="button button-primary" type="button">
-                Adicionar ao carrinho
-                <ArrowRight aria-hidden="true" size={18} />
-              </button>
+              <AddToCartButton productSlug={product.slug} />
               <Link href="/pedido-personalizado" className="button button-secondary">
                 Personalizar com Lucas
               </Link>
