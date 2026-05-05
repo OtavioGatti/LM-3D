@@ -423,7 +423,7 @@ img {
 
 .catalog-toolbar {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) 220px 220px 48px;
+  grid-template-columns: minmax(240px, 1fr) 190px 190px 190px 48px;
   gap: 12px;
   align-items: end;
   margin-bottom: 28px;
@@ -912,6 +912,25 @@ img {
   color: var(--accent);
   font-weight: 800;
   text-decoration: none;
+}
+
+.empty-state {
+  display: grid;
+  gap: 8px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+}
+
+.empty-state h2,
+.empty-state p {
+  margin: 0;
+}
+
+.empty-state p {
+  color: var(--muted);
 }
 
 .account-page {

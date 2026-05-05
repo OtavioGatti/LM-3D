@@ -14,7 +14,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
       </Link>
       <div className="product-card-body">
         <div className="product-card-meta">
-          <span>{category?.name ?? "Produto"}</span>
+          <span>{product.categoryName ?? category?.name ?? "Produto"}</span>
           {product.acceptsCustomization ? (
             <span>
               <Palette aria-hidden="true" size={14} />

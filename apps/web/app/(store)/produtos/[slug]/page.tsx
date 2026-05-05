@@ -2,7 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2, MessageCircle, ShieldCheck, Truck } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
-import { getCategoryBySlug, getProductBySlug, getRelatedProducts, products } from "@/data/demo-catalog";
+import {
+  getPublicCategories,
+  getPublicProductBySlug,
+  getPublicProducts,
+  getPublicRelatedProducts
+} from "@/lib/catalog/public-catalog";
 import { formatMoneyBRL } from "@lm-3d/shared";
 
 type ProductPageProps = {
@@ -11,7 +16,9 @@ type ProductPageProps = {
   }>;
 };
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const products = await getPublicProducts();
+
   return products.map((product) => ({
     slug: product.slug
   }));
@@ -19,7 +26,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getPublicProductBySlug(slug);
 
   return {
     title: product?.name ?? "Produto"
@@ -28,14 +35,15 @@ export async function generateMetadata({ params }: ProductPageProps) {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getPublicProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
-  const category = getCategoryBySlug(product.categorySlug);
-  const related = getRelatedProducts(product);
+  const categories = await getPublicCategories();
+  const category = categories.find((item) => item.slug === product.categorySlug);
+  const related = await getPublicRelatedProducts(product);
 
   return (
     <div>

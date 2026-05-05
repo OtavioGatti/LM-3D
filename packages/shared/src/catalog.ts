@@ -21,6 +21,7 @@ export type ProductSummary = {
   shortDescription: string;
   priceInCents: number;
   categorySlug: string;
+  categoryName?: string;
   status: ProductStatus;
   acceptsCustomization: boolean;
   productionTime: string;

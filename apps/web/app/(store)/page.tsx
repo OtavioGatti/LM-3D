@@ -3,8 +3,8 @@ import { ArrowRight, BadgeCheck, Boxes, CreditCard, MessageCircle, Sparkles } fr
 import { ProductCard } from "@/components/product-card";
 import { SectionHeader } from "@/components/section-header";
 import { TrustRail } from "@/components/trust-rail";
-import { categories, featuredProducts } from "@/data/demo-catalog";
 import { assetPath } from "@/lib/assets";
+import { getPublicCatalog } from "@/lib/catalog/public-catalog";
 
 const trustItems = [
   {
@@ -29,7 +29,9 @@ const trustItems = [
   }
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { categories, featuredProducts } = await getPublicCatalog();
+
   return (
     <div>
       <section className="hero-section">
@@ -82,7 +84,7 @@ export default function HomePage() {
         <div className="page-container">
           <SectionHeader
             title="Produtos prontos para comprar"
-            description="Uma primeira vitrine de exemplo para validar layout, rotas e componentes antes do banco."
+            description="Produtos cadastrados por Lucas, com prazo claro e possibilidade de personalizacao quando indicado."
             actionHref="/catalogo"
             actionLabel="Ver catalogo"
           />
