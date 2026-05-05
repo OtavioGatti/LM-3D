@@ -14,7 +14,7 @@ type PublicCategoryRow = {
 type PublicProductImageRow = {
   public_url: string | null;
   storage_path: string | null;
-  alt_text: string | null;
+  alt: string | null;
   sort_order: number;
 };
 
@@ -36,7 +36,9 @@ type PublicProductRow = {
   production_time_days_min: number;
   production_time_days_max: number;
   accepts_customization: boolean;
-  color_options: string[] | null;
+  metadata: {
+    color_options?: string[];
+  } | null;
   product_images: PublicProductImageRow[] | null;
   product_categories: PublicProductCategoryRow[] | null;
 };
@@ -84,7 +86,7 @@ function mapImage(row: PublicProductImageRow | undefined, productName: string): 
 
   return {
     src: src ?? assetPath("/images/product-detail.svg"),
-    alt: row?.alt_text ?? `${productName} impresso em 3D`,
+    alt: row?.alt ?? `${productName} impresso em 3D`,
     sortOrder: row?.sort_order ?? 1
   };
 }
@@ -122,7 +124,7 @@ function mapProduct(row: PublicProductRow, allSlugs: string[]): ProductDetails {
     material: row.material ?? "PLA",
     dimensions: row.dimensions ?? "Medidas sob consulta",
     weightInGrams: row.weight_grams ?? 0,
-    colors: row.color_options?.length ? row.color_options : ["sob consulta"],
+    colors: row.metadata?.color_options?.length ? row.metadata.color_options : ["sob consulta"],
     image: primaryImage,
     images,
     faq: [
@@ -189,11 +191,11 @@ export async function getPublicProducts() {
       production_time_days_min,
       production_time_days_max,
       accepts_customization,
-      color_options,
+      metadata,
       product_images (
         public_url,
         storage_path,
-        alt_text,
+        alt,
         sort_order
       ),
       product_categories (

@@ -19,7 +19,11 @@ const productPayloadSchema = z.object({
   stock_quantity: z.coerce.number().int().min(0).default(0),
   accepts_customization: z.boolean().default(false),
   customization_prompt: z.string().trim().optional().nullable(),
-  color_options: z.array(z.string().trim().min(1)).default([]),
+  metadata: z
+    .object({
+      color_options: z.array(z.string().trim().min(1)).default([])
+    })
+    .default({ color_options: [] }),
   category_ids: z.array(z.string().uuid()).default([]),
   image_urls: z.array(z.string().trim().min(1)).default([])
 });
@@ -90,7 +94,7 @@ adminProductsRouter.post("/", async (req, res, next) => {
         imageUrls.map((url, index) => ({
           product_id: product.id,
           public_url: url,
-          alt_text: product.name,
+          alt: product.name,
           sort_order: index + 1
         }))
       );
@@ -152,7 +156,7 @@ adminProductsRouter.patch("/:id", async (req, res, next) => {
           imageUrls.map((url, index) => ({
             product_id: req.params.id,
             public_url: url,
-            alt_text: product.name,
+            alt: product.name,
             sort_order: index + 1
           }))
         );

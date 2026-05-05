@@ -126,7 +126,7 @@ async function directSupabaseAdminFetch<T>(path: string, init?: RequestInit): Pr
         imageUrls.map((url, index) => ({
           product_id: product.id,
           public_url: url,
-          alt_text: product.name,
+          alt: product.name,
           sort_order: index + 1
         }))
       );
@@ -175,7 +175,7 @@ async function directSupabaseAdminFetch<T>(path: string, init?: RequestInit): Pr
           imageUrls.map((url, index) => ({
             product_id: productMatch[1],
             public_url: url,
-            alt_text: product.name,
+            alt: product.name,
             sort_order: index + 1
           }))
         );

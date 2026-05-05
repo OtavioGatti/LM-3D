@@ -27,7 +27,9 @@ type AdminProduct = {
   stock_quantity: number;
   accepts_customization: boolean;
   customization_prompt: string | null;
-  color_options: string[];
+  metadata: {
+    color_options?: string[];
+  } | null;
   product_images?: Array<{ public_url: string | null; storage_path: string | null }>;
   product_categories?: Array<{ category: AdminCategory | null }>;
 };
@@ -137,7 +139,9 @@ export function AdminProductManager() {
         stock_quantity: Number(form.stock_quantity),
         accepts_customization: form.accepts_customization,
         customization_prompt: form.customization_prompt || null,
-        color_options: lines(form.color_options),
+        metadata: {
+          color_options: lines(form.color_options)
+        },
         category_ids: form.category_ids,
         image_urls: lines(form.image_urls)
       };
@@ -186,7 +190,7 @@ export function AdminProductManager() {
       stock_quantity: String(product.stock_quantity),
       accepts_customization: product.accepts_customization,
       customization_prompt: product.customization_prompt ?? "",
-      color_options: product.color_options?.join("\n") ?? "",
+      color_options: product.metadata?.color_options?.join("\n") ?? "",
       category_ids:
         product.product_categories?.flatMap((item) => (item.category ? [item.category.id] : [])) ?? [],
       image_urls:
