@@ -93,6 +93,7 @@ export function AdminProductManager() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [form, setForm] = useState<ProductFormState>(emptyForm);
+  const [mode, setMode] = useState<"list" | "form">("list");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -147,6 +148,7 @@ export function AdminProductManager() {
       });
 
       setForm(emptyForm);
+      setMode("list");
       setMessage("Produto salvo.");
       await loadData();
     } catch (error) {
@@ -193,197 +195,221 @@ export function AdminProductManager() {
           .filter(Boolean)
           .join("\n") ?? ""
     });
+    setMode("form");
+  }
+
+  function newProduct() {
+    setForm(emptyForm);
+    setMessage("");
+    setMode("form");
+  }
+
+  function cancelForm() {
+    setForm(emptyForm);
+    setMessage("");
+    setMode("list");
   }
 
   return (
-    <section className="admin-panel split-panel">
-      <form className="admin-form" onSubmit={handleSubmit}>
-        <h2>{form.id ? "Editar produto" : "Novo produto"}</h2>
-        <label>
-          Nome
-          <input
-            onChange={(event) => setForm({ ...form, name: event.target.value })}
-            required
-            value={form.name}
-          />
-        </label>
-        <div className="form-grid">
+    <section className="admin-panel admin-management-panel">
+      <div className="admin-management-header">
+        <div>
+          <h2>{mode === "form" ? (form.id ? "Editar produto" : "Novo produto") : "Produtos cadastrados"}</h2>
+          <p>{mode === "form" ? "Preencha os dados e salve para voltar a lista." : "Escolha um produto para editar ou crie um novo cadastro."}</p>
+        </div>
+        {mode === "list" ? (
+          <button className="button button-primary" type="button" onClick={newProduct}>
+            <Plus aria-hidden="true" size={18} />
+            Novo produto
+          </button>
+        ) : null}
+      </div>
+
+      {message ? <p className="form-note">{message}</p> : null}
+
+      {mode === "form" ? (
+        <form className="admin-form" onSubmit={handleSubmit}>
           <label>
-            Slug
+            Nome
             <input
-              onChange={(event) => setForm({ ...form, slug: event.target.value })}
-              placeholder="Gerado pelo backend"
-              value={form.slug}
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              required
+              value={form.name}
+            />
+          </label>
+          <div className="form-grid">
+            <label>
+              Slug
+              <input
+                onChange={(event) => setForm({ ...form, slug: event.target.value })}
+                placeholder="Gerado pelo backend"
+                value={form.slug}
+              />
+            </label>
+            <label>
+              Status
+              <select
+                onChange={(event) => setForm({ ...form, status: event.target.value as ProductStatus })}
+                value={form.status}
+              >
+                {PRODUCT_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label>
+            Resumo do card
+            <input
+              onChange={(event) => setForm({ ...form, short_description: event.target.value })}
+              required
+              value={form.short_description}
             />
           </label>
           <label>
-            Status
+            Descricao completa
+            <textarea
+              onChange={(event) => setForm({ ...form, description: event.target.value })}
+              required
+              rows={4}
+              value={form.description}
+            />
+          </label>
+          <div className="form-grid">
+            <label>
+              Preco
+              <input
+                inputMode="decimal"
+                onChange={(event) => setForm({ ...form, price: event.target.value })}
+                placeholder="89,90"
+                required
+                value={form.price}
+              />
+            </label>
+            <label>
+              Material
+              <input
+                onChange={(event) => setForm({ ...form, material: event.target.value })}
+                value={form.material}
+              />
+            </label>
+            <label>
+              Peso em gramas
+              <input
+                min="0"
+                onChange={(event) => setForm({ ...form, weight_grams: event.target.value })}
+                type="number"
+                value={form.weight_grams}
+              />
+            </label>
+            <label>
+              Estoque
+              <input
+                min="0"
+                onChange={(event) => setForm({ ...form, stock_quantity: event.target.value })}
+                type="number"
+                value={form.stock_quantity}
+              />
+            </label>
+            <label>
+              Prazo minimo
+              <input
+                min="0"
+                onChange={(event) =>
+                  setForm({ ...form, production_time_days_min: event.target.value })
+                }
+                type="number"
+                value={form.production_time_days_min}
+              />
+            </label>
+            <label>
+              Prazo maximo
+              <input
+                min="0"
+                onChange={(event) =>
+                  setForm({ ...form, production_time_days_max: event.target.value })
+                }
+                type="number"
+                value={form.production_time_days_max}
+              />
+            </label>
+          </div>
+          <label>
+            Dimensoes
+            <input
+              onChange={(event) => setForm({ ...form, dimensions: event.target.value })}
+              value={form.dimensions}
+            />
+          </label>
+          <label>
+            Categorias
             <select
-              onChange={(event) => setForm({ ...form, status: event.target.value as ProductStatus })}
-              value={form.status}
+              multiple
+              onChange={(event) =>
+                setForm({
+                  ...form,
+                  category_ids: Array.from(event.target.selectedOptions).map((option) => option.value)
+                })
+              }
+              value={form.category_ids}
             >
-              {PRODUCT_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
                 </option>
               ))}
             </select>
           </label>
-        </div>
-        <label>
-          Resumo do card
-          <input
-            onChange={(event) => setForm({ ...form, short_description: event.target.value })}
-            required
-            value={form.short_description}
-          />
-        </label>
-        <label>
-          Descricao completa
-          <textarea
-            onChange={(event) => setForm({ ...form, description: event.target.value })}
-            required
-            rows={4}
-            value={form.description}
-          />
-        </label>
-        <div className="form-grid">
           <label>
-            Preco
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, price: event.target.value })}
-              placeholder="89,90"
-              required
-              value={form.price}
-            />
-          </label>
-          <label>
-            Material
-            <input
-              onChange={(event) => setForm({ ...form, material: event.target.value })}
-              value={form.material}
-            />
-          </label>
-          <label>
-            Peso em gramas
-            <input
-              min="0"
-              onChange={(event) => setForm({ ...form, weight_grams: event.target.value })}
-              type="number"
-              value={form.weight_grams}
-            />
-          </label>
-          <label>
-            Estoque
-            <input
-              min="0"
-              onChange={(event) => setForm({ ...form, stock_quantity: event.target.value })}
-              type="number"
-              value={form.stock_quantity}
-            />
-          </label>
-          <label>
-            Prazo minimo
-            <input
-              min="0"
-              onChange={(event) =>
-                setForm({ ...form, production_time_days_min: event.target.value })
-              }
-              type="number"
-              value={form.production_time_days_min}
-            />
-          </label>
-          <label>
-            Prazo maximo
-            <input
-              min="0"
-              onChange={(event) =>
-                setForm({ ...form, production_time_days_max: event.target.value })
-              }
-              type="number"
-              value={form.production_time_days_max}
-            />
-          </label>
-        </div>
-        <label>
-          Dimensoes
-          <input
-            onChange={(event) => setForm({ ...form, dimensions: event.target.value })}
-            value={form.dimensions}
-          />
-        </label>
-        <label>
-          Categorias
-          <select
-            multiple
-            onChange={(event) =>
-              setForm({
-                ...form,
-                category_ids: Array.from(event.target.selectedOptions).map((option) => option.value)
-              })
-            }
-            value={form.category_ids}
-          >
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          URLs de imagens
-          <textarea
-            onChange={(event) => setForm({ ...form, image_urls: event.target.value })}
-            placeholder="Uma URL por linha"
-            rows={3}
-            value={form.image_urls}
-          />
-        </label>
-        <label>
-          Cores disponiveis
-          <textarea
-            onChange={(event) => setForm({ ...form, color_options: event.target.value })}
-            placeholder="Uma cor por linha"
-            rows={3}
-            value={form.color_options}
-          />
-        </label>
-        <label className="checkbox-row">
-          <input
-            checked={form.accepts_customization}
-            onChange={(event) => setForm({ ...form, accepts_customization: event.target.checked })}
-            type="checkbox"
-          />
-          Aceita personalizacao
-        </label>
-        {form.accepts_customization ? (
-          <label>
-            Orientacao de personalizacao
+            URLs de imagens
             <textarea
-              onChange={(event) => setForm({ ...form, customization_prompt: event.target.value })}
+              onChange={(event) => setForm({ ...form, image_urls: event.target.value })}
+              placeholder="Uma URL por linha"
               rows={3}
-              value={form.customization_prompt}
+              value={form.image_urls}
             />
           </label>
-        ) : null}
-        {message ? <p className="form-note">{message}</p> : null}
-        <div className="admin-inline-actions">
-          <button className="button button-primary" disabled={isSaving} type="submit">
-            {form.id ? <Save aria-hidden="true" size={18} /> : <Plus aria-hidden="true" size={18} />}
-            {isSaving ? "Salvando..." : "Salvar"}
-          </button>
-          {form.id ? (
-            <button className="button button-secondary" type="button" onClick={() => setForm(emptyForm)}>
+          <label>
+            Cores disponiveis
+            <textarea
+              onChange={(event) => setForm({ ...form, color_options: event.target.value })}
+              placeholder="Uma cor por linha"
+              rows={3}
+              value={form.color_options}
+            />
+          </label>
+          <label className="checkbox-row">
+            <input
+              checked={form.accepts_customization}
+              onChange={(event) => setForm({ ...form, accepts_customization: event.target.checked })}
+              type="checkbox"
+            />
+            Aceita personalizacao
+          </label>
+          {form.accepts_customization ? (
+            <label>
+              Orientacao de personalizacao
+              <textarea
+                onChange={(event) => setForm({ ...form, customization_prompt: event.target.value })}
+                rows={3}
+                value={form.customization_prompt}
+              />
+            </label>
+          ) : null}
+          <div className="admin-inline-actions">
+            <button className="button button-primary" disabled={isSaving} type="submit">
+              {form.id ? <Save aria-hidden="true" size={18} /> : <Plus aria-hidden="true" size={18} />}
+              {isSaving ? "Salvando..." : "Salvar"}
+            </button>
+            <button className="button button-secondary" type="button" onClick={cancelForm}>
               Cancelar
             </button>
-          ) : null}
-        </div>
-      </form>
-
-      <div className="admin-action-list">
-        <h2>Produtos cadastrados</h2>
+          </div>
+        </form>
+      ) : (
+        <div className="admin-action-list">
         {isLoading ? <p>Carregando produtos...</p> : null}
         {products.map((product) => (
           <article className="admin-list-card" key={product.id}>
@@ -403,7 +429,14 @@ export function AdminProductManager() {
             </div>
           </article>
         ))}
-      </div>
+        {!isLoading && products.length === 0 ? (
+          <div className="empty-state">
+            <h2>Nenhum produto cadastrado</h2>
+            <p>Crie o primeiro produto para comecar a montar a vitrine.</p>
+          </div>
+        ) : null}
+        </div>
+      )}
     </section>
   );
 }

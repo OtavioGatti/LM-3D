@@ -1,0 +1,230 @@
+"use client";
+
+import { ORDER_STATUSES, OrderStatus, formatMoneyBRL } from "@lm-3d/shared";
+import { Save, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { adminApiFetch } from "@/lib/api/admin";
+
+type OrderItem = {
+  id: string;
+  product_snapshot: {
+    name?: string;
+    slug?: string;
+  };
+  quantity: number;
+  unit_price_cents: number;
+  line_total_cents: number;
+  customization_notes: string | null;
+};
+
+type AdminOrder = {
+  id: string;
+  code: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  status: OrderStatus;
+  payment_status: string;
+  total_cents: number;
+  customer_notes: string | null;
+  admin_notes: string | null;
+  tracking_code: string | null;
+  delivery_method: string | null;
+  created_at: string;
+  order_items: OrderItem[];
+};
+
+const statusLabels: Record<OrderStatus, string> = {
+  pending_payment: "Aguardando pagamento",
+  paid: "Pago",
+  payment_failed: "Pagamento falhou",
+  in_production: "Em producao",
+  ready: "Pronto",
+  shipped: "Enviado",
+  delivered: "Entregue",
+  canceled: "Cancelado",
+  refunded: "Reembolsado"
+};
+
+export function AdminOrderManager() {
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<OrderStatus | "todos">("todos");
+  const [savingId, setSavingId] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  async function loadOrders() {
+    setIsLoading(true);
+    const payload = await adminApiFetch<{ orders: AdminOrder[] }>("/admin/orders");
+    setOrders(payload.orders);
+    setIsLoading(false);
+  }
+
+  useEffect(() => {
+    void loadOrders().catch((error: Error) => {
+      setMessage(error.message);
+      setIsLoading(false);
+    });
+  }, []);
+
+  const filteredOrders = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+
+    return orders.filter((order) => {
+      const matchesStatus = status === "todos" || order.status === status;
+      const matchesQuery =
+        !normalized ||
+        [order.code, order.customer_name, order.customer_email, order.customer_phone]
+          .filter(Boolean)
+          .some((value) => value!.toLowerCase().includes(normalized));
+
+      return matchesStatus && matchesQuery;
+    });
+  }, [orders, query, status]);
+
+  async function updateOrder(order: AdminOrder, updates: Partial<AdminOrder>) {
+    setSavingId(order.id);
+    setMessage("");
+
+    try {
+      const payload = {
+        status: updates.status ?? order.status,
+        admin_notes: updates.admin_notes ?? order.admin_notes,
+        tracking_code: updates.tracking_code ?? order.tracking_code,
+        delivery_method: updates.delivery_method ?? order.delivery_method
+      };
+
+      const response = await adminApiFetch<{ order: AdminOrder }>(`/admin/orders/${order.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload)
+      });
+
+      setOrders((current) => current.map((item) => (item.id === order.id ? response.order : item)));
+      setMessage(`Pedido ${order.code} atualizado.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel atualizar o pedido.");
+    } finally {
+      setSavingId("");
+    }
+  }
+
+  return (
+    <section className="admin-panel admin-management-panel">
+      <div className="catalog-toolbar compact-toolbar">
+        <label className="search-field">
+          <Search aria-hidden="true" size={18} />
+          <input
+            placeholder="Buscar pedido ou cliente"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </label>
+        <label>
+          <span>Status</span>
+          <select value={status} onChange={(event) => setStatus(event.target.value as OrderStatus | "todos")}>
+            <option value="todos">Todos</option>
+            {ORDER_STATUSES.map((item) => (
+              <option key={item} value={item}>
+                {statusLabels[item]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {message ? <p className="form-note">{message}</p> : null}
+      {isLoading ? <p>Carregando pedidos...</p> : null}
+
+      <div className="admin-order-list">
+        {filteredOrders.map((order) => (
+          <article className="admin-order-card" key={order.id}>
+            <div className="admin-order-card-header">
+              <div>
+                <strong>{order.code}</strong>
+                <span>
+                  {order.customer_name} · {order.customer_email}
+                </span>
+              </div>
+              <div>
+                <strong>{formatMoneyBRL(order.total_cents)}</strong>
+                <span>{new Intl.DateTimeFormat("pt-BR").format(new Date(order.created_at))}</span>
+              </div>
+            </div>
+
+            <div className="order-items-list">
+              {order.order_items.map((item) => (
+                <div key={item.id}>
+                  <span>
+                    {item.quantity}x {item.product_snapshot?.name ?? "Produto"}
+                  </span>
+                  <strong>{formatMoneyBRL(item.line_total_cents)}</strong>
+                  {item.customization_notes ? <small>{item.customization_notes}</small> : null}
+                </div>
+              ))}
+            </div>
+
+            <div className="form-grid">
+              <label>
+                Status do pedido
+                <select
+                  value={order.status}
+                  onChange={(event) =>
+                    void updateOrder(order, { status: event.target.value as OrderStatus })
+                  }
+                >
+                  {ORDER_STATUSES.map((item) => (
+                    <option key={item} value={item}>
+                      {statusLabels[item]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Entrega/retirada
+                <input
+                  defaultValue={order.delivery_method ?? ""}
+                  onBlur={(event) => void updateOrder(order, { delivery_method: event.target.value })}
+                  placeholder="Ex.: Retirada, Correios, motoboy"
+                />
+              </label>
+              <label>
+                Codigo de rastreio
+                <input
+                  defaultValue={order.tracking_code ?? ""}
+                  onBlur={(event) => void updateOrder(order, { tracking_code: event.target.value })}
+                />
+              </label>
+              <label>
+                Observacao interna
+                <textarea
+                  defaultValue={order.admin_notes ?? ""}
+                  onBlur={(event) => void updateOrder(order, { admin_notes: event.target.value })}
+                  rows={3}
+                />
+              </label>
+            </div>
+
+            <div className="admin-inline-actions">
+              <span className="status-pill">{statusLabels[order.status]}</span>
+              <span className="status-pill">{order.payment_status}</span>
+              {savingId === order.id ? (
+                <span className="saving-pill">
+                  <Save aria-hidden="true" size={14} />
+                  Salvando
+                </span>
+              ) : null}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {!isLoading && filteredOrders.length === 0 ? (
+        <div className="empty-state">
+          <h2>Nenhum pedido encontrado</h2>
+          <p>Quando pedidos forem criados, eles aparecerao aqui para acompanhar producao e entrega.</p>
+        </div>
+      ) : null}
+    </section>
+  );
+}

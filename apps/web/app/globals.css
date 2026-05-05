@@ -451,6 +451,9 @@ img {
 .admin-form input,
 .admin-form select,
 .admin-form textarea,
+.admin-order-card input,
+.admin-order-card select,
+.admin-order-card textarea,
 .cart-item textarea {
   width: 100%;
   border: 1px solid var(--border);
@@ -465,7 +468,9 @@ img {
 .catalog-toolbar select,
 .lead-form input,
 .admin-form input,
-.admin-form select {
+.admin-form select,
+.admin-order-card input,
+.admin-order-card select {
   min-height: 44px;
   padding: 0 12px;
 }
@@ -473,6 +478,7 @@ img {
 .lead-form textarea,
 .admin-form select[multiple],
 .admin-form textarea,
+.admin-order-card textarea,
 .cart-item textarea {
   padding: 12px;
   resize: vertical;
@@ -1134,6 +1140,27 @@ img {
   align-content: start;
 }
 
+.admin-management-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-management-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-management-header h2,
+.admin-management-header p {
+  margin: 0;
+}
+
+.admin-management-header p {
+  color: var(--muted);
+}
+
 .admin-inline-actions,
 .row-actions {
   display: flex;
@@ -1151,7 +1178,9 @@ img {
 }
 
 .admin-list-card {
-  display: grid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
   padding: 16px;
   border: 1px solid var(--border);
@@ -1197,6 +1226,71 @@ img {
   background: var(--surface-strong);
   color: var(--surface-ink);
   font-weight: 800;
+}
+
+.admin-order-list {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-order-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.admin-order-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-order-card-header div {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-order-card-header span,
+.order-items-list small {
+  color: var(--muted);
+}
+
+.order-items-list {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+
+.order-items-list div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+}
+
+.order-items-list small {
+  grid-column: 1 / -1;
+}
+
+.status-pill,
+.saving-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--surface-ink);
+  font-size: 0.84rem;
+  font-weight: 900;
 }
 
 .category-admin-list {

@@ -33,6 +33,7 @@ const emptyForm: CategoryFormState = {
 export function AdminCategoryManager() {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [form, setForm] = useState<CategoryFormState>(emptyForm);
+  const [mode, setMode] = useState<"list" | "form">("list");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -71,6 +72,7 @@ export function AdminCategoryManager() {
       });
 
       setForm(emptyForm);
+      setMode("list");
       setMessage("Categoria salva.");
       await loadCategories();
     } catch (error) {
@@ -91,70 +93,106 @@ export function AdminCategoryManager() {
     }
   }
 
+  function newCategory() {
+    setForm(emptyForm);
+    setMessage("");
+    setMode("form");
+  }
+
+  function editCategory(category: AdminCategory) {
+    setForm({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      description: category.description ?? "",
+      sort_order: String(category.sort_order),
+      is_active: category.is_active
+    });
+    setMessage("");
+    setMode("form");
+  }
+
+  function cancelForm() {
+    setForm(emptyForm);
+    setMessage("");
+    setMode("list");
+  }
+
   return (
-    <section className="admin-panel split-panel">
-      <form className="admin-form" onSubmit={handleSubmit}>
-        <h2>{form.id ? "Editar categoria" : "Nova categoria"}</h2>
-        <label>
-          Nome
-          <input
-            onChange={(event) => setForm({ ...form, name: event.target.value })}
-            placeholder="Ex.: Presentes"
-            required
-            value={form.name}
-          />
-        </label>
-        <label>
-          Slug
-          <input
-            onChange={(event) => setForm({ ...form, slug: event.target.value })}
-            placeholder="Gerado pelo backend se ficar vazio"
-            value={form.slug}
-          />
-        </label>
-        <label>
-          Descricao
-          <textarea
-            onChange={(event) => setForm({ ...form, description: event.target.value })}
-            rows={3}
-            value={form.description}
-          />
-        </label>
-        <div className="form-grid">
-          <label>
-            Ordem
-            <input
-              min="0"
-              onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
-              type="number"
-              value={form.sort_order}
-            />
-          </label>
-          <label className="checkbox-row">
-            <input
-              checked={form.is_active}
-              onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
-              type="checkbox"
-            />
-            Categoria ativa
-          </label>
+    <section className="admin-panel admin-management-panel">
+      <div className="admin-management-header">
+        <div>
+          <h2>{mode === "form" ? (form.id ? "Editar categoria" : "Nova categoria") : "Categorias cadastradas"}</h2>
+          <p>{mode === "form" ? "Salve para voltar a lista de categorias." : "Escolha uma categoria para editar ou crie uma nova."}</p>
         </div>
-        {message ? <p className="form-note">{message}</p> : null}
-        <div className="admin-inline-actions">
-          <button className="button button-primary" disabled={isSaving} type="submit">
-            {form.id ? <Save aria-hidden="true" size={18} /> : <Plus aria-hidden="true" size={18} />}
-            {isSaving ? "Salvando..." : "Salvar"}
+        {mode === "list" ? (
+          <button className="button button-primary" type="button" onClick={newCategory}>
+            <Plus aria-hidden="true" size={18} />
+            Nova categoria
           </button>
-          {form.id ? (
-            <button className="button button-secondary" type="button" onClick={() => setForm(emptyForm)}>
+        ) : null}
+      </div>
+
+      {message ? <p className="form-note">{message}</p> : null}
+
+      {mode === "form" ? (
+        <form className="admin-form" onSubmit={handleSubmit}>
+          <label>
+            Nome
+            <input
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              placeholder="Ex.: Presentes"
+              required
+              value={form.name}
+            />
+          </label>
+          <label>
+            Slug
+            <input
+              onChange={(event) => setForm({ ...form, slug: event.target.value })}
+              placeholder="Gerado pelo backend se ficar vazio"
+              value={form.slug}
+            />
+          </label>
+          <label>
+            Descricao
+            <textarea
+              onChange={(event) => setForm({ ...form, description: event.target.value })}
+              rows={3}
+              value={form.description}
+            />
+          </label>
+          <div className="form-grid">
+            <label>
+              Ordem
+              <input
+                min="0"
+                onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
+                type="number"
+                value={form.sort_order}
+              />
+            </label>
+            <label className="checkbox-row">
+              <input
+                checked={form.is_active}
+                onChange={(event) => setForm({ ...form, is_active: event.target.checked })}
+                type="checkbox"
+              />
+              Categoria ativa
+            </label>
+          </div>
+          <div className="admin-inline-actions">
+            <button className="button button-primary" disabled={isSaving} type="submit">
+              {form.id ? <Save aria-hidden="true" size={18} /> : <Plus aria-hidden="true" size={18} />}
+              {isSaving ? "Salvando..." : "Salvar"}
+            </button>
+            <button className="button button-secondary" type="button" onClick={cancelForm}>
               Cancelar
             </button>
-          ) : null}
-        </div>
-      </form>
-
+          </div>
+        </form>
+      ) : (
       <div className="category-admin-list">
-        <h2>Categorias cadastradas</h2>
         {isLoading ? <p>Carregando categorias...</p> : null}
         {categories.map((category) => (
           <article key={category.id}>
@@ -166,16 +204,7 @@ export function AdminCategoryManager() {
             <div className="row-actions">
               <button
                 type="button"
-                onClick={() =>
-                  setForm({
-                    id: category.id,
-                    name: category.name,
-                    slug: category.slug,
-                    description: category.description ?? "",
-                    sort_order: String(category.sort_order),
-                    is_active: category.is_active
-                  })
-                }
+                onClick={() => editCategory(category)}
               >
                 Editar
               </button>
@@ -185,7 +214,14 @@ export function AdminCategoryManager() {
             </div>
           </article>
         ))}
+        {!isLoading && categories.length === 0 ? (
+          <div className="empty-state">
+            <h2>Nenhuma categoria cadastrada</h2>
+            <p>Crie categorias para organizar a vitrine publica.</p>
+          </div>
+        ) : null}
       </div>
+      )}
     </section>
   );
 }
