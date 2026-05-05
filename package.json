@@ -1,0 +1,26 @@
+{
+  "name": "lm-3d-commerce",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@11.6.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @lm-3d/web",
+    "dev:web": "npm run dev --workspace @lm-3d/web",
+    "dev:api": "npm run dev --workspace @lm-3d/api",
+    "build": "npm run build --workspace @lm-3d/shared && npm run build --workspace @lm-3d/api && npm run build --workspace @lm-3d/web",
+    "typecheck": "npm run build --workspace @lm-3d/shared && npm run typecheck --workspace @lm-3d/api && npm run typecheck --workspace @lm-3d/web"
+  },
+  "overrides": {
+    "postcss": "8.5.10",
+    "next@16.2.4": {
+      "postcss": "8.5.10"
+    }
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  }
+}
