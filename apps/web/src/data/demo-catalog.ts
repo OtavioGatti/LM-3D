@@ -1,4 +1,5 @@
 import type { Category, ProductDetails } from "@lm-3d/shared";
+import { assetPath } from "@/lib/assets";
 
 export const categories: Category[] = [
   {
@@ -63,18 +64,18 @@ export const products: ProductDetails[] = [
     weightInGrams: 120,
     colors: ["preto", "vermelho", "azul", "verde"],
     image: {
-      src: "/images/product-dragon.svg",
+      src: assetPath("/images/product-dragon.svg"),
       alt: "Dragao articulado impresso em 3D",
       sortOrder: 1
     },
     images: [
       {
-        src: "/images/product-dragon.svg",
+        src: assetPath("/images/product-dragon.svg"),
         alt: "Dragao articulado impresso em 3D",
         sortOrder: 1
       },
       {
-        src: "/images/product-detail.svg",
+        src: assetPath("/images/product-detail.svg"),
         alt: "Detalhe de acabamento de impressao 3D",
         sortOrder: 2
       }
@@ -108,13 +109,13 @@ export const products: ProductDetails[] = [
     weightInGrams: 24,
     colors: ["branco", "preto", "rosa", "azul", "amarelo"],
     image: {
-      src: "/images/product-keychain.svg",
+      src: assetPath("/images/product-keychain.svg"),
       alt: "Chaveiro personalizado impresso em 3D",
       sortOrder: 1
     },
     images: [
       {
-        src: "/images/product-keychain.svg",
+        src: assetPath("/images/product-keychain.svg"),
         alt: "Chaveiro personalizado impresso em 3D",
         sortOrder: 1
       }
@@ -148,13 +149,13 @@ export const products: ProductDetails[] = [
     weightInGrams: 180,
     colors: ["preto", "cinza", "branco"],
     image: {
-      src: "/images/product-desk.svg",
+      src: assetPath("/images/product-desk.svg"),
       alt: "Organizador de mesa impresso em 3D",
       sortOrder: 1
     },
     images: [
       {
-        src: "/images/product-desk.svg",
+        src: assetPath("/images/product-desk.svg"),
         alt: "Organizador de mesa impresso em 3D",
         sortOrder: 1
       }
@@ -184,13 +185,13 @@ export const products: ProductDetails[] = [
     weightInGrams: 95,
     colors: ["preto", "cinza", "azul"],
     image: {
-      src: "/images/product-stand.svg",
+      src: assetPath("/images/product-stand.svg"),
       alt: "Suporte para controle impresso em 3D",
       sortOrder: 1
     },
     images: [
       {
-        src: "/images/product-stand.svg",
+        src: assetPath("/images/product-stand.svg"),
         alt: "Suporte para controle impresso em 3D",
         sortOrder: 1
       }

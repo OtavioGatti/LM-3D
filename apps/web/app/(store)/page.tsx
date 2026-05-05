@@ -4,6 +4,7 @@ import { ProductCard } from "@/components/product-card";
 import { SectionHeader } from "@/components/section-header";
 import { TrustRail } from "@/components/trust-rail";
 import { categories, featuredProducts } from "@/data/demo-catalog";
+import { assetPath } from "@/lib/assets";
 
 const trustItems = [
   {
@@ -52,7 +53,7 @@ export default function HomePage() {
           </div>
 
           <div className="hero-media" aria-label="Produtos impressos em 3D">
-            <img src="/images/hero-print-lab.svg" alt="" />
+            <img src={assetPath("/images/hero-print-lab.svg")} alt="" />
           </div>
         </div>
       </section>
