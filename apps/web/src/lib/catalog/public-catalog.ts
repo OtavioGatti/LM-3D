@@ -70,6 +70,10 @@ function getPublicSupabaseClient() {
   return publicClient;
 }
 
+export function canLoadPublicCatalogInBrowser() {
+  return hasPublicSupabaseConfig();
+}
+
 function mapCategory(row: PublicCategoryRow): Category {
   return {
     id: row.id,
@@ -99,7 +103,7 @@ function productionTime(min: number, max: number) {
   return `${min} a ${max} dias uteis`;
 }
 
-function mapProduct(row: PublicProductRow, allSlugs: string[]): ProductDetails {
+export function mapPublicProduct(row: PublicProductRow, allSlugs: string[]): ProductDetails {
   const sortedImages = [...(row.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order);
   const images = sortedImages.length
     ? sortedImages.map((image) => mapImage(image, row.name))
@@ -219,7 +223,7 @@ export async function getPublicProducts() {
   const rows = data as unknown as PublicProductRow[];
   const allSlugs = rows.map((product) => product.slug);
 
-  return rows.map((product) => mapProduct(product, allSlugs));
+  return rows.map((product) => mapPublicProduct(product, allSlugs));
 }
 
 export async function getPublicCatalog() {
@@ -245,4 +249,72 @@ export async function getPublicRelatedProducts(product: ProductDetails) {
   );
 
   return (sameCategory.length ? sameCategory : products.filter((item) => item.slug !== product.slug)).slice(0, 3);
+}
+
+export async function loadPublicCatalogFromBrowser() {
+  const supabase = getPublicSupabaseClient();
+
+  if (!supabase) {
+    return null;
+  }
+
+  const [categoriesResult, productsResult] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("id, slug, name, description, sort_order")
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true }),
+    supabase
+      .from("products")
+      .select(
+        `
+        id,
+        slug,
+        name,
+        short_description,
+        description,
+        price_cents,
+        status,
+        material,
+        dimensions,
+        weight_grams,
+        production_time_days_min,
+        production_time_days_max,
+        accepts_customization,
+        metadata,
+        product_images (
+          public_url,
+          storage_path,
+          alt,
+          sort_order
+        ),
+        product_categories (
+          category:categories (
+            id,
+            slug,
+            name,
+            description,
+            sort_order
+          )
+        )
+      `
+      )
+      .in("status", ["active", "made_to_order"])
+      .order("created_at", { ascending: false })
+  ]);
+
+  if (categoriesResult.error || productsResult.error || !productsResult.data?.length) {
+    return null;
+  }
+
+  const productRows = productsResult.data as unknown as PublicProductRow[];
+  const slugs = productRows.map((product) => product.slug);
+  const products = productRows.map((product) => mapPublicProduct(product, slugs));
+
+  return {
+    categories: categoriesResult.data.map(mapCategory),
+    products,
+    featuredProducts: products.slice(0, 3)
+  };
 }

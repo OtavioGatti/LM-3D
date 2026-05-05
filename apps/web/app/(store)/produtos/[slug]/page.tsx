@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2, MessageCircle, ShieldCheck, Truck } from "lucide-react";
-import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { CheckCircle2 } from "lucide-react";
+import { LiveProductDetail } from "@/components/catalog/live-product-detail";
 import { ProductCard } from "@/components/product-card";
 import {
   getPublicCategories,
@@ -9,7 +9,6 @@ import {
   getPublicProducts,
   getPublicRelatedProducts
 } from "@/lib/catalog/public-catalog";
-import { formatMoneyBRL } from "@lm-3d/shared";
 
 type ProductPageProps = {
   params: Promise<{
@@ -50,58 +49,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <div>
       <section className="section product-detail-section">
         <div className="page-container product-detail-grid">
-          <div className="product-gallery">
-            {product.images.map((image) => (
-              <figure className="gallery-frame" key={image.src}>
-                <img src={image.src} alt={image.alt} />
-              </figure>
-            ))}
-          </div>
-
-          <div className="product-info-panel">
-            <p className="category-label">{category?.name}</p>
-            <h1>{product.name}</h1>
-            <p className="product-lead">{product.description}</p>
-            <p className="product-price">{formatMoneyBRL(product.priceInCents)}</p>
-
-            <dl className="product-specs">
-              <div>
-                <dt>Prazo</dt>
-                <dd>{product.productionTime}</dd>
-              </div>
-              <div>
-                <dt>Material</dt>
-                <dd>{product.material}</dd>
-              </div>
-              <div>
-                <dt>Dimensoes</dt>
-                <dd>{product.dimensions}</dd>
-              </div>
-              <div>
-                <dt>Cores</dt>
-                <dd>{product.colors.join(", ")}</dd>
-              </div>
-            </dl>
-
-            <div className="purchase-panel">
-              <AddToCartButton productSlug={product.slug} />
-              <Link href="/pedido-personalizado" className="button button-secondary">
-                Personalizar com Lucas
-              </Link>
-            </div>
-
-            <div className="cta-trust-list" aria-label="Garantias da compra">
-              <span>
-                <ShieldCheck aria-hidden="true" size={18} /> Pagamento seguro
-              </span>
-              <span>
-                <Truck aria-hidden="true" size={18} /> Prazo combinado antes da producao
-              </span>
-              <span>
-                <MessageCircle aria-hidden="true" size={18} /> Atendimento direto
-              </span>
-            </div>
-          </div>
+          <LiveProductDetail initialProduct={product} initialCategory={category} />
         </div>
       </section>
 

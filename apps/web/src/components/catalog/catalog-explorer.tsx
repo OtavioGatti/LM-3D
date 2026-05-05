@@ -4,6 +4,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import type { Category, ProductDetails, ProductStatus } from "@lm-3d/shared";
 import { ProductCard } from "@/components/product-card";
 import { useEffect, useMemo, useState } from "react";
+import { loadPublicCatalogFromBrowser } from "@/lib/catalog/public-catalog";
 
 type CatalogExplorerProps = {
   categories: Category[];
@@ -11,6 +12,8 @@ type CatalogExplorerProps = {
 };
 
 export function CatalogExplorer({ categories, products }: CatalogExplorerProps) {
+  const [liveCategories, setLiveCategories] = useState(categories);
+  const [liveProducts, setLiveProducts] = useState(products);
   const [query, setQuery] = useState("");
   const [categorySlug, setCategorySlug] = useState("todos");
   const [status, setStatus] = useState<ProductStatus | "todos">("todos");
@@ -25,10 +28,21 @@ export function CatalogExplorer({ categories, products }: CatalogExplorerProps) 
     }
   }, []);
 
+  useEffect(() => {
+    void loadPublicCatalogFromBrowser().then((catalog) => {
+      if (!catalog) {
+        return;
+      }
+
+      setLiveCategories(catalog.categories);
+      setLiveProducts(catalog.products);
+    });
+  }, []);
+
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return products.filter((product) => {
+    return liveProducts.filter((product) => {
       const matchesQuery =
         !normalizedQuery ||
         [product.name, product.shortDescription, product.description, product.categoryName]
@@ -42,7 +56,7 @@ export function CatalogExplorer({ categories, products }: CatalogExplorerProps) 
 
       return matchesQuery && matchesCategory && matchesStatus && matchesCustomizable;
     });
-  }, [categorySlug, customizable, products, query, status]);
+  }, [categorySlug, customizable, liveProducts, query, status]);
 
   return (
     <>
@@ -60,7 +74,7 @@ export function CatalogExplorer({ categories, products }: CatalogExplorerProps) 
           <span>Categoria</span>
           <select value={categorySlug} onChange={(event) => setCategorySlug(event.target.value)}>
             <option value="todos">Todas</option>
-            {categories.map((category) => (
+            {liveCategories.map((category) => (
               <option value={category.slug} key={category.slug}>
                 {category.name}
               </option>
