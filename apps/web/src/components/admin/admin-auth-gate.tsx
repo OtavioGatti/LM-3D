@@ -1,6 +1,6 @@
 "use client";
 
-import { ADMIN_ROLES } from "@lm-3d/shared";
+import { isOwnerRole } from "@lm-3d/shared";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -34,7 +34,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        router.replace("/admin/login");
+        router.replace("/login");
         return;
       }
 
@@ -48,7 +48,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      if (error || !profile || !ADMIN_ROLES.includes(profile.role)) {
+      if (error || !profile || !isOwnerRole(profile.role)) {
         setState("denied");
         return;
       }
@@ -91,9 +91,9 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
         <div className="admin-auth-card">
           <ShieldAlert aria-hidden="true" size={28} />
           <h1>Acesso restrito</h1>
-          <p>Esta conta existe, mas nao tem role de admin ou owner no perfil Supabase.</p>
-          <Link href="/admin/login" className="button button-secondary">
-            Entrar com outra conta
+          <p>Esta conta esta logada, mas nao tem role owner no perfil Supabase.</p>
+          <Link href="/conta" className="button button-secondary">
+            Ver minha conta
           </Link>
         </div>
       </div>

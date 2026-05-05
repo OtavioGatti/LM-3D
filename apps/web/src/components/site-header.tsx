@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShoppingCart, UserCog } from "lucide-react";
+import { HeaderAuthActions } from "@/components/auth/header-auth-actions";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -21,15 +21,7 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="header-actions">
-          <Link href="/admin" className="icon-button" aria-label="Acessar painel admin">
-            <UserCog aria-hidden="true" size={20} />
-          </Link>
-          <Link href="/carrinho" className="button button-primary">
-            <ShoppingCart aria-hidden="true" size={18} />
-            Carrinho
-          </Link>
-        </div>
+        <HeaderAuthActions />
       </div>
     </header>
   );

@@ -914,6 +914,50 @@ img {
   text-decoration: none;
 }
 
+.account-page {
+  padding: 54px 0;
+}
+
+.account-panel {
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+}
+
+.account-panel h1,
+.account-panel p {
+  margin: 0;
+}
+
+.account-panel > svg {
+  color: var(--accent);
+}
+
+.owner-callout {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-strong);
+}
+
+.owner-callout svg {
+  color: var(--accent);
+}
+
+.owner-callout div {
+  display: grid;
+  gap: 4px;
+}
+
+.owner-callout span {
+  color: var(--muted);
+}
+
 .admin-content {
   padding: 32px;
 }

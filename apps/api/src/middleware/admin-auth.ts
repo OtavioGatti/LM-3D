@@ -1,4 +1,4 @@
-import { ADMIN_ROLES } from "@lm-3d/shared";
+import { isOwnerRole } from "@lm-3d/shared";
 import type { RequestHandler } from "express";
 import { HttpError } from "../lib/http.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
@@ -7,7 +7,7 @@ export type AdminProfile = {
   id: string;
   full_name: string | null;
   phone: string | null;
-  role: "admin" | "owner";
+  role: "owner";
 };
 
 function getBearerToken(header: string | undefined) {
@@ -23,7 +23,7 @@ export const requireAdmin: RequestHandler = async (req, res, next) => {
     const token = getBearerToken(req.header("authorization"));
 
     if (!token) {
-      throw new HttpError(401, "AUTH_REQUIRED", "Login administrativo obrigatorio.");
+      throw new HttpError(401, "AUTH_REQUIRED", "Login obrigatorio.");
     }
 
     const supabase = getSupabaseAdminClient();
@@ -42,8 +42,8 @@ export const requireAdmin: RequestHandler = async (req, res, next) => {
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile || !ADMIN_ROLES.includes(profile.role)) {
-      throw new HttpError(403, "ADMIN_FORBIDDEN", "Acesso restrito ao Lucas/admin.");
+    if (profileError || !profile || !isOwnerRole(profile.role)) {
+      throw new HttpError(403, "ADMIN_FORBIDDEN", "Acesso restrito a contas owner.");
     }
 
     res.locals.adminProfile = profile satisfies AdminProfile;

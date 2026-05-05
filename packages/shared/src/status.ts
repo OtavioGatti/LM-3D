@@ -33,9 +33,13 @@ export const PAYMENT_STATUSES = [
 
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-export const ADMIN_ROLES = ["owner", "admin"] as const;
+export const ADMIN_ROLES = ["owner"] as const;
 
 export type AdminRole = (typeof ADMIN_ROLES)[number];
+
+export function isOwnerRole(role: string | null | undefined) {
+  return role === "owner";
+}
 
 export function isPublicProductStatus(status: ProductStatus) {
   return status === "active" || status === "made_to_order";

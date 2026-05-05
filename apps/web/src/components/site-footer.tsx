@@ -17,8 +17,9 @@ export function SiteFooter() {
           <Link href="/carrinho">Carrinho</Link>
         </div>
         <div>
-          <h2>Lucas</h2>
-          <Link href="/admin">Painel admin</Link>
+          <h2>Conta</h2>
+          <Link href="/login">Entrar</Link>
+          <Link href="/conta">Minha conta</Link>
           <span>Pagamentos via Mercado Pago nas proximas fases.</span>
         </div>
       </div>

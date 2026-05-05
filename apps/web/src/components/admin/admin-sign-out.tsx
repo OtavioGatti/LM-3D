@@ -12,7 +12,7 @@ export function AdminSignOut() {
       await getSupabaseBrowserClient().auth.signOut();
     }
 
-    router.replace("/admin/login");
+    router.replace("/login");
   }
 
   return (
