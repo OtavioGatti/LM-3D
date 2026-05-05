@@ -2,6 +2,227 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
+function shouldUseDirectSupabase() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const isLocalApi = apiBaseUrl.includes("localhost") || apiBaseUrl.includes("127.0.0.1");
+  const isLocalPage = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+  return isLocalApi && !isLocalPage;
+}
+
+function toSlug(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+async function readBody(init?: RequestInit) {
+  if (!init?.body || typeof init.body !== "string") {
+    return {};
+  }
+
+  return JSON.parse(init.body) as Record<string, unknown>;
+}
+
+async function directSupabaseAdminFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const supabase = getSupabaseBrowserClient();
+  const method = init?.method?.toUpperCase() ?? "GET";
+  const body = await readBody(init);
+  const categoryMatch = path.match(/^\/admin\/categories\/([^/]+)$/);
+  const productMatch = path.match(/^\/admin\/products\/([^/]+)$/);
+  const orderMatch = path.match(/^\/admin\/orders\/([^/]+)$/);
+
+  if (path === "/admin/categories" && method === "GET") {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error) throw new Error(error.message);
+    return { categories: data } as T;
+  }
+
+  if (path === "/admin/categories" && method === "POST") {
+    const payload = { ...body, slug: toSlug(String(body.slug || body.name || "")) };
+    const { data, error } = await supabase.from("categories").insert(payload).select("*").single();
+
+    if (error) throw new Error(error.message);
+    return { category: data } as T;
+  }
+
+  if (categoryMatch && method === "PATCH") {
+    const payload = { ...body, ...(body.slug ? { slug: toSlug(String(body.slug)) } : {}) };
+    const { data, error } = await supabase
+      .from("categories")
+      .update(payload)
+      .eq("id", categoryMatch[1])
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { category: data } as T;
+  }
+
+  if (categoryMatch && method === "DELETE") {
+    const { error } = await supabase.from("categories").delete().eq("id", categoryMatch[1]);
+
+    if (error) throw new Error(error.message);
+    return undefined as T;
+  }
+
+  if (path === "/admin/products" && method === "GET") {
+    const { data, error } = await supabase
+      .from("products")
+      .select(
+        `
+        *,
+        product_images (*),
+        product_categories (
+          category:categories (*)
+        )
+      `
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return { products: data } as T;
+  }
+
+  if (path === "/admin/products" && method === "POST") {
+    const { category_ids: categoryIds = [], image_urls: imageUrls = [], ...productPayload } = body as {
+      category_ids?: string[];
+      image_urls?: string[];
+      [key: string]: unknown;
+    };
+    const slug = toSlug(String(productPayload.slug || productPayload.name || ""));
+    const { data: product, error } = await supabase
+      .from("products")
+      .insert({ ...productPayload, slug })
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    if (categoryIds.length > 0) {
+      const { error: categoryError } = await supabase.from("product_categories").insert(
+        categoryIds.map((categoryId) => ({
+          product_id: product.id,
+          category_id: categoryId
+        }))
+      );
+      if (categoryError) throw new Error(categoryError.message);
+    }
+
+    if (imageUrls.length > 0) {
+      const { error: imageError } = await supabase.from("product_images").insert(
+        imageUrls.map((url, index) => ({
+          product_id: product.id,
+          public_url: url,
+          alt_text: product.name,
+          sort_order: index + 1
+        }))
+      );
+      if (imageError) throw new Error(imageError.message);
+    }
+
+    return { product } as T;
+  }
+
+  if (productMatch && method === "PATCH") {
+    const { category_ids: categoryIds, image_urls: imageUrls, ...productPayload } = body as {
+      category_ids?: string[];
+      image_urls?: string[];
+      [key: string]: unknown;
+    };
+    const payload = {
+      ...productPayload,
+      ...(productPayload.slug ? { slug: toSlug(String(productPayload.slug)) } : {})
+    };
+    const { data: product, error } = await supabase
+      .from("products")
+      .update(payload)
+      .eq("id", productMatch[1])
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+
+    if (categoryIds) {
+      await supabase.from("product_categories").delete().eq("product_id", productMatch[1]);
+      if (categoryIds.length > 0) {
+        const { error: categoryError } = await supabase.from("product_categories").insert(
+          categoryIds.map((categoryId) => ({
+            product_id: productMatch[1],
+            category_id: categoryId
+          }))
+        );
+        if (categoryError) throw new Error(categoryError.message);
+      }
+    }
+
+    if (imageUrls) {
+      await supabase.from("product_images").delete().eq("product_id", productMatch[1]);
+      if (imageUrls.length > 0) {
+        const { error: imageError } = await supabase.from("product_images").insert(
+          imageUrls.map((url, index) => ({
+            product_id: productMatch[1],
+            public_url: url,
+            alt_text: product.name,
+            sort_order: index + 1
+          }))
+        );
+        if (imageError) throw new Error(imageError.message);
+      }
+    }
+
+    return { product } as T;
+  }
+
+  if (productMatch && method === "DELETE") {
+    const { data, error } = await supabase
+      .from("products")
+      .update({ status: "archived" })
+      .eq("id", productMatch[1])
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { product: data } as T;
+  }
+
+  if (path === "/admin/orders" && method === "GET") {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*, order_items (*), payments (*)")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return { orders: data } as T;
+  }
+
+  if (orderMatch && method === "PATCH") {
+    const { data, error } = await supabase
+      .from("orders")
+      .update(body)
+      .eq("id", orderMatch[1])
+      .select("*, order_items (*), payments (*)")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { order: data } as T;
+  }
+
+  throw new Error("Rota administrativa nao suportada no modo GitHub Pages.");
+}
+
 export async function adminApiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const {
     data: { session }
@@ -9,6 +230,10 @@ export async function adminApiFetch<T>(path: string, init?: RequestInit): Promis
 
   if (!session) {
     throw new Error("Sessao administrativa expirada.");
+  }
+
+  if (shouldUseDirectSupabase()) {
+    return directSupabaseAdminFetch<T>(path, init);
   }
 
   const response = await fetch(`${apiBaseUrl}${path}`, {
