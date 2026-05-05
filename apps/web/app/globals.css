@@ -807,6 +807,106 @@ img {
   font-size: 0.86rem;
 }
 
+.admin-sign-out {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-sign-out:hover {
+  background: var(--surface-strong);
+}
+
+.admin-auth-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background:
+    linear-gradient(135deg, rgba(18, 74, 62, 0.92), rgba(14, 32, 44, 0.94)),
+    var(--surface-ink);
+}
+
+.admin-auth-card {
+  width: min(100%, 460px);
+  display: grid;
+  gap: 16px;
+  padding: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.admin-auth-card svg {
+  color: var(--accent);
+}
+
+.admin-auth-card h1,
+.admin-auth-card p {
+  margin: 0;
+}
+
+.admin-auth-card p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.admin-auth-card code {
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.admin-auth-form {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-auth-form label {
+  display: grid;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.admin-auth-form input {
+  min-height: 46px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 14px;
+  font: inherit;
+}
+
+.admin-auth-form button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.form-error {
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  background: #fff1f2;
+  color: #be123c;
+  font-weight: 800;
+}
+
+.quiet-link {
+  color: var(--accent);
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .admin-content {
   padding: 32px;
 }

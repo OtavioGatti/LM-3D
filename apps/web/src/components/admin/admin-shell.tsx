@@ -1,5 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { BarChart3, Calculator, FolderTree, Package, ShoppingBag, Store } from "lucide-react";
+import { AdminAuthGate } from "./admin-auth-gate";
+import { AdminSignOut } from "./admin-sign-out";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: BarChart3 },
@@ -10,29 +15,38 @@ const navItems = [
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
+  if (pathname.endsWith("/admin/login")) {
+    return <AdminAuthGate>{children}</AdminAuthGate>;
+  }
+
   return (
-    <div className="admin-shell">
-      <aside className="admin-sidebar">
-        <Link href="/" className="admin-brand">
-          <Store aria-hidden="true" size={22} />
-          <span>LM-3D Admin</span>
-        </Link>
-        <nav aria-label="Navegacao administrativa">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link href={item.href} key={item.href}>
-                <Icon aria-hidden="true" size={18} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <p className="admin-security-note">
-          Protecao real com Supabase Auth e role de admin entra na Fase 3.
-        </p>
-      </aside>
-      <main className="admin-content">{children}</main>
-    </div>
+    <AdminAuthGate>
+      <div className="admin-shell">
+        <aside className="admin-sidebar">
+          <Link href="/" className="admin-brand">
+            <Store aria-hidden="true" size={22} />
+            <span>LM-3D Admin</span>
+          </Link>
+          <nav aria-label="Navegacao administrativa">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link href={item.href} key={item.href}>
+                  <Icon aria-hidden="true" size={18} />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <p className="admin-security-note">
+            Acesso protegido por Supabase Auth, RLS e role admin/owner.
+          </p>
+          <AdminSignOut />
+        </aside>
+        <main className="admin-content">{children}</main>
+      </div>
+    </AdminAuthGate>
   );
 }
