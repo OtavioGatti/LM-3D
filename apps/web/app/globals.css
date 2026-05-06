@@ -1187,6 +1187,41 @@ img {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.dashboard-stats-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.dashboard-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.dashboard-request-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-request-list article {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+
+.dashboard-request-list strong {
+  color: var(--surface-ink);
+}
+
+.dashboard-request-list span,
+.dashboard-request-list small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .admin-stat-card,
 .calculator-result {
   padding: 20px;
@@ -1578,6 +1613,7 @@ img {
   .two-column-content,
   .cart-layout,
   .checkout-layout,
+  .dashboard-panels,
   .custom-order-layout,
   .split-panel,
   .footer-grid {
@@ -1591,7 +1627,8 @@ img {
   .category-grid,
   .product-grid,
   .trust-grid,
-  .admin-stats-grid {
+  .admin-stats-grid,
+  .dashboard-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1636,6 +1673,7 @@ img {
   .product-grid,
   .trust-grid,
   .admin-stats-grid,
+  .dashboard-stats-grid,
   .catalog-toolbar,
   .product-specs,
   .form-grid,
