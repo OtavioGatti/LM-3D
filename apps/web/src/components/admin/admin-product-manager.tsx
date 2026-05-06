@@ -4,6 +4,7 @@ import { PRODUCT_STATUSES, ProductStatus, formatMoneyBRL } from "@lm-3d/shared";
 import { Archive, Plus, Save } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
+import { ProductImageManager } from "./product-image-manager";
 
 type AdminCategory = {
   id: string;
@@ -30,7 +31,14 @@ type AdminProduct = {
   metadata: {
     color_options?: string[];
   } | null;
-  product_images?: Array<{ public_url: string | null; storage_path: string | null }>;
+  product_images?: Array<{
+    id: string;
+    public_url: string | null;
+    storage_path: string | null;
+    alt: string | null;
+    sort_order: number;
+    is_primary: boolean;
+  }>;
   product_categories?: Array<{ category: AdminCategory | null }>;
 };
 
@@ -99,6 +107,7 @@ export function AdminProductManager() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const editingProduct = form.id ? products.find((product) => product.id === form.id) : undefined;
 
   async function loadData() {
     setIsLoading(true);
@@ -375,6 +384,21 @@ export function AdminProductManager() {
               value={form.image_urls}
             />
           </label>
+          {form.id && editingProduct ? (
+            <ProductImageManager
+              images={[...(editingProduct.product_images ?? [])].sort(
+                (first, second) => first.sort_order - second.sort_order
+              )}
+              onChanged={loadData}
+              productId={editingProduct.id}
+              productName={form.name || editingProduct.name}
+            />
+          ) : (
+            <p className="form-note">
+              Salve o produto antes de enviar imagens pelo upload. URLs externas ainda podem ser
+              coladas no campo acima.
+            </p>
+          )}
           <label>
             Cores disponiveis
             <textarea
