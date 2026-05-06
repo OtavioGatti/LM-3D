@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShieldCheck, User } from "lucide-react";
+import { AccountOrders } from "@/components/account/account-orders";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 type AccountProfile = {
@@ -62,7 +63,7 @@ export default function AccountPage() {
         <div>
           <span className="eyebrow">Minha conta</span>
           <h1>{isLoading ? "Carregando..." : email || "Conta LM-3D"}</h1>
-          <p>Aqui o cliente podera acompanhar pedidos e personalizacoes nas proximas fases.</p>
+          <p>Acompanhe pedidos, personalizacoes e proximos passos da producao.</p>
         </div>
 
         {profile && isOwnerRole(profile.role) ? (
@@ -86,6 +87,8 @@ export default function AccountPage() {
           Sair
         </button>
       </section>
+
+      <AccountOrders />
     </main>
   );
 }

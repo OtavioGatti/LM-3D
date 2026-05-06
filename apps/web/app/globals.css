@@ -1093,6 +1093,80 @@ img {
   color: var(--muted);
 }
 
+.account-orders {
+  max-width: 920px;
+  margin: 28px auto 0;
+  display: grid;
+  gap: 14px;
+}
+
+.account-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.account-section-header h2,
+.account-section-header p {
+  margin: 0;
+}
+
+.account-section-header p {
+  color: var(--muted);
+}
+
+.account-order-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 12px 28px rgba(21, 47, 38, 0.05);
+}
+
+.account-order-card header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.account-order-card header div {
+  display: grid;
+  gap: 4px;
+}
+
+.account-order-card span,
+.account-order-card small,
+.account-order-card p {
+  color: var(--muted);
+}
+
+.account-order-card p {
+  margin: 0;
+}
+
+.account-order-items {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+
+.account-order-items div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+}
+
+.account-order-items small {
+  grid-column: 1 / -1;
+}
+
 .admin-content {
   padding: 32px;
 }

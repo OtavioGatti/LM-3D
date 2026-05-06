@@ -1,3 +1,5 @@
+import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
+
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 
 export type CheckoutOrderPayload = {
@@ -35,12 +37,16 @@ export type CheckoutOrderResponse = {
 
 export async function createCheckoutOrder(payload: CheckoutOrderPayload) {
   let response: Response;
+  const session = hasSupabaseBrowserConfig()
+    ? (await getSupabaseBrowserClient().auth.getSession()).data.session
+    : null;
 
   try {
     response = await fetch(`${apiBaseUrl}/orders`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...(session ? { Authorization: `Bearer ${session.access_token}` } : {})
       },
       body: JSON.stringify(payload)
     });

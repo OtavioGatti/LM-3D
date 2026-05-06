@@ -50,6 +50,14 @@ const checkoutOrderSchema = z.object({
 
 export const ordersRouter = Router();
 
+function getBearerToken(header: string | undefined) {
+  if (!header?.startsWith("Bearer ")) {
+    return null;
+  }
+
+  return header.slice("Bearer ".length).trim();
+}
+
 function createOrderCode() {
   const date = new Date();
   const stamp = [
@@ -66,6 +74,10 @@ ordersRouter.post("/", async (req, res, next) => {
   try {
     const payload = checkoutOrderSchema.parse(req.body);
     const supabase = getSupabaseAdminClient();
+    const token = getBearerToken(req.header("authorization"));
+    const {
+      data: { user }
+    } = token ? await supabase.auth.getUser(token) : { data: { user: null } };
     const requestedSlugs = [...new Set(payload.items.map((item) => item.productSlug))];
 
     const { data: products, error: productError } = await supabase
@@ -122,6 +134,7 @@ ordersRouter.post("/", async (req, res, next) => {
       .from("orders")
       .insert({
         code,
+        user_id: user?.id ?? null,
         customer_name: payload.customer.name,
         customer_email: payload.customer.email,
         customer_phone: payload.customer.phone || null,
