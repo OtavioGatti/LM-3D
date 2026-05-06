@@ -36,6 +36,7 @@ async function directSupabaseAdminFetch<T>(path: string, init?: RequestInit): Pr
   const method = init?.method?.toUpperCase() ?? "GET";
   const body = await readBody(init);
   const categoryMatch = path.match(/^\/admin\/categories\/([^/]+)$/);
+  const customRequestMatch = path.match(/^\/admin\/custom-requests\/([^/]+)$/);
   const productMatch = path.match(/^\/admin\/products\/([^/]+)$/);
   const orderMatch = path.match(/^\/admin\/orders\/([^/]+)$/);
 
@@ -94,6 +95,28 @@ async function directSupabaseAdminFetch<T>(path: string, init?: RequestInit): Pr
 
     if (error) throw new Error(error.message);
     return { products: data } as T;
+  }
+
+  if (path === "/admin/custom-requests" && method === "GET") {
+    const { data, error } = await supabase
+      .from("custom_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return { requests: data } as T;
+  }
+
+  if (customRequestMatch && method === "PATCH") {
+    const { data, error } = await supabase
+      .from("custom_requests")
+      .update(body)
+      .eq("id", customRequestMatch[1])
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { request: data } as T;
   }
 
   if (path === "/admin/products" && method === "POST") {

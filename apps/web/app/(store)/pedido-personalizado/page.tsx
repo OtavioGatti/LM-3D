@@ -1,4 +1,5 @@
 import { MessageCircle, UploadCloud } from "lucide-react";
+import { CustomOrderForm } from "@/components/custom-order/custom-order-form";
 
 export const metadata = {
   title: "Pedido personalizado"
@@ -24,26 +25,7 @@ export default function CustomOrderPage() {
           </div>
         </div>
 
-        <form className="lead-form">
-          <label>
-            Nome
-            <input placeholder="Seu nome" />
-          </label>
-          <label>
-            WhatsApp ou e-mail
-            <input placeholder="Como Lucas pode falar com voce" />
-          </label>
-          <label>
-            O que voce quer imprimir?
-            <textarea rows={6} placeholder="Descreva tamanho, cor, quantidade e finalidade." />
-          </label>
-          <button type="button" className="button button-primary">
-            Enviar ideia
-          </button>
-          <p>
-            Na fase de backend, este formulario sera conectado a uma fila segura de orcamentos.
-          </p>
-        </form>
+        <CustomOrderForm />
       </div>
     </section>
   );
