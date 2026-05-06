@@ -41,6 +41,15 @@ export function writeCartItems(items: StoredCartItem[]) {
   window.dispatchEvent(new Event(CART_UPDATED_EVENT));
 }
 
+export function clearCartItems() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(CART_STORAGE_KEY);
+  window.dispatchEvent(new Event(CART_UPDATED_EVENT));
+}
+
 export function addCartItem(productSlug: string, quantity = 1) {
   const items = readCartItems();
   const current = items.find((item) => item.productSlug === productSlug);
