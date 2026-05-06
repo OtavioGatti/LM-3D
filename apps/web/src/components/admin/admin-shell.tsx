@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Calculator, ClipboardList, FolderTree, Package, ShoppingBag, Store } from "lucide-react";
+import { BarChart3, Calculator, ClipboardList, FolderTree, Package, ShoppingBag } from "lucide-react";
+import { assetPath } from "@/lib/assets";
 import { AdminAuthGate } from "./admin-auth-gate";
 import { AdminSignOut } from "./admin-sign-out";
 
@@ -27,7 +28,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="admin-shell">
         <aside className="admin-sidebar">
           <Link href="/" className="admin-brand">
-            <Store aria-hidden="true" size={22} />
+            <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
             <span>LM-3D Admin</span>
           </Link>
           <nav aria-label="Navegacao administrativa">

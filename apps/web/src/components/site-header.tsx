@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HeaderAuthActions } from "@/components/auth/header-auth-actions";
+import { assetPath } from "@/lib/assets";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -12,7 +13,8 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="page-container site-header-inner">
         <Link href="/" className="brand-mark" aria-label="LM-3D Home">
-          LM-3D
+          <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
+          <span>LM-3D</span>
         </Link>
         <nav aria-label="Navegacao principal">
           {navItems.map((item) => (

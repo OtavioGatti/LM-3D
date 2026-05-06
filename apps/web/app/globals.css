@@ -79,22 +79,19 @@ img {
 .brand-mark {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   color: var(--surface-ink);
   font-weight: 900;
   letter-spacing: 0;
 }
 
-.brand-mark::before {
-  content: "";
-  width: 30px;
-  height: 30px;
-  margin-right: 10px;
+.brand-mark img {
+  width: 34px;
+  height: 34px;
   border: 2px solid var(--accent);
   border-radius: 7px;
-  background:
-    linear-gradient(135deg, transparent 48%, rgba(10, 124, 102, 0.18) 49%),
-    var(--surface);
-  box-shadow: inset 0 -6px 0 rgba(239, 111, 85, 0.2);
+  object-fit: contain;
+  background: #fff;
 }
 
 .site-header nav,
@@ -897,6 +894,15 @@ img {
   gap: 10px;
   color: var(--surface-ink);
   font-weight: 950;
+}
+
+.admin-brand img {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  object-fit: contain;
+  background: #fff;
 }
 
 .admin-sidebar nav {

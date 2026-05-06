@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { assetPath } from "@/lib/assets";
 
 export function SiteFooter() {
   return (
@@ -6,7 +7,8 @@ export function SiteFooter() {
       <div className="page-container footer-grid">
         <div>
           <Link href="/" className="brand-mark">
-            LM-3D
+            <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
+            <span>LM-3D</span>
           </Link>
           <p>Produtos impressos em 3D com cuidado, clareza de prazo e atendimento direto.</p>
         </div>
