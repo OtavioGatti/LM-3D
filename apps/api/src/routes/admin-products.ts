@@ -113,6 +113,7 @@ adminProductsRouter.post("/", async (req, res, next) => {
 adminProductsRouter.patch("/:id", async (req, res, next) => {
   try {
     const payload = productUpdateSchema.parse(req.body);
+    const shouldSyncImages = Object.prototype.hasOwnProperty.call(req.body, "image_urls");
     const supabase = getSupabaseAdminClient();
     const { category_ids: categoryIds, image_urls: imageUrls, ...productPayload } = payload;
     const updatePayload = {
@@ -148,7 +149,7 @@ adminProductsRouter.patch("/:id", async (req, res, next) => {
       }
     }
 
-    if (imageUrls) {
+    if (shouldSyncImages && imageUrls) {
       await supabase.from("product_images").delete().eq("product_id", req.params.id);
 
       if (imageUrls.length > 0) {

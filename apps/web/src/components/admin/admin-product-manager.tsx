@@ -133,7 +133,7 @@ export function AdminProductManager() {
     setIsSaving(true);
 
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         name: form.name,
         slug: form.slug || undefined,
         short_description: form.short_description,
@@ -151,9 +151,12 @@ export function AdminProductManager() {
         metadata: {
           color_options: lines(form.color_options)
         },
-        category_ids: form.category_ids,
-        image_urls: lines(form.image_urls)
+        category_ids: form.category_ids
       };
+
+      if (!form.id) {
+        payload.image_urls = lines(form.image_urls);
+      }
 
       await adminApiFetch(form.id ? `/admin/products/${form.id}` : "/admin/products", {
         method: form.id ? "PATCH" : "POST",
@@ -202,11 +205,7 @@ export function AdminProductManager() {
       color_options: product.metadata?.color_options?.join("\n") ?? "",
       category_ids:
         product.product_categories?.flatMap((item) => (item.category ? [item.category.id] : [])) ?? [],
-      image_urls:
-        product.product_images
-          ?.map((image) => image.public_url ?? image.storage_path ?? "")
-          .filter(Boolean)
-          .join("\n") ?? ""
+      image_urls: ""
     });
     setMode("form");
   }
@@ -375,15 +374,17 @@ export function AdminProductManager() {
               ))}
             </select>
           </label>
-          <label>
-            URLs de imagens
-            <textarea
-              onChange={(event) => setForm({ ...form, image_urls: event.target.value })}
-              placeholder="Uma URL por linha"
-              rows={3}
-              value={form.image_urls}
-            />
-          </label>
+          {!form.id ? (
+            <label>
+              URLs de imagens externas
+              <textarea
+                onChange={(event) => setForm({ ...form, image_urls: event.target.value })}
+                placeholder="Uma URL por linha"
+                rows={3}
+                value={form.image_urls}
+              />
+            </label>
+          ) : null}
           {form.id && editingProduct ? (
             <ProductImageManager
               images={[...(editingProduct.product_images ?? [])].sort(
@@ -395,8 +396,7 @@ export function AdminProductManager() {
             />
           ) : (
             <p className="form-note">
-              Salve o produto antes de enviar imagens pelo upload. URLs externas ainda podem ser
-              coladas no campo acima.
+              Salve o produto antes de enviar imagens pelo upload.
             </p>
           )}
           <label>
