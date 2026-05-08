@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShieldCheck, User } from "lucide-react";
+import { AccountCustomRequests } from "@/components/account/account-custom-requests";
 import { AccountOrders } from "@/components/account/account-orders";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
@@ -89,6 +90,7 @@ export default function AccountPage() {
       </section>
 
       <AccountOrders />
+      <AccountCustomRequests />
     </main>
   );
 }

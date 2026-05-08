@@ -22,8 +22,12 @@ type AccountOrder = {
   code: string;
   status: OrderStatus;
   payment_status: PaymentStatus;
+  subtotal_cents: number;
+  discount_cents: number;
   total_cents: number;
   created_at: string;
+  delivery_method: string | null;
+  tracking_code: string | null;
   customer_notes: string | null;
   order_items: AccountOrderItem[];
 };
@@ -69,8 +73,12 @@ export function AccountOrders() {
           code,
           status,
           payment_status,
+          subtotal_cents,
+          discount_cents,
           total_cents,
           created_at,
+          delivery_method,
+          tracking_code,
           customer_notes,
           order_items (
             id,
@@ -129,6 +137,8 @@ export function AccountOrders() {
           <div className="checkout-assurance">
             <span>{orderStatusLabels[order.status]}</span>
             <span>Pagamento: {paymentStatusLabels[order.payment_status]}</span>
+            {order.delivery_method ? <span>{order.delivery_method}</span> : null}
+            {order.tracking_code ? <span>Rastreio: {order.tracking_code}</span> : null}
           </div>
 
           <div className="account-order-items">
@@ -142,6 +152,13 @@ export function AccountOrders() {
               </div>
             ))}
           </div>
+
+          {order.discount_cents > 0 ? (
+            <div className="account-order-totals">
+              <span>Subtotal {formatMoneyBRL(order.subtotal_cents)}</span>
+              <strong>Desconto -{formatMoneyBRL(order.discount_cents)}</strong>
+            </div>
+          ) : null}
 
           {order.customer_notes ? <p>{order.customer_notes}</p> : null}
         </article>

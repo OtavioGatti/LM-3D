@@ -1188,6 +1188,19 @@ img {
   grid-column: 1 / -1;
 }
 
+.account-order-totals {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.account-order-totals strong {
+  color: var(--accent);
+}
+
 .admin-content {
   padding: 32px;
 }
