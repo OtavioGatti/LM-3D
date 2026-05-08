@@ -123,12 +123,18 @@ export function AdminPriceCalculator() {
       cents(form.finishingCost) +
       cents(form.lossesCost) +
       cents(form.laborCost);
-    const margin = numberValue(form.desiredMarginPercent) / 100;
-    const fee = numberValue(form.marketplaceFeePercent) / 100;
+    const marginPercent = numberValue(form.desiredMarginPercent);
+    const feePercent = numberValue(form.marketplaceFeePercent);
+    const margin = marginPercent / 100;
+    const fee = feePercent / 100;
     const denominator = 1 - margin - fee;
-    const suggestedPrice = denominator > 0 ? Math.ceil(operationalCost / denominator) : 0;
+    const invalidReason =
+      denominator <= 0
+        ? `Margem e taxa somam ${Number((marginPercent + feePercent).toFixed(2))}%. Para margem real, a soma precisa ser menor que 100%; com taxa de ${Number(feePercent.toFixed(2))}%, use margem menor que ${Number((100 - feePercent).toFixed(2))}%.`
+        : "";
+    const suggestedPrice = invalidReason ? 0 : Math.ceil(operationalCost / denominator);
     const minimumPrice = fee < 1 ? Math.ceil(operationalCost / (1 - fee)) : operationalCost;
-    const estimatedProfit = suggestedPrice - operationalCost;
+    const estimatedProfit = invalidReason ? 0 : suggestedPrice - operationalCost;
 
     return {
       filamentCost: Math.round(filamentCost),
@@ -136,7 +142,8 @@ export function AdminPriceCalculator() {
       operationalCost: Math.round(operationalCost),
       suggestedPrice: Math.round(suggestedPrice),
       minimumPrice: Math.round(minimumPrice),
-      estimatedProfit: Math.round(estimatedProfit)
+      estimatedProfit: Math.round(estimatedProfit),
+      invalidReason
     };
   }, [form]);
 
@@ -159,6 +166,10 @@ export function AdminPriceCalculator() {
     setIsSaving(true);
 
     try {
+      if (result.invalidReason) {
+        throw new Error(result.invalidReason);
+      }
+
       await adminApiFetch("/admin/price/presets", {
         method: "POST",
         body: JSON.stringify({
@@ -174,7 +185,7 @@ export function AdminPriceCalculator() {
         })
       });
 
-      setMessage("Preset salvo como padrao.");
+      setMessage("Preset salvo como padrão.");
       await loadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível salvar o preset.");
@@ -189,6 +200,10 @@ export function AdminPriceCalculator() {
     setIsSaving(true);
 
     try {
+      if (result.invalidReason) {
+        throw new Error(result.invalidReason);
+      }
+
       await adminApiFetch("/admin/price/calculations", {
         method: "POST",
         body: JSON.stringify({
@@ -203,7 +218,7 @@ export function AdminPriceCalculator() {
         })
       });
 
-      setMessage("Calculo salvo.");
+      setMessage("Cálculo salvo.");
       await loadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Não foi possível salvar o cálculo.");
@@ -215,6 +230,11 @@ export function AdminPriceCalculator() {
   async function applyPriceToProduct() {
     if (!form.product_id) {
       setMessage("Selecione um produto para aplicar o preço.");
+      return;
+    }
+
+    if (result.invalidReason) {
+      setMessage(result.invalidReason);
       return;
     }
 
@@ -247,7 +267,7 @@ export function AdminPriceCalculator() {
               onChange={(event) => setForm({ ...form, product_id: event.target.value })}
               value={form.product_id}
             >
-              <option value="">Calculo avulso</option>
+              <option value="">Cálculo avulso</option>
               {products.map((product) => (
                 <option key={product.id} value={product.id}>
                   {product.name}
@@ -297,7 +317,7 @@ export function AdminPriceCalculator() {
             />
           </label>
           <label>
-            Potencia media da impressora em watts
+            Potência média da impressora em watts
             <input
               inputMode="numeric"
               onChange={(event) => setForm({ ...form, printerPowerWatts: event.target.value })}
@@ -339,10 +359,14 @@ export function AdminPriceCalculator() {
           <label>
             Margem de lucro desejada %
             <input
+              aria-describedby="margin-help"
               inputMode="decimal"
               onChange={(event) => setForm({ ...form, desiredMarginPercent: event.target.value })}
               value={form.desiredMarginPercent}
             />
+            <small id="margin-help">
+              Margem real precisa ser menor que 100% menos a taxa de pagamento.
+            </small>
           </label>
           <label>
             Perdas ou retrabalho
@@ -353,7 +377,7 @@ export function AdminPriceCalculator() {
             />
           </label>
           <label>
-            Mao de obra
+            Mão de obra
             <input
               inputMode="decimal"
               onChange={(event) => setForm({ ...form, laborCost: event.target.value })}
@@ -372,12 +396,12 @@ export function AdminPriceCalculator() {
         {message ? <p className="form-note">{message}</p> : null}
 
         <div className="admin-inline-actions">
-          <button className="button button-primary" disabled={isSaving} type="submit">
+          <button className="button button-primary" disabled={isSaving || Boolean(result.invalidReason)} type="submit">
             <Save aria-hidden="true" size={18} />
             Salvar cálculo
           </button>
-          <button className="button button-secondary" disabled={isSaving} type="button" onClick={() => void savePreset()}>
-            Salvar preset padrao
+          <button className="button button-secondary" disabled={isSaving || Boolean(result.invalidReason)} type="button" onClick={() => void savePreset()}>
+            Salvar preset padrão
           </button>
         </div>
       </form>
@@ -385,7 +409,8 @@ export function AdminPriceCalculator() {
       <aside className="calculator-result">
         <Calculator aria-hidden="true" size={26} />
         <h2>Preço sugerido</h2>
-        <strong>{formatMoneyBRL(result.suggestedPrice)}</strong>
+        <strong>{result.invalidReason ? "Ajuste a margem" : formatMoneyBRL(result.suggestedPrice)}</strong>
+        {result.invalidReason ? <p className="form-error">{result.invalidReason}</p> : null}
         <div className="calculator-breakdown">
           <span>Filamento <strong>{formatMoneyBRL(result.filamentCost)}</strong></span>
           <span>Energia <strong>{formatMoneyBRL(result.energyCost)}</strong></span>
@@ -397,7 +422,7 @@ export function AdminPriceCalculator() {
           Margem de lucro é calculada sobre o preço final. Markup seria aplicar um multiplicador
           sobre o custo; aqui o preço é ajustado para a margem desejada depois de custos e taxa.
         </p>
-        <button className="button button-secondary" disabled={isSaving} type="button" onClick={() => void applyPriceToProduct()}>
+        <button className="button button-secondary" disabled={isSaving || Boolean(result.invalidReason)} type="button" onClick={() => void applyPriceToProduct()}>
           Aplicar ao produto
         </button>
 

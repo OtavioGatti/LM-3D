@@ -3,17 +3,22 @@ import { z } from "zod";
 import type { AdminProfile } from "../middleware/admin-auth.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
 
-const presetSchema = z.object({
-  name: z.string().trim().min(2).max(100),
-  filament_kg_cost_cents: z.coerce.number().int().min(0),
-  kwh_cost_cents: z.coerce.number().int().min(0),
-  printer_power_watts: z.coerce.number().int().min(0),
-  marketplace_fee_percent: z.coerce.number().min(0).max(99),
-  desired_margin_percent: z.coerce.number().min(0).max(99),
-  packaging_cost_cents: z.coerce.number().int().min(0),
-  labor_cost_cents: z.coerce.number().int().min(0),
-  is_default: z.boolean().default(false)
-});
+const presetSchema = z
+  .object({
+    name: z.string().trim().min(2).max(100),
+    filament_kg_cost_cents: z.coerce.number().int().min(0),
+    kwh_cost_cents: z.coerce.number().int().min(0),
+    printer_power_watts: z.coerce.number().int().min(0),
+    marketplace_fee_percent: z.coerce.number().min(0).max(99),
+    desired_margin_percent: z.coerce.number().min(0).max(99),
+    packaging_cost_cents: z.coerce.number().int().min(0),
+    labor_cost_cents: z.coerce.number().int().min(0),
+    is_default: z.boolean().default(false)
+  })
+  .refine((payload) => payload.marketplace_fee_percent + payload.desired_margin_percent < 100, {
+    message: "A soma da taxa de pagamento e da margem precisa ser menor que 100%.",
+    path: ["desired_margin_percent"]
+  });
 
 const calculationSchema = z.object({
   product_id: z.string().uuid().optional().nullable(),
@@ -21,7 +26,7 @@ const calculationSchema = z.object({
   filament_cost_cents: z.coerce.number().int().min(0),
   energy_cost_cents: z.coerce.number().int().min(0),
   operational_cost_cents: z.coerce.number().int().min(0),
-  suggested_price_cents: z.coerce.number().int().min(0),
+  suggested_price_cents: z.coerce.number().int().min(1),
   minimum_price_cents: z.coerce.number().int().min(0),
   estimated_profit_cents: z.coerce.number().int()
 });
