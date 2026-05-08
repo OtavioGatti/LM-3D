@@ -545,6 +545,8 @@ img {
 .product-lead {
   color: var(--muted);
   font-size: 1.08rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .product-specs {
