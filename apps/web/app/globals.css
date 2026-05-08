@@ -788,6 +788,21 @@ img {
   gap: 10px;
 }
 
+.coupon-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+
+.coupon-box .form-note {
+  grid-column: 1 / -1;
+}
+
 .checkout-assurance span {
   display: inline-flex;
   align-items: center;
@@ -1683,6 +1698,7 @@ img {
   .catalog-toolbar,
   .product-specs,
   .form-grid,
+  .coupon-box,
   .compact-toolbar {
     grid-template-columns: 1fr;
   }

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAdmin, type AdminProfile } from "../middleware/admin-auth.js";
 import { adminCategoriesRouter } from "./admin-categories.js";
+import { adminCouponsRouter } from "./admin-coupons.js";
 import { adminCustomRequestsRouter } from "./admin-custom-requests.js";
 import { adminOrdersRouter } from "./admin-orders.js";
 import { adminProductsRouter } from "./admin-products.js";
@@ -18,6 +19,7 @@ adminRouter.get("/me", (_req, res) => {
 });
 
 adminRouter.use("/categories", adminCategoriesRouter);
+adminRouter.use("/coupons", adminCouponsRouter);
 adminRouter.use("/custom-requests", adminCustomRequestsRouter);
 adminRouter.use("/orders", adminOrdersRouter);
 adminRouter.use("/products", adminProductsRouter);

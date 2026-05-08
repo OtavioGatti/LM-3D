@@ -18,6 +18,7 @@ export type CheckoutOrderPayload = {
     } | null;
   };
   notes?: string | null;
+  couponCode?: string | null;
   items: Array<{
     productSlug: string;
     quantity: number;
@@ -32,6 +33,7 @@ export type CheckoutOrderResponse = {
     status: string;
     paymentStatus: string;
     totalCents: number;
+    discountCents: number;
   };
 };
 

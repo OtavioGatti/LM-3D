@@ -11,6 +11,7 @@ import {
   readCartItems,
   type StoredCartItem
 } from "@/lib/cart/cart-storage";
+import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 type CheckoutManagerProps = {
   products: ProductDetails[];
@@ -26,6 +27,7 @@ type CheckoutFormState = {
   state: string;
   postalCode: string;
   notes: string;
+  couponCode: string;
 };
 
 const emptyForm: CheckoutFormState = {
@@ -37,7 +39,17 @@ const emptyForm: CheckoutFormState = {
   city: "",
   state: "",
   postalCode: "",
-  notes: ""
+  notes: "",
+  couponCode: ""
+};
+
+type CouponPreview = {
+  code: string;
+  discount_type: "percent" | "fixed";
+  discount_value: number;
+  min_order_cents: number;
+  max_redemptions: number | null;
+  redeemed_count: number;
 };
 
 export function CheckoutManager({ products }: CheckoutManagerProps) {
@@ -45,6 +57,8 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
   const [items, setItems] = useState<StoredCartItem[]>([]);
   const [form, setForm] = useState<CheckoutFormState>(emptyForm);
   const [message, setMessage] = useState("");
+  const [couponMessage, setCouponMessage] = useState("");
+  const [coupon, setCoupon] = useState<CouponPreview | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const productBySlug = useMemo(
@@ -64,10 +78,61 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
     (total, line) => total + line.product.priceInCents * line.item.quantity,
     0
   );
+  const couponDiscount = coupon
+    ? Math.min(
+        coupon.discount_type === "percent"
+          ? Math.floor((subtotal * coupon.discount_value) / 100)
+          : coupon.discount_value,
+        subtotal
+      )
+    : 0;
+  const estimatedTotal = subtotal - couponDiscount;
 
   useEffect(() => {
     setItems(readCartItems());
   }, []);
+
+  async function applyCoupon() {
+    const code = form.couponCode.trim().toUpperCase();
+    setCoupon(null);
+    setCouponMessage("");
+
+    if (!code) {
+      return;
+    }
+
+    if (!hasSupabaseBrowserConfig()) {
+      setCouponMessage("Cupom sera validado ao criar o pedido.");
+      return;
+    }
+
+    const { data, error } = await getSupabaseBrowserClient()
+      .from("discount_coupons")
+      .select("code, discount_type, discount_value, min_order_cents, max_redemptions, redeemed_count")
+      .eq("code", code)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (error || !data) {
+      setCouponMessage("Cupom nao encontrado ou inativo.");
+      return;
+    }
+
+    const preview = data as CouponPreview;
+
+    if (preview.max_redemptions !== null && preview.redeemed_count >= preview.max_redemptions) {
+      setCouponMessage("Este cupom atingiu o limite de uso.");
+      return;
+    }
+
+    if (subtotal < preview.min_order_cents) {
+      setCouponMessage(`Pedido minimo para este cupom: ${formatMoneyBRL(preview.min_order_cents)}.`);
+      return;
+    }
+
+    setCoupon(preview);
+    setCouponMessage("Cupom aplicado.");
+  }
 
   async function submitOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,6 +163,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
               : null
         },
         notes: form.notes || null,
+        couponCode: form.couponCode || null,
         items: cartLines.map(({ item }) => ({
           productSlug: item.productSlug,
           quantity: item.quantity,
@@ -249,6 +315,21 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             />
           </label>
 
+          <div className="coupon-box">
+            <label>
+              Cupom de desconto
+              <input
+                onChange={(event) => setForm({ ...form, couponCode: event.target.value })}
+                placeholder="Ex.: LM10"
+                value={form.couponCode}
+              />
+            </label>
+            <button className="button button-secondary" type="button" onClick={() => void applyCoupon()}>
+              Aplicar cupom
+            </button>
+            {couponMessage ? <p className="form-note">{couponMessage}</p> : null}
+          </div>
+
           <div className="checkout-assurance">
             <span>
               <ShieldCheck aria-hidden="true" size={18} /> Precos recalculados no backend
@@ -282,13 +363,19 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             <span>Subtotal</span>
             <strong>{formatMoneyBRL(subtotal)}</strong>
           </div>
+          {couponDiscount > 0 ? (
+            <div className="summary-line">
+              <span>Cupom {coupon?.code ?? form.couponCode}</span>
+              <strong>-{formatMoneyBRL(couponDiscount)}</strong>
+            </div>
+          ) : null}
           <div className="summary-line">
             <span>Entrega</span>
             <strong>A combinar</strong>
           </div>
           <div className="summary-total">
             <span>Total estimado</span>
-            <strong>{formatMoneyBRL(subtotal)}</strong>
+            <strong>{formatMoneyBRL(estimatedTotal)}</strong>
           </div>
           <div className="summary-note">
             <Clock aria-hidden="true" size={18} />

@@ -36,6 +36,7 @@ async function directSupabaseAdminFetch<T>(path: string, init?: RequestInit): Pr
   const method = init?.method?.toUpperCase() ?? "GET";
   const body = await readBody(init);
   const categoryMatch = path.match(/^\/admin\/categories\/([^/]+)$/);
+  const couponMatch = path.match(/^\/admin\/coupons\/([^/]+)$/);
   const customRequestMatch = path.match(/^\/admin\/custom-requests\/([^/]+)$/);
   const productMatch = path.match(/^\/admin\/products\/([^/]+)$/);
   const orderMatch = path.match(/^\/admin\/orders\/([^/]+)$/);
@@ -105,6 +106,40 @@ async function directSupabaseAdminFetch<T>(path: string, init?: RequestInit): Pr
 
     if (error) throw new Error(error.message);
     return { requests: data } as T;
+  }
+
+  if (path === "/admin/coupons" && method === "GET") {
+    const { data, error } = await supabase
+      .from("discount_coupons")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return { coupons: data } as T;
+  }
+
+  if (path === "/admin/coupons" && method === "POST") {
+    const payload = { ...body, code: String(body.code ?? "").trim().toUpperCase().replace(/\s+/g, "-") };
+    const { data, error } = await supabase.from("discount_coupons").insert(payload).select("*").single();
+
+    if (error) throw new Error(error.message);
+    return { coupon: data } as T;
+  }
+
+  if (couponMatch && method === "PATCH") {
+    const payload = {
+      ...body,
+      ...(body.code ? { code: String(body.code).trim().toUpperCase().replace(/\s+/g, "-") } : {})
+    };
+    const { data, error } = await supabase
+      .from("discount_coupons")
+      .update(payload)
+      .eq("id", couponMatch[1])
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { coupon: data } as T;
   }
 
   if (customRequestMatch && method === "PATCH") {

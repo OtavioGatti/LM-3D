@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Calculator, ClipboardList, FolderTree, Package, ShoppingBag } from "lucide-react";
+import { BarChart3, Calculator, ClipboardList, FolderTree, Package, ShoppingBag, TicketPercent } from "lucide-react";
 import { assetPath } from "@/lib/assets";
 import { AdminAuthGate } from "./admin-auth-gate";
 import { AdminSignOut } from "./admin-sign-out";
@@ -13,6 +13,7 @@ const navItems = [
   { href: "/admin/categorias", label: "Categorias", icon: FolderTree },
   { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
   { href: "/admin/orcamentos", label: "Orcamentos", icon: ClipboardList },
+  { href: "/admin/cupons", label: "Cupons", icon: TicketPercent },
   { href: "/admin/calculadora", label: "Calculadora", icon: Calculator }
 ];
 

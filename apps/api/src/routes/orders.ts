@@ -17,6 +17,19 @@ type ProductRow = {
   accepts_customization: boolean;
 };
 
+type CouponRow = {
+  id: string;
+  code: string;
+  discount_type: "percent" | "fixed";
+  discount_value: number;
+  min_order_cents: number;
+  max_redemptions: number | null;
+  redeemed_count: number;
+  is_active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+};
+
 const checkoutOrderSchema = z.object({
   customer: z.object({
     name: z.string().trim().min(2).max(120),
@@ -36,6 +49,7 @@ const checkoutOrderSchema = z.object({
       .nullable()
   }),
   notes: z.string().trim().max(1200).optional().nullable(),
+  couponCode: z.string().trim().max(40).optional().nullable(),
   items: z
     .array(
       z.object({
@@ -68,6 +82,36 @@ function createOrderCode() {
   const suffix = randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
 
   return `LM3D-${stamp}-${suffix}`;
+}
+
+function calculateCouponDiscount(coupon: CouponRow, subtotalCents: number) {
+  if (!coupon.is_active) {
+    throw new HttpError(400, "COUPON_INACTIVE", "Cupom inativo.");
+  }
+
+  const now = Date.now();
+  if (coupon.starts_at && new Date(coupon.starts_at).getTime() > now) {
+    throw new HttpError(400, "COUPON_NOT_STARTED", "Cupom ainda nao esta ativo.");
+  }
+
+  if (coupon.ends_at && new Date(coupon.ends_at).getTime() < now) {
+    throw new HttpError(400, "COUPON_EXPIRED", "Cupom expirado.");
+  }
+
+  if (coupon.max_redemptions !== null && coupon.redeemed_count >= coupon.max_redemptions) {
+    throw new HttpError(400, "COUPON_LIMIT_REACHED", "Este cupom atingiu o limite de uso.");
+  }
+
+  if (subtotalCents < coupon.min_order_cents) {
+    throw new HttpError(400, "COUPON_MIN_ORDER", "O pedido nao atinge o valor minimo do cupom.");
+  }
+
+  const discount =
+    coupon.discount_type === "percent"
+      ? Math.floor((subtotalCents * coupon.discount_value) / 100)
+      : coupon.discount_value;
+
+  return Math.max(0, Math.min(discount, subtotalCents));
 }
 
 ordersRouter.post("/", async (req, res, next) => {
@@ -128,7 +172,31 @@ ordersRouter.post("/", async (req, res, next) => {
     });
 
     const subtotalCents = orderItems.reduce((total, item) => total + item.line_total_cents, 0);
+    const couponCode = payload.couponCode?.trim().toUpperCase() || null;
+    let coupon: CouponRow | null = null;
+    let discountCents = 0;
+
+    if (couponCode) {
+      const { data: couponData, error: couponError } = await supabase
+        .from("discount_coupons")
+        .select("*")
+        .eq("code", couponCode)
+        .maybeSingle();
+
+      if (couponError) {
+        throw couponError;
+      }
+
+      if (!couponData) {
+        throw new HttpError(400, "COUPON_NOT_FOUND", "Cupom nao encontrado.");
+      }
+
+      coupon = couponData as CouponRow;
+      discountCents = calculateCouponDiscount(coupon, subtotalCents);
+    }
+
     const code = createOrderCode();
+    const totalCents = subtotalCents - discountCents;
 
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -142,8 +210,8 @@ ordersRouter.post("/", async (req, res, next) => {
         payment_status: "pending",
         subtotal_cents: subtotalCents,
         shipping_cents: 0,
-        discount_cents: 0,
-        total_cents: subtotalCents,
+        discount_cents: discountCents,
+        total_cents: totalCents,
         delivery_method:
           payload.delivery.method === "retirada" ? "Retirada com Lucas" : "Entrega a combinar",
         delivery_address: payload.delivery.address ?? null,
@@ -154,6 +222,38 @@ ordersRouter.post("/", async (req, res, next) => {
 
     if (orderError) {
       throw orderError;
+    }
+
+    if (coupon) {
+      const couponUpdate = supabase
+        .from("discount_coupons")
+        .update({ redeemed_count: coupon.redeemed_count + 1 })
+        .eq("id", coupon.id);
+      const { data: updatedCoupon, error: couponLimitError } =
+        coupon.max_redemptions === null
+          ? await couponUpdate.select("id").single()
+          : await couponUpdate
+              .lt("redeemed_count", coupon.max_redemptions)
+              .select("id")
+              .maybeSingle();
+
+      if (couponLimitError || !updatedCoupon) {
+        await supabase.from("orders").delete().eq("id", order.id);
+        throw new HttpError(400, "COUPON_LIMIT_REACHED", "Este cupom atingiu o limite de uso.");
+      }
+
+      const { error: redemptionError } = await supabase.from("discount_coupon_redemptions").insert({
+        coupon_id: coupon.id,
+        order_id: order.id,
+        user_id: user?.id ?? null,
+        customer_email: payload.customer.email,
+        discount_cents: discountCents
+      });
+
+      if (redemptionError) {
+        await supabase.from("orders").delete().eq("id", order.id);
+        throw redemptionError;
+      }
     }
 
     const { error: itemsError } = await supabase.from("order_items").insert(
@@ -191,7 +291,8 @@ ordersRouter.post("/", async (req, res, next) => {
         code: order.code,
         status: order.status,
         paymentStatus: order.payment_status,
-        totalCents: order.total_cents
+        totalCents: order.total_cents,
+        discountCents: order.discount_cents
       }
     });
   } catch (error) {
