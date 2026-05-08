@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     rootDir: .
-    buildCommand: npm ci && npm run build --workspace @lm-3d/shared && npm run build --workspace @lm-3d/api
+    buildCommand: npm ci --include=dev && npm run build --workspace @lm-3d/shared && npm run build --workspace @lm-3d/api
     startCommand: npm run start --workspace @lm-3d/api
     healthCheckPath: /api/health
     envVars:

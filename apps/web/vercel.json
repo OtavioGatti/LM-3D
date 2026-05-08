@@ -1,0 +1,5 @@
+{
+  "installCommand": "cd ../.. && npm ci",
+  "buildCommand": "cd ../.. && npm run build --workspace @lm-3d/shared && npm run build --workspace @lm-3d/web",
+  "outputDirectory": "out"
+}
