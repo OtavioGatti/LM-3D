@@ -16,7 +16,7 @@ type LoginCardProps = {
 export function LoginCard({
   eyebrow = "Conta LM-3D",
   title = "Entrar",
-  description = "Acesse sua conta para acompanhar pedidos, personalizacoes e atendimento.",
+  description = "Acesse sua conta para acompanhar pedidos, personalizações e atendimento.",
   redirectTo = "/conta"
 }: LoginCardProps) {
   const router = useRouter();
@@ -31,7 +31,7 @@ export function LoginCard({
     setErrorMessage("");
 
     if (!isConfigured) {
-      setErrorMessage("Configure as variaveis publicas do Supabase antes de entrar.");
+      setErrorMessage("Configure as variáveis públicas do Supabase antes de entrar.");
       return;
     }
 
@@ -45,7 +45,7 @@ export function LoginCard({
     setIsSubmitting(false);
 
     if (error) {
-      setErrorMessage("E-mail ou senha invalidos.");
+      setErrorMessage("E-mail ou senha inválidos.");
       return;
     }
 

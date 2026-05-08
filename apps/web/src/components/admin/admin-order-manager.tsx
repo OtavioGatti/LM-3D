@@ -38,7 +38,7 @@ const statusLabels: Record<OrderStatus, string> = {
   pending_payment: "Aguardando pagamento",
   paid: "Pago",
   payment_failed: "Pagamento falhou",
-  in_production: "Em producao",
+  in_production: "Em produção",
   ready: "Pronto",
   shipped: "Enviado",
   delivered: "Entregue",
@@ -103,7 +103,7 @@ export function AdminOrderManager() {
       setOrders((current) => current.map((item) => (item.id === order.id ? response.order : item)));
       setMessage(`Pedido ${order.code} atualizado.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel atualizar o pedido.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível atualizar o pedido.");
     } finally {
       setSavingId("");
     }
@@ -222,7 +222,7 @@ export function AdminOrderManager() {
       {!isLoading && filteredOrders.length === 0 ? (
         <div className="empty-state">
           <h2>Nenhum pedido encontrado</h2>
-          <p>Quando pedidos forem criados, eles aparecerao aqui para acompanhar producao e entrega.</p>
+          <p>Quando pedidos forem criados, eles aparecerão aqui para acompanhar produção e entrega.</p>
         </div>
       ) : null}
     </section>

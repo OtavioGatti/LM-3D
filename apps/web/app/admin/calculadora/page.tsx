@@ -1,7 +1,7 @@
 import { AdminPriceCalculator } from "@/components/admin/admin-price-calculator";
 
 export const metadata = {
-  title: "Calculadora de preco"
+  title: "Calculadora de preço"
 };
 
 export default function AdminCalculatorPage() {
@@ -9,8 +9,8 @@ export default function AdminCalculatorPage() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>Calculadora de preco</h1>
-          <p>Calcule preco de venda com margem real, custos operacionais e taxa de pagamento.</p>
+          <h1>Calculadora de preço</h1>
+          <p>Calcule preço de venda com margem real, custos operacionais e taxa de pagamento.</p>
         </div>
       </div>
 

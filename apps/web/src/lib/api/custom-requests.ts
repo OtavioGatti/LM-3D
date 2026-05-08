@@ -92,7 +92,7 @@ export async function createCustomRequest(payload: CustomRequestPayload) {
         error?: { message?: string };
       } | null;
 
-      throw new Error(errorPayload?.error?.message ?? "Nao foi possivel enviar o orcamento.");
+      throw new Error(errorPayload?.error?.message ?? "Não foi possível enviar o orçamento.");
     }
 
     return response.json() as Promise<CustomRequestResponse>;

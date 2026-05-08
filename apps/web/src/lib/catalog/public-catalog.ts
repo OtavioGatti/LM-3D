@@ -98,10 +98,10 @@ function mapImage(row: PublicProductImageRow | undefined, productName: string): 
 
 function productionTime(min: number, max: number) {
   if (min === max) {
-    return `${min} dias uteis`;
+    return `${min} dias úteis`;
   }
 
-  return `${min} a ${max} dias uteis`;
+  return `${min} a ${max} dias úteis`;
 }
 
 export function mapPublicProduct(row: PublicProductRow, allSlugs: string[]): ProductDetails {
@@ -140,17 +140,17 @@ export function mapPublicProduct(row: PublicProductRow, allSlugs: string[]): Pro
     images,
     faq: [
       {
-        question: "Posso personalizar esta peca?",
+        question: "Posso personalizar esta peça?",
         answer: row.accepts_customization
-          ? "Sim. Informe cor, nome ou detalhe desejado e Lucas confirma a viabilidade antes da producao."
-          : "Este produto e vendido no modelo anunciado. Alteracoes podem ser combinadas por orcamento personalizado."
+          ? "Sim. Informe cor, nome ou detalhe desejado e Lucas confirma a viabilidade antes da produção."
+          : "Este produto é vendido no modelo anunciado. Alterações podem ser combinadas por orçamento personalizado."
       },
       {
         question: "Quando o pedido fica pronto?",
-        answer: `O prazo estimado e de ${productionTime(
+        answer: `O prazo estimado é de ${productionTime(
           row.production_time_days_min,
           row.production_time_days_max
-        )}, podendo variar conforme personalizacao e fila de producao.`
+        )}, podendo variar conforme personalização e fila de produção.`
       }
     ],
     relatedSlugs

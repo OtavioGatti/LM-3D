@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     template: "%s | LM-3D"
   },
   description:
-    "E-commerce da LM-3D para produtos impressos em 3D, presentes criativos e pecas sob encomenda.",
+    "E-commerce da LM-3D para produtos impressos em 3D, presentes criativos e peças sob encomenda.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000")
 };
 

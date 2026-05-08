@@ -64,7 +64,7 @@ export default function AccountPage() {
         <div>
           <span className="eyebrow">Minha conta</span>
           <h1>{isLoading ? "Carregando..." : email || "Conta LM-3D"}</h1>
-          <p>Acompanhe pedidos, personalizacoes e proximos passos da producao.</p>
+          <p>Acompanhe pedidos, personalizações e próximos passos da produção.</p>
         </div>
 
         {profile && isOwnerRole(profile.role) ? (
@@ -72,7 +72,7 @@ export default function AccountPage() {
             <ShieldCheck aria-hidden="true" size={22} />
             <div>
               <strong>Perfil owner ativo</strong>
-              <span>Voce pode acessar as opcoes administrativas da LM-3D.</span>
+              <span>Você pode acessar as opções administrativas da LM-3D.</span>
             </div>
             <Link href="/admin" className="button button-primary">
               Abrir admin
@@ -80,7 +80,7 @@ export default function AccountPage() {
           </div>
         ) : (
           <div className="form-note">
-            Conta de cliente ativa. As opcoes administrativas aparecem apenas para owner.
+            Conta de cliente ativa. As opções administrativas aparecem apenas para owner.
           </div>
         )}
 

@@ -12,7 +12,7 @@ const navItems = [
   { href: "/admin/produtos", label: "Produtos", icon: Package },
   { href: "/admin/categorias", label: "Categorias", icon: FolderTree },
   { href: "/admin/pedidos", label: "Pedidos", icon: ShoppingBag },
-  { href: "/admin/orcamentos", label: "Orcamentos", icon: ClipboardList },
+  { href: "/admin/orcamentos", label: "Orçamentos", icon: ClipboardList },
   { href: "/admin/cupons", label: "Cupons", icon: TicketPercent },
   { href: "/admin/calculadora", label: "Calculadora", icon: Calculator }
 ];

@@ -60,12 +60,12 @@ export function CatalogExplorer({ categories, products }: CatalogExplorerProps) 
 
   return (
     <>
-      <div className="catalog-toolbar" aria-label="Filtros do catalogo">
+      <div className="catalog-toolbar" aria-label="Filtros do catálogo">
         <label className="search-field">
           <Search aria-hidden="true" size={18} />
           <input
             type="search"
-            placeholder="Buscar por nome, presente, escritorio..."
+            placeholder="Buscar por nome, presente, escritório..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -93,11 +93,11 @@ export function CatalogExplorer({ categories, products }: CatalogExplorerProps) 
           </select>
         </label>
         <label>
-          <span>Personalizacao</span>
+          <span>Personalização</span>
           <select value={customizable} onChange={(event) => setCustomizable(event.target.value)}>
             <option value="todos">Todos</option>
-            <option value="sim">Personalizaveis</option>
-            <option value="nao">Sem personalizacao</option>
+            <option value="sim">Personalizáveis</option>
+            <option value="nao">Sem personalização</option>
           </select>
         </label>
         <button className="icon-button" type="button" aria-label="Ajustar filtros">

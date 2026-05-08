@@ -36,7 +36,7 @@ const orderStatusLabels: Record<OrderStatus, string> = {
   pending_payment: "Aguardando pagamento",
   paid: "Pago",
   payment_failed: "Pagamento falhou",
-  in_production: "Em producao",
+  in_production: "Em produção",
   ready: "Pronto",
   shipped: "Enviado",
   delivered: "Entregue",
@@ -50,7 +50,7 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
   rejected: "Rejeitado",
   cancelled: "Cancelado",
   refunded: "Reembolsado",
-  charged_back: "Contestacao"
+  charged_back: "Contestação"
 };
 
 export function AccountOrders() {
@@ -109,7 +109,7 @@ export function AccountOrders() {
       <div className="account-section-header">
         <div>
           <h2>Meus pedidos</h2>
-          <p>Status, itens e proximos passos ficam reunidos aqui.</p>
+          <p>Status, itens e próximos passos ficam reunidos aqui.</p>
         </div>
       </div>
 
@@ -120,7 +120,7 @@ export function AccountOrders() {
         <div className="empty-state">
           <PackageCheck aria-hidden="true" size={26} />
           <h2>Nenhum pedido vinculado ainda</h2>
-          <p>Pedidos criados enquanto voce estiver logado aparecem automaticamente aqui.</p>
+          <p>Pedidos criados enquanto você estiver logado aparecem automaticamente aqui.</p>
         </div>
       ) : null}
 

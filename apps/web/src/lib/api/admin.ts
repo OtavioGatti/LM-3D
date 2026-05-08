@@ -336,7 +336,7 @@ async function directSupabaseAdminFetch<T>(path: string, init?: RequestInit): Pr
     return { order: data } as T;
   }
 
-  throw new Error("Rota administrativa nao suportada no modo GitHub Pages.");
+  throw new Error("Rota administrativa não suportada no modo GitHub Pages.");
 }
 
 export async function adminApiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -366,7 +366,7 @@ export async function adminApiFetch<T>(path: string, init?: RequestInit): Promis
       error?: { message?: string };
     } | null;
 
-    throw new Error(payload?.error?.message ?? "Nao foi possivel concluir a operacao.");
+    throw new Error(payload?.error?.message ?? "Não foi possível concluir a operação.");
   }
 
   if (response.status === 204) {

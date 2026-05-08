@@ -16,8 +16,8 @@ export function OrderConfirmationPanel() {
       <p>
         {code
           ? `Anotamos o pedido ${code}.`
-          : "Seu pedido foi recebido e ficara disponivel para acompanhamento."}{" "}
-        Lucas confere os detalhes, confirma personalizacoes e combina pagamento assim que o
+          : "Seu pedido foi recebido e ficará disponível para acompanhamento."}{" "}
+        Lucas confere os detalhes, confirma personalizações e combina pagamento assim que o
         checkout Mercado Pago estiver ativo.
       </p>
 
@@ -26,13 +26,13 @@ export function OrderConfirmationPanel() {
           <Clock aria-hidden="true" size={18} /> Pagamento: {payment ?? "pendente"}
         </span>
         <span>
-          <MessageSquareText aria-hidden="true" size={18} /> Proximo passo: contato do Lucas
+          <MessageSquareText aria-hidden="true" size={18} /> Próximo passo: contato do Lucas
         </span>
       </div>
 
       <div className="hero-actions">
         <Link href="/catalogo" className="button button-primary">
-          Voltar ao catalogo
+          Voltar ao catálogo
         </Link>
         <Link href="/conta" className="button button-secondary">
           Minha conta

@@ -72,7 +72,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
       <div className="admin-auth-screen">
         <div className="admin-auth-card">
           <ShieldAlert aria-hidden="true" size={28} />
-          <h1>Supabase ainda nao configurado</h1>
+          <h1>Supabase ainda não configurado</h1>
           <p>
             Preencha <code>NEXT_PUBLIC_SUPABASE_URL</code> e{" "}
             <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> para ativar o login do painel.
@@ -91,7 +91,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
         <div className="admin-auth-card">
           <ShieldAlert aria-hidden="true" size={28} />
           <h1>Acesso restrito</h1>
-          <p>Esta conta esta logada, mas nao tem role owner no perfil Supabase.</p>
+          <p>Esta conta está logada, mas não tem role owner no perfil Supabase.</p>
           <Link href="/conta" className="button button-secondary">
             Ver minha conta
           </Link>
@@ -105,7 +105,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
       <div className="admin-auth-card">
         <ShieldCheck aria-hidden="true" size={28} />
         <h1>Verificando acesso</h1>
-        <p>Conferindo sessao e permissao administrativa.</p>
+        <p>Conferindo sessão e permissão administrativa.</p>
       </div>
     </div>
   );

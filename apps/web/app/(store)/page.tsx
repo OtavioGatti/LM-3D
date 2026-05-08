@@ -9,8 +9,8 @@ import { getPublicCatalog } from "@/lib/catalog/public-catalog";
 const trustItems = [
   {
     icon: BadgeCheck,
-    title: "Producao cuidadosa",
-    text: "Cada peca e revisada antes da entrega."
+    title: "Produção cuidadosa",
+    text: "Cada peça é revisada antes da entrega."
   },
   {
     icon: Boxes,
@@ -25,7 +25,7 @@ const trustItems = [
   {
     icon: CreditCard,
     title: "Pagamento seguro",
-    text: "Checkout dedicado via Mercado Pago nas proximas fases."
+    text: "Checkout dedicado via Mercado Pago nas próximas fases."
   }
 ];
 
@@ -37,18 +37,18 @@ export default async function HomePage() {
       <section className="hero-section">
         <div className="page-container hero-grid">
           <div className="hero-copy">
-            <h1>Impressoes 3D sob medida e produtos criativos feitos com qualidade.</h1>
+            <h1>Impressões 3D sob medida e produtos criativos feitos com qualidade.</h1>
             <p>
-              A LM-3D transforma ideias em pecas prontas para presentear, organizar, decorar
+              A LM-3D transforma ideias em peças prontas para presentear, organizar, decorar
               ou resolver pequenas necessidades do dia a dia.
             </p>
             <div className="hero-actions">
               <Link href="/catalogo" className="button button-primary">
-                Ver catalogo
+                Ver catálogo
                 <ArrowRight aria-hidden="true" size={18} />
               </Link>
               <Link href="/pedido-personalizado" className="button button-secondary">
-                Pedir orcamento
+                Pedir orçamento
               </Link>
             </div>
             <TrustRail />
@@ -64,7 +64,7 @@ export default async function HomePage() {
         <div className="page-container">
           <SectionHeader
             title="Categorias em destaque"
-            description="Comece pelo tipo de peca que voce procura ou envie uma ideia para personalizar."
+            description="Comece pelo tipo de peça que você procura ou envie uma ideia para personalizar."
             actionHref="/catalogo"
             actionLabel="Explorar tudo"
           />
@@ -84,9 +84,9 @@ export default async function HomePage() {
         <div className="page-container">
           <SectionHeader
             title="Produtos prontos para comprar"
-            description="Produtos cadastrados por Lucas, com prazo claro e possibilidade de personalizacao quando indicado."
+            description="Produtos cadastrados por Lucas, com prazo claro e possibilidade de personalização quando indicado."
             actionHref="/catalogo"
-            actionLabel="Ver catalogo"
+            actionLabel="Ver catálogo"
           />
           <div className="product-grid">
             {featuredProducts.map((product) => (

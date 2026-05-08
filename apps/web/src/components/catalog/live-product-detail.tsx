@@ -61,7 +61,7 @@ export function LiveProductDetail({ initialProduct, initialCategory }: LiveProdu
             <dd>{product.material}</dd>
           </div>
           <div>
-            <dt>Dimensoes</dt>
+            <dt>Dimensões</dt>
             <dd>{product.dimensions}</dd>
           </div>
           <div>
@@ -82,7 +82,7 @@ export function LiveProductDetail({ initialProduct, initialCategory }: LiveProdu
             <ShieldCheck aria-hidden="true" size={18} /> Pagamento seguro
           </span>
           <span>
-            <Truck aria-hidden="true" size={18} /> Prazo combinado antes da producao
+            <Truck aria-hidden="true" size={18} /> Prazo combinado antes da produção
           </span>
           <span>
             <MessageCircle aria-hidden="true" size={18} /> Atendimento direto

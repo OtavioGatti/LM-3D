@@ -168,7 +168,7 @@ export function AdminProductManager() {
       setMessage("Produto salvo.");
       await loadData();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel salvar.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar.");
     } finally {
       setIsSaving(false);
     }
@@ -181,7 +181,7 @@ export function AdminProductManager() {
       setMessage("Produto arquivado.");
       await loadData();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel arquivar.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível arquivar.");
     }
   }
 
@@ -227,7 +227,7 @@ export function AdminProductManager() {
       <div className="admin-management-header">
         <div>
           <h2>{mode === "form" ? (form.id ? "Editar produto" : "Novo produto") : "Produtos cadastrados"}</h2>
-          <p>{mode === "form" ? "Preencha os dados e salve para voltar a lista." : "Escolha um produto para editar ou crie um novo cadastro."}</p>
+          <p>{mode === "form" ? "Preencha os dados e salve para voltar à lista." : "Escolha um produto para editar ou crie um novo cadastro."}</p>
         </div>
         {mode === "list" ? (
           <button className="button button-primary" type="button" onClick={newProduct}>
@@ -281,7 +281,7 @@ export function AdminProductManager() {
             />
           </label>
           <label>
-            Descricao completa
+            Descrição completa
             <textarea
               onChange={(event) => setForm({ ...form, description: event.target.value })}
               required
@@ -291,7 +291,7 @@ export function AdminProductManager() {
           </label>
           <div className="form-grid">
             <label>
-              Preco
+              Preço
               <input
                 inputMode="decimal"
                 onChange={(event) => setForm({ ...form, price: event.target.value })}
@@ -400,7 +400,7 @@ export function AdminProductManager() {
             </p>
           )}
           <label>
-            Cores disponiveis
+            Cores disponíveis
             <textarea
               onChange={(event) => setForm({ ...form, color_options: event.target.value })}
               placeholder="Uma cor por linha"
@@ -414,11 +414,11 @@ export function AdminProductManager() {
               onChange={(event) => setForm({ ...form, accepts_customization: event.target.checked })}
               type="checkbox"
             />
-            Aceita personalizacao
+            Aceita personalização
           </label>
           {form.accepts_customization ? (
             <label>
-              Orientacao de personalizacao
+              Orientação de personalização
               <textarea
                 onChange={(event) => setForm({ ...form, customization_prompt: event.target.value })}
                 rows={3}

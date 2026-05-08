@@ -75,13 +75,13 @@ export function CartManager({ products }: CartManagerProps) {
       <section className="section">
         <div className="page-container empty-state cart-empty-state">
           <h1>Carrinho vazio</h1>
-          <p>Escolha um produto do catalogo ou envie uma ideia personalizada para Lucas avaliar.</p>
+          <p>Escolha um produto do catálogo ou envie uma ideia personalizada para Lucas avaliar.</p>
           <div className="hero-actions">
             <Link href="/catalogo" className="button button-primary">
-              Ver catalogo
+              Ver catálogo
             </Link>
             <Link href="/pedido-personalizado" className="button button-secondary">
-              Pedir orcamento
+              Pedir orçamento
             </Link>
           </div>
         </div>
@@ -95,7 +95,7 @@ export function CartManager({ products }: CartManagerProps) {
         <div>
           <h1>Carrinho</h1>
           <p className="page-intro">
-            Revise quantidades e deixe observacoes de cor, nome ou detalhe antes do checkout.
+            Revise quantidades e deixe observações de cor, nome ou detalhe antes do checkout.
           </p>
 
           {cartLines.map(({ item, product }) => (
@@ -122,7 +122,7 @@ export function CartManager({ products }: CartManagerProps) {
                   </button>
                 </div>
                 <label>
-                  Observacoes de personalizacao
+                  Observações de personalização
                   <textarea
                     placeholder="Ex.: nome, cor preferida, detalhe desejado..."
                     rows={4}
@@ -167,11 +167,11 @@ export function CartManager({ products }: CartManagerProps) {
           </Link>
           <div className="summary-note">
             <Clock aria-hidden="true" size={18} />
-            Produtos sob encomenda podem ter prazo de producao antes do envio.
+            Produtos sob encomenda podem ter prazo de produção antes do envio.
           </div>
           <div className="summary-note">
             <ShieldCheck aria-hidden="true" size={18} />
-            Na proxima fase, o backend vai recalcular tudo antes de criar o pagamento.
+            Na próxima fase, o backend vai recalcular tudo antes de criar o pagamento.
           </div>
         </aside>
       </div>

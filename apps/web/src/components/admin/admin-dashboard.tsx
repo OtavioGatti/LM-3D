@@ -34,7 +34,7 @@ const orderStatusLabels: Record<OrderStatus, string> = {
   pending_payment: "Aguardando pagamento",
   paid: "Pago",
   payment_failed: "Pagamento falhou",
-  in_production: "Em producao",
+  in_production: "Em produção",
   ready: "Pronto",
   shipped: "Enviado",
   delivered: "Entregue",
@@ -86,7 +86,7 @@ export function AdminDashboard() {
       { label: "Pedidos recentes", value: String(recentOrders), icon: ShoppingBag },
       { label: "Faturamento estimado", value: formatMoneyBRL(estimatedRevenue), icon: CircleDollarSign },
       { label: "Pagamentos pendentes", value: String(pendingPayments), icon: TimerReset },
-      { label: "Orcamentos novos", value: String(newRequests), icon: ClipboardList }
+      { label: "Orçamentos novos", value: String(newRequests), icon: ClipboardList }
     ];
   }, [orders, products, requests]);
 
@@ -98,11 +98,11 @@ export function AdminDashboard() {
       <div className="admin-page-header">
         <div>
           <h1>Dashboard</h1>
-          <p>Visao operacional com produtos, pedidos e orcamentos reais da LM-3D.</p>
+          <p>Visão operacional com produtos, pedidos e orçamentos reais da LM-3D.</p>
         </div>
         <div className="admin-inline-actions">
           <Link href="/admin/orcamentos" className="button button-secondary">
-            Ver orcamentos
+            Ver orçamentos
           </Link>
           <Link href="/admin/produtos" className="button button-primary">
             Adicionar produto
@@ -131,7 +131,7 @@ export function AdminDashboard() {
           <div className="admin-management-header">
             <div>
               <h2>Pedidos recentes</h2>
-              <p>Ultimos pedidos criados no checkout.</p>
+              <p>Últimos pedidos criados no checkout.</p>
             </div>
             <Link href="/admin/pedidos" className="text-link">
               Ver todos
@@ -164,7 +164,7 @@ export function AdminDashboard() {
         <section className="admin-panel">
           <div className="admin-management-header">
             <div>
-              <h2>Orcamentos novos</h2>
+              <h2>Orçamentos novos</h2>
               <p>Ideias personalizadas enviadas pela vitrine.</p>
             </div>
             <Link href="/admin/orcamentos" className="text-link">
@@ -184,8 +184,8 @@ export function AdminDashboard() {
           </div>
           {!isLoading && latestRequests.length === 0 ? (
             <div className="empty-state">
-              <h2>Nenhum orcamento ainda</h2>
-              <p>Solicitacoes personalizadas entram nesta fila.</p>
+              <h2>Nenhum orçamento ainda</h2>
+              <p>Solicitações personalizadas entram nesta fila.</p>
             </div>
           ) : null}
         </section>

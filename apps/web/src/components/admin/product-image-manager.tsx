@@ -75,7 +75,7 @@ export function ProductImageManager({
       setMessage("Imagem enviada.");
       await onChanged();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel enviar a imagem.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível enviar a imagem.");
     } finally {
       setIsUploading(false);
     }
@@ -107,7 +107,7 @@ export function ProductImageManager({
       setMessage("Imagem removida.");
       await onChanged();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel remover a imagem.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível remover a imagem.");
     }
   }
 
@@ -127,7 +127,7 @@ export function ProductImageManager({
       setMessage("Texto alternativo salvo.");
       await onChanged();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel salvar o texto.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar o texto.");
     }
   }
 
@@ -167,7 +167,7 @@ export function ProductImageManager({
       setMessage("Imagem principal atualizada.");
       await onChanged();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel definir a principal.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível definir a principal.");
     }
   }
 
@@ -205,7 +205,7 @@ export function ProductImageManager({
       setMessage("Ordem atualizada.");
       await onChanged();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel reordenar.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível reordenar.");
     }
   }
 
@@ -288,7 +288,7 @@ export function ProductImageManager({
       ) : (
         <div className="empty-state">
           <h2>Nenhuma imagem enviada</h2>
-          <p>Enquanto nao houver upload, a vitrine usa uma imagem padrao.</p>
+          <p>Enquanto não houver upload, a vitrine usa uma imagem padrão.</p>
         </div>
       )}
     </section>

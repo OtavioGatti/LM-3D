@@ -23,7 +23,7 @@ type AccountCustomRequest = {
 const statusLabels: Record<AccountCustomRequest["status"], string> = {
   new: "Recebido",
   contacted: "Contato feito",
-  quoted: "Orcado",
+  quoted: "Orçado",
   converted: "Convertido em pedido",
   closed: "Fechado",
   canceled: "Cancelado"
@@ -77,19 +77,19 @@ export function AccountCustomRequests() {
     <section className="account-orders">
       <div className="account-section-header">
         <div>
-          <h2>Meus orcamentos</h2>
-          <p>Ideias personalizadas enviadas para avaliacao do Lucas.</p>
+          <h2>Meus orçamentos</h2>
+          <p>Ideias personalizadas enviadas para avaliação do Lucas.</p>
         </div>
       </div>
 
       {message ? <p className="form-error">{message}</p> : null}
-      {isLoading ? <p className="form-note">Carregando orcamentos...</p> : null}
+      {isLoading ? <p className="form-note">Carregando orçamentos...</p> : null}
 
       {!isLoading && requests.length === 0 ? (
         <div className="empty-state">
           <ClipboardList aria-hidden="true" size={26} />
-          <h2>Nenhum orcamento enviado ainda</h2>
-          <p>Quando voce enviar uma ideia personalizada logado, ela aparecera aqui.</p>
+          <h2>Nenhum orçamento enviado ainda</h2>
+          <p>Quando você enviar uma ideia personalizada logado, ela aparecerá aqui.</p>
         </div>
       ) : null}
 
@@ -105,7 +105,7 @@ export function AccountCustomRequests() {
             <strong>
               {request.estimated_price_cents
                 ? formatMoneyBRL(request.estimated_price_cents)
-                : "Em analise"}
+                : "Em análise"}
             </strong>
           </header>
 
@@ -124,7 +124,7 @@ export function AccountCustomRequests() {
               {request.desired_colors ? <small>Cores: {request.desired_colors}</small> : null}
               {request.reference_url ? (
                 <small>
-                  Referencia:{" "}
+                  Referência:{" "}
                   <a className="text-link" href={request.reference_url} rel="noreferrer" target="_blank">
                     abrir link
                   </a>

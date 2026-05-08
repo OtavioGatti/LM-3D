@@ -4,7 +4,7 @@ import { assetPath } from "@/lib/assets";
 
 const navItems = [
   { href: "/", label: "Home" },
-  { href: "/catalogo", label: "Catalogo" },
+  { href: "/catalogo", label: "Catálogo" },
   { href: "/pedido-personalizado", label: "Pedido personalizado" }
 ];
 
@@ -16,7 +16,7 @@ export function SiteHeader() {
           <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
           <span>LM-3D</span>
         </Link>
-        <nav aria-label="Navegacao principal">
+        <nav aria-label="Navegação principal">
           {navItems.map((item) => (
             <Link href={item.href} key={item.href}>
               {item.label}

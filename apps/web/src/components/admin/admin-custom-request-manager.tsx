@@ -40,7 +40,7 @@ type CustomRequest = {
 const statusLabels: Record<Exclude<CustomRequestStatus, "todos">, string> = {
   new: "Novo",
   contacted: "Contato feito",
-  quoted: "Orcado",
+  quoted: "Orçado",
   converted: "Convertido",
   closed: "Fechado",
   canceled: "Cancelado"
@@ -118,9 +118,9 @@ export function AdminCustomRequestManager() {
       setRequests((current) =>
         current.map((item) => (item.id === request.id ? response.request : item))
       );
-      setMessage(`Orcamento ${request.code} atualizado.`);
+      setMessage(`Orçamento ${request.code} atualizado.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel atualizar.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível atualizar.");
     } finally {
       setSavingId("");
     }
@@ -130,8 +130,8 @@ export function AdminCustomRequestManager() {
     <section className="admin-panel admin-management-panel">
       <div className="admin-management-header">
         <div>
-          <h2>Solicitacoes recebidas</h2>
-          <p>Ideias fora do catalogo para Lucas avaliar, orcar e converter em pedido.</p>
+          <h2>Solicitações recebidas</h2>
+          <p>Ideias fora do catálogo para Lucas avaliar, orçar e converter em pedido.</p>
         </div>
       </div>
 
@@ -140,7 +140,7 @@ export function AdminCustomRequestManager() {
           Buscar
           <input
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Cliente, codigo ou ideia"
+            placeholder="Cliente, código ou ideia"
             value={query}
           />
         </label>
@@ -160,7 +160,7 @@ export function AdminCustomRequestManager() {
       </div>
 
       {message ? <p className="form-note">{message}</p> : null}
-      {isLoading ? <p>Carregando orcamentos...</p> : null}
+      {isLoading ? <p>Carregando orçamentos...</p> : null}
 
       <div className="admin-order-list">
         {filteredRequests.map((request) => (
@@ -177,7 +177,7 @@ export function AdminCustomRequestManager() {
                 <strong>
                   {request.estimated_price_cents
                     ? formatMoneyBRL(request.estimated_price_cents)
-                    : "Sem preco"}
+                    : "Sem preço"}
                 </strong>
                 <span className="status-pill">{statusLabels[request.status]}</span>
               </div>
@@ -194,7 +194,7 @@ export function AdminCustomRequestManager() {
                 {request.reference_url ? (
                   <small>
                     <a className="text-link" href={request.reference_url} rel="noreferrer" target="_blank">
-                      Referencia <ExternalLink aria-hidden="true" size={14} />
+                      Referência <ExternalLink aria-hidden="true" size={14} />
                     </a>
                   </small>
                 ) : null}
@@ -222,7 +222,7 @@ export function AdminCustomRequestManager() {
                 </select>
               </label>
               <label>
-                Preco estimado
+                Preço estimado
                 <input
                   defaultValue={
                     request.estimated_price_cents
@@ -256,7 +256,7 @@ export function AdminCustomRequestManager() {
 
       {!isLoading && filteredRequests.length === 0 ? (
         <div className="empty-state">
-          <h2>Nenhum orcamento encontrado</h2>
+          <h2>Nenhum orçamento encontrado</h2>
           <p>Novas ideias enviadas pelo site aparecem aqui.</p>
         </div>
       ) : null}

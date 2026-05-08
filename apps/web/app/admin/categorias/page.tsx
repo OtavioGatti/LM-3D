@@ -6,7 +6,7 @@ export default function AdminCategoriesPage() {
       <div className="admin-page-header">
         <div>
           <h1>Categorias</h1>
-          <p>Organize catalogos, grupos e ordem de exibicao da vitrine.</p>
+          <p>Organize catálogos, grupos e ordem de exibição da vitrine.</p>
         </div>
       </div>
 

@@ -63,9 +63,9 @@ export function CustomOrderForm() {
       });
 
       setForm(emptyForm);
-      setMessage(`Pedido personalizado enviado. Codigo: ${response.request.code}`);
+      setMessage(`Pedido personalizado enviado. Código: ${response.request.code}`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel enviar sua ideia.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível enviar sua ideia.");
     } finally {
       setIsSubmitting(false);
     }
@@ -88,7 +88,7 @@ export function CustomOrderForm() {
         <input
           autoComplete="email tel"
           onChange={(event) => setForm({ ...form, contact: event.target.value })}
-          placeholder="Como Lucas pode falar com voce"
+          placeholder="Como Lucas pode falar com você"
           required
           value={form.contact}
         />
@@ -103,10 +103,10 @@ export function CustomOrderForm() {
         />
       </label>
       <label>
-        O que voce quer imprimir?
+        O que você quer imprimir?
         <textarea
           onChange={(event) => setForm({ ...form, description: event.target.value })}
-          placeholder="Descreva tamanho, uso, quantidade, encaixes, nomes, acabamento e referencias."
+          placeholder="Descreva tamanho, uso, quantidade, encaixes, nomes, acabamento e referências."
           required
           rows={6}
           value={form.description}
@@ -144,15 +144,15 @@ export function CustomOrderForm() {
         Prazo desejado
         <input
           onChange={(event) => setForm({ ...form, deadline: event.target.value })}
-          placeholder="Ex.: ate sexta, sem pressa, presente de aniversario..."
+          placeholder="Ex.: até sexta, sem pressa, presente de aniversário..."
           value={form.deadline}
         />
       </label>
       <label>
-        Link de referencia
+        Link de referência
         <input
           onChange={(event) => setForm({ ...form, referenceUrl: event.target.value })}
-          placeholder="URL de imagem, modelo 3D ou inspiracao"
+          placeholder="URL de imagem, modelo 3D ou inspiração"
           type="url"
           value={form.referenceUrl}
         />
@@ -165,7 +165,7 @@ export function CustomOrderForm() {
         {isSubmitting ? "Enviando..." : "Enviar ideia"}
       </button>
       <p>
-        Lucas recebe a solicitacao no admin, avalia viabilidade e responde com prazo e preco.
+        Lucas recebe a solicitação no admin, avalia viabilidade e responde com prazo e preço.
       </p>
     </form>
   );

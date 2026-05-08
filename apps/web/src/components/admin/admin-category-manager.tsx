@@ -76,7 +76,7 @@ export function AdminCategoryManager() {
       setMessage("Categoria salva.");
       await loadCategories();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel salvar.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar.");
     } finally {
       setIsSaving(false);
     }
@@ -89,7 +89,7 @@ export function AdminCategoryManager() {
       setMessage("Categoria apagada.");
       await loadCategories();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel apagar.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível apagar.");
     }
   }
 
@@ -155,7 +155,7 @@ export function AdminCategoryManager() {
             />
           </label>
           <label>
-            Descricao
+            Descrição
             <textarea
               onChange={(event) => setForm({ ...form, description: event.target.value })}
               rows={3}

@@ -102,7 +102,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
     }
 
     if (!hasSupabaseBrowserConfig()) {
-      setCouponMessage("Cupom sera validado ao criar o pedido.");
+      setCouponMessage("Cupom será validado ao criar o pedido.");
       return;
     }
 
@@ -114,7 +114,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
       .maybeSingle();
 
     if (error || !data) {
-      setCouponMessage("Cupom nao encontrado ou inativo.");
+      setCouponMessage("Cupom não encontrado ou inativo.");
       return;
     }
 
@@ -126,7 +126,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
     }
 
     if (subtotal < preview.min_order_cents) {
-      setCouponMessage(`Pedido minimo para este cupom: ${formatMoneyBRL(preview.min_order_cents)}.`);
+      setCouponMessage(`Pedido mínimo para este cupom: ${formatMoneyBRL(preview.min_order_cents)}.`);
       return;
     }
 
@@ -141,7 +141,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
 
     try {
       if (cartLines.length === 0) {
-        throw new Error("Seu carrinho esta vazio.");
+        throw new Error("Seu carrinho está vazio.");
       }
 
       const response = await createCheckoutOrder({
@@ -181,7 +181,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Nao foi possivel criar o pedido agora."
+          : "Não foi possível criar o pedido agora."
       );
     } finally {
       setIsSubmitting(false);
@@ -196,7 +196,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           <h1>Nenhum item no checkout</h1>
           <p>Adicione um produto ao carrinho para criar um pedido.</p>
           <Link href="/catalogo" className="button button-primary">
-            Ver catalogo
+            Ver catálogo
           </Link>
         </div>
       </section>
@@ -211,7 +211,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           <div>
             <h1>Finalizar pedido</h1>
             <p>
-              Lucas recebe os dados do pedido, confirma detalhes de personalizacao e libera o
+              Lucas recebe os dados do pedido, confirma detalhes de personalização e libera o
               pagamento quando o Mercado Pago estiver conectado.
             </p>
           </div>
@@ -246,7 +246,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             <input
               autoComplete="tel"
               onChange={(event) => setForm({ ...form, phone: event.target.value })}
-              placeholder="Para confirmar personalizacoes"
+              placeholder="Para confirmar personalizações"
               value={form.phone}
             />
           </label>
@@ -270,11 +270,11 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           {form.deliveryMethod === "entrega_combinar" ? (
             <div className="form-grid">
               <label>
-                Endereco
+                Endereço
                 <input
                   autoComplete="street-address"
                   onChange={(event) => setForm({ ...form, addressLine: event.target.value })}
-                  placeholder="Rua, numero, bairro"
+                  placeholder="Rua, número, bairro"
                   value={form.addressLine}
                 />
               </label>
@@ -306,7 +306,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           ) : null}
 
           <label>
-            Observacoes gerais
+            Observações gerais
             <textarea
               onChange={(event) => setForm({ ...form, notes: event.target.value })}
               placeholder="Prazo desejado, presente, cor preferida ou qualquer detalhe importante."
@@ -332,10 +332,10 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
 
           <div className="checkout-assurance">
             <span>
-              <ShieldCheck aria-hidden="true" size={18} /> Precos recalculados no backend
+              <ShieldCheck aria-hidden="true" size={18} /> Preços recalculados no backend
             </span>
             <span>
-              <MessageSquareText aria-hidden="true" size={18} /> Confirmacao antes da producao
+              <MessageSquareText aria-hidden="true" size={18} /> Confirmação antes da produção
             </span>
           </div>
 
@@ -379,7 +379,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           </div>
           <div className="summary-note">
             <Clock aria-hidden="true" size={18} />
-            O pagamento fica pendente ate conectarmos o Mercado Pago na etapa final.
+            O pagamento fica pendente até conectarmos o Mercado Pago na etapa final.
           </div>
         </aside>
       </div>

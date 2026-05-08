@@ -61,7 +61,7 @@ export async function createCheckoutOrder(payload: CheckoutOrderPayload) {
 
     if (isLocalApi && !isLocalPage) {
       throw new Error(
-        "O checkout ja esta pronto, mas precisa do backend publicado para criar pedidos fora do ambiente local."
+        "O checkout já está pronto, mas precisa do backend publicado para criar pedidos fora do ambiente local."
       );
     }
 
@@ -73,7 +73,7 @@ export async function createCheckoutOrder(payload: CheckoutOrderPayload) {
       error?: { message?: string };
     } | null;
 
-    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel criar o pedido.");
+    throw new Error(errorPayload?.error?.message ?? "Não foi possível criar o pedido.");
   }
 
   return response.json() as Promise<CheckoutOrderResponse>;

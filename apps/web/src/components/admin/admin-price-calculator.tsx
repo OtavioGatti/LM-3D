@@ -177,7 +177,7 @@ export function AdminPriceCalculator() {
       setMessage("Preset salvo como padrao.");
       await loadData();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel salvar o preset.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar o preset.");
     } finally {
       setIsSaving(false);
     }
@@ -206,7 +206,7 @@ export function AdminPriceCalculator() {
       setMessage("Calculo salvo.");
       await loadData();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel salvar o calculo.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar o cálculo.");
     } finally {
       setIsSaving(false);
     }
@@ -214,7 +214,7 @@ export function AdminPriceCalculator() {
 
   async function applyPriceToProduct() {
     if (!form.product_id) {
-      setMessage("Selecione um produto para aplicar o preco.");
+      setMessage("Selecione um produto para aplicar o preço.");
       return;
     }
 
@@ -229,9 +229,9 @@ export function AdminPriceCalculator() {
         })
       });
       await saveCalculation();
-      setMessage("Preco sugerido aplicado ao produto.");
+      setMessage("Preço sugerido aplicado ao produto.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel aplicar o preco.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível aplicar o preço.");
     } finally {
       setIsSaving(false);
     }
@@ -281,7 +281,7 @@ export function AdminPriceCalculator() {
             />
           </label>
           <label>
-            Peso da impressao em gramas
+            Peso da impressão em gramas
             <input
               inputMode="decimal"
               onChange={(event) => setForm({ ...form, weightGrams: event.target.value })}
@@ -305,7 +305,7 @@ export function AdminPriceCalculator() {
             />
           </label>
           <label>
-            Horas de impressao
+            Horas de impressão
             <input
               inputMode="decimal"
               onChange={(event) => setForm({ ...form, printHours: event.target.value })}
@@ -374,7 +374,7 @@ export function AdminPriceCalculator() {
         <div className="admin-inline-actions">
           <button className="button button-primary" disabled={isSaving} type="submit">
             <Save aria-hidden="true" size={18} />
-            Salvar calculo
+            Salvar cálculo
           </button>
           <button className="button button-secondary" disabled={isSaving} type="button" onClick={() => void savePreset()}>
             Salvar preset padrao
@@ -384,28 +384,28 @@ export function AdminPriceCalculator() {
 
       <aside className="calculator-result">
         <Calculator aria-hidden="true" size={26} />
-        <h2>Preco sugerido</h2>
+        <h2>Preço sugerido</h2>
         <strong>{formatMoneyBRL(result.suggestedPrice)}</strong>
         <div className="calculator-breakdown">
           <span>Filamento <strong>{formatMoneyBRL(result.filamentCost)}</strong></span>
           <span>Energia <strong>{formatMoneyBRL(result.energyCost)}</strong></span>
           <span>Custo total <strong>{formatMoneyBRL(result.operationalCost)}</strong></span>
-          <span>Preco minimo <strong>{formatMoneyBRL(result.minimumPrice)}</strong></span>
+          <span>Preço mínimo <strong>{formatMoneyBRL(result.minimumPrice)}</strong></span>
           <span>Lucro estimado <strong>{formatMoneyBRL(result.estimatedProfit)}</strong></span>
         </div>
         <p>
-          Margem de lucro e calculada sobre o preco final. Markup seria aplicar um multiplicador
-          sobre o custo; aqui o preco e ajustado para a margem desejada depois de custos e taxa.
+          Margem de lucro é calculada sobre o preço final. Markup seria aplicar um multiplicador
+          sobre o custo; aqui o preço é ajustado para a margem desejada depois de custos e taxa.
         </p>
         <button className="button button-secondary" disabled={isSaving} type="button" onClick={() => void applyPriceToProduct()}>
           Aplicar ao produto
         </button>
 
         <div className="calculation-history">
-          <h3>Ultimos calculos</h3>
+          <h3>Últimos cálculos</h3>
           {calculations.map((calculation) => (
             <article key={calculation.id}>
-              <span>{calculation.product?.name ?? "Calculo avulso"}</span>
+              <span>{calculation.product?.name ?? "Cálculo avulso"}</span>
               <strong>{formatMoneyBRL(calculation.suggested_price_cents)}</strong>
               <small>
                 Custo {formatMoneyBRL(calculation.operational_cost_cents)} · lucro{" "}

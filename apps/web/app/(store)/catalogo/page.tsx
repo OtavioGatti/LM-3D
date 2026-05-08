@@ -3,7 +3,7 @@ import { SectionHeader } from "@/components/section-header";
 import { getPublicCatalog } from "@/lib/catalog/public-catalog";
 
 export const metadata = {
-  title: "Catalogo"
+  title: "Catálogo"
 };
 
 export default async function CatalogPage() {
@@ -13,8 +13,8 @@ export default async function CatalogPage() {
     <section className="section">
       <div className="page-container">
         <SectionHeader
-          title="Catalogo LM-3D"
-          description="Produtos reais cadastrados no painel, com filtros por categoria, disponibilidade e personalizacao."
+          title="Catálogo LM-3D"
+          description="Produtos reais cadastrados no painel, com filtros por categoria, disponibilidade e personalização."
         />
 
         <CatalogExplorer categories={categories} products={products} />

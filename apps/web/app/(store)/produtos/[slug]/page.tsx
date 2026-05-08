@@ -72,8 +72,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <aside className="custom-order-panel">
             <h2>Quer mudar nome, cor ou medida?</h2>
             <p>
-              Produtos personalizaveis precisam de uma revisao rapida para confirmar custo,
-              prazo e viabilidade da impressao.
+              Produtos personalizáveis precisam de uma revisão rápida para confirmar custo,
+              prazo e viabilidade da impressão.
             </p>
             <Link href="/pedido-personalizado" className="button button-secondary">
               Enviar ideia personalizada

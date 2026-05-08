@@ -99,7 +99,7 @@ export function AdminCouponManager() {
       setMessage("Cupom salvo.");
       await loadCoupons();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel salvar o cupom.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível salvar o cupom.");
     } finally {
       setIsSaving(false);
     }

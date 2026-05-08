@@ -6,7 +6,7 @@ export default function AdminOrdersPage() {
       <div className="admin-page-header">
         <div>
           <h1>Pedidos</h1>
-          <p>Fila administrativa para acompanhar pagamento, producao e entrega.</p>
+          <p>Fila administrativa para acompanhar pagamento, produção e entrega.</p>
         </div>
       </div>
 
