@@ -40,16 +40,23 @@ export type CheckoutOrderResponse = {
 
 export async function createCheckoutOrder(payload: CheckoutOrderPayload) {
   let response: Response;
-  const session = hasSupabaseBrowserConfig()
-    ? (await getSupabaseBrowserClient().auth.getSession()).data.session
-    : null;
+
+  if (!hasSupabaseBrowserConfig()) {
+    throw new Error("O login precisa estar configurado para criar pedidos vinculados à conta.");
+  }
+
+  const session = (await getSupabaseBrowserClient().auth.getSession()).data.session;
+
+  if (!session) {
+    throw new Error("Entre ou crie uma conta para finalizar o pedido.");
+  }
 
   try {
     response = await fetch(`${apiBaseUrl}/orders`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(session ? { Authorization: `Bearer ${session.access_token}` } : {})
+        Authorization: `Bearer ${session.access_token}`
       },
       body: JSON.stringify(payload)
     });

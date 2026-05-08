@@ -119,9 +119,20 @@ ordersRouter.post("/", async (req, res, next) => {
     const payload = checkoutOrderSchema.parse(req.body);
     const supabase = getSupabaseAdminClient();
     const token = getBearerToken(req.header("authorization"));
+
+    if (!token) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Entre ou crie uma conta para finalizar o pedido.");
+    }
+
     const {
-      data: { user }
-    } = token ? await supabase.auth.getUser(token) : { data: { user: null } };
+      data: { user },
+      error: authError
+    } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessão expirou. Entre novamente para finalizar o pedido.");
+    }
+
     const requestedSlugs = [...new Set(payload.items.map((item) => item.productSlug))];
 
     const { data: products, error: productError } = await supabase
@@ -202,7 +213,7 @@ ordersRouter.post("/", async (req, res, next) => {
       .from("orders")
       .insert({
         code,
-        user_id: user?.id ?? null,
+        user_id: user.id,
         customer_name: payload.customer.name,
         customer_email: payload.customer.email,
         customer_phone: payload.customer.phone || null,
@@ -245,7 +256,7 @@ ordersRouter.post("/", async (req, res, next) => {
       const { error: redemptionError } = await supabase.from("discount_coupon_redemptions").insert({
         coupon_id: coupon.id,
         order_id: order.id,
-        user_id: user?.id ?? null,
+        user_id: user.id,
         customer_email: payload.customer.email,
         discount_cents: discountCents
       });

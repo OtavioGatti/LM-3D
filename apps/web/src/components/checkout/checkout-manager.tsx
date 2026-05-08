@@ -1,7 +1,7 @@
 "use client";
 
 import { formatMoneyBRL, type ProductDetails } from "@lm-3d/shared";
-import { ArrowRight, Clock, LockKeyhole, MessageSquareText, ShieldCheck } from "lucide-react";
+import { ArrowRight, Clock, LockKeyhole, MessageSquareText, ShieldCheck, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -52,6 +52,8 @@ type CouponPreview = {
   redeemed_count: number;
 };
 
+type CheckoutAuthStatus = "checking" | "signed-in" | "signed-out" | "unconfigured";
+
 export function CheckoutManager({ products }: CheckoutManagerProps) {
   const router = useRouter();
   const [items, setItems] = useState<StoredCartItem[]>([]);
@@ -59,6 +61,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
   const [message, setMessage] = useState("");
   const [couponMessage, setCouponMessage] = useState("");
   const [coupon, setCoupon] = useState<CouponPreview | null>(null);
+  const [authStatus, setAuthStatus] = useState<CheckoutAuthStatus>("checking");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const productBySlug = useMemo(
@@ -90,6 +93,47 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
 
   useEffect(() => {
     setItems(readCartItems());
+  }, []);
+
+  useEffect(() => {
+    async function loadSession() {
+      if (!hasSupabaseBrowserConfig()) {
+        setAuthStatus("unconfigured");
+        return;
+      }
+
+      const supabase = getSupabaseBrowserClient();
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        setAuthStatus("signed-out");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      setForm((current) => ({
+        ...current,
+        name:
+          current.name ||
+          profile?.full_name ||
+          (typeof session.user.user_metadata.full_name === "string"
+            ? session.user.user_metadata.full_name
+            : ""),
+        email: current.email || session.user.email || ""
+      }));
+      setAuthStatus("signed-in");
+    }
+
+    void loadSession().catch(() => {
+      setAuthStatus("signed-out");
+    });
   }, []);
 
   async function applyCoupon() {
@@ -142,6 +186,10 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
     try {
       if (cartLines.length === 0) {
         throw new Error("Seu carrinho está vazio.");
+      }
+
+      if (authStatus !== "signed-in") {
+        throw new Error("Entre ou crie uma conta para finalizar o pedido.");
       }
 
       const response = await createCheckoutOrder({
@@ -198,6 +246,51 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           <Link href="/catalogo" className="button button-primary">
             Ver catálogo
           </Link>
+        </div>
+      </section>
+    );
+  }
+
+  if (authStatus === "checking") {
+    return (
+      <section className="section">
+        <div className="page-container checkout-placeholder">
+          <LockKeyhole aria-hidden="true" size={36} />
+          <h1>Verificando sua conta</h1>
+          <p>Estamos conferindo se você já está logado para vincular o pedido à sua conta.</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (authStatus !== "signed-in") {
+    return (
+      <section className="section">
+        <div className="page-container checkout-placeholder">
+          {authStatus === "unconfigured" ? (
+            <>
+              <LockKeyhole aria-hidden="true" size={36} />
+              <h1>Login indisponível</h1>
+              <p>Configure o Supabase público no ambiente para permitir pedidos vinculados a contas.</p>
+            </>
+          ) : (
+            <>
+              <UserPlus aria-hidden="true" size={36} />
+              <h1>Entre para finalizar</h1>
+              <p>
+                Para o pedido aparecer em Minha conta e ficar vinculado ao cliente correto, é
+                necessário entrar ou criar uma conta antes de finalizar.
+              </p>
+              <div className="checkout-auth-actions">
+                <Link href="/login?redirect=/checkout" className="button button-primary">
+                  Entrar
+                </Link>
+                <Link href="/login?redirect=/checkout&mode=signup" className="button button-secondary">
+                  Criar conta
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
     );

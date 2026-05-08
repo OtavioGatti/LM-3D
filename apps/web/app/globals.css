@@ -159,6 +159,39 @@ img {
   border-color: var(--accent);
 }
 
+.auth-mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-strong);
+}
+
+.auth-mode-switch button {
+  min-height: 40px;
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  background: transparent;
+  color: var(--muted);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.auth-mode-switch button.active {
+  background: var(--surface);
+  color: var(--surface-ink);
+  box-shadow: 0 10px 24px rgba(0, 74, 63, 0.08);
+}
+
+.checkout-auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
 .full-width {
   width: 100%;
 }
@@ -1131,6 +1164,15 @@ img {
   border-radius: var(--radius);
   background: #fff1f2;
   color: #be123c;
+  font-weight: 800;
+}
+
+.form-success {
+  padding: 12px 14px;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius);
+  background: #f0fdf4;
+  color: #166534;
   font-weight: 800;
 }
 
