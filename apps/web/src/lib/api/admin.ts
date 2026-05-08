@@ -118,6 +118,64 @@ async function directSupabaseAdminFetch<T>(path: string, init?: RequestInit): Pr
     return { coupons: data } as T;
   }
 
+  if (path === "/admin/price/presets" && method === "GET") {
+    const { data, error } = await supabase
+      .from("price_calculation_presets")
+      .select("*")
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return { presets: data } as T;
+  }
+
+  if (path === "/admin/price/presets" && method === "POST") {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    if (body.is_default) {
+      await supabase
+        .from("price_calculation_presets")
+        .update({ is_default: false })
+        .eq("owner_id", session?.user.id);
+    }
+
+    const { data, error } = await supabase
+      .from("price_calculation_presets")
+      .insert({ ...body, owner_id: session?.user.id })
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { preset: data } as T;
+  }
+
+  if (path === "/admin/price/calculations" && method === "GET") {
+    const { data, error } = await supabase
+      .from("price_calculations")
+      .select("*, product:products (id, name)")
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    if (error) throw new Error(error.message);
+    return { calculations: data } as T;
+  }
+
+  if (path === "/admin/price/calculations" && method === "POST") {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    const { data, error } = await supabase
+      .from("price_calculations")
+      .insert({ ...body, created_by: session?.user.id })
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    return { calculation: data } as T;
+  }
+
   if (path === "/admin/coupons" && method === "POST") {
     const payload = { ...body, code: String(body.code ?? "").trim().toUpperCase().replace(/\s+/g, "-") };
     const { data, error } = await supabase.from("discount_coupons").insert(payload).select("*").single();
