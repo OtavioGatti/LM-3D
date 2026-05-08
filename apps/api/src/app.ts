@@ -1,6 +1,6 @@
 import cors from "cors";
 import express from "express";
-import { corsOrigins } from "./config/env.js";
+import { isAllowedCorsOrigin } from "./config/env.js";
 import { notFoundHandler, errorHandler } from "./middleware/error-handler.js";
 import { apiRouter } from "./routes/index.js";
 
@@ -10,7 +10,9 @@ export function createApp() {
   app.disable("x-powered-by");
   app.use(
     cors({
-      origin: corsOrigins,
+      origin(origin, callback) {
+        callback(null, isAllowedCorsOrigin(origin));
+      },
       credentials: true
     })
   );

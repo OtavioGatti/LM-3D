@@ -15,6 +15,41 @@ const envSchema = z.object({
 
 export const env = envSchema.parse(process.env);
 
-export const corsOrigins = env.CORS_ORIGIN.split(",")
+export const corsOriginRules = env.CORS_ORIGIN.split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+function normalizeOrigin(origin: string) {
+  return origin.replace(/\/+$/, "");
+}
+
+function wildcardToRegExp(rule: string) {
+  const escaped = rule
+    .split("*")
+    .map((part) => part.replace(/[|\\{}()[\]^$+?.]/g, "\\$&"))
+    .join(".*");
+
+  return new RegExp(`^${escaped}$`);
+}
+
+export function isAllowedCorsOrigin(origin: string | undefined) {
+  if (!origin) {
+    return true;
+  }
+
+  const normalizedOrigin = normalizeOrigin(origin);
+
+  return corsOriginRules.some((rule) => {
+    const normalizedRule = normalizeOrigin(rule);
+
+    if (normalizedRule === "*") {
+      return env.NODE_ENV !== "production";
+    }
+
+    if (normalizedRule.includes("*")) {
+      return wildcardToRegExp(normalizedRule).test(normalizedOrigin);
+    }
+
+    return normalizedRule === normalizedOrigin;
+  });
+}
