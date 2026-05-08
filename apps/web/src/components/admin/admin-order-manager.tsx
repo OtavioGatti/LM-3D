@@ -49,6 +49,14 @@ type AdminOrder = {
   delivery_address: DeliveryAddress | null;
   created_at: string;
   order_items: OrderItem[];
+  discount_coupon_redemptions?: Array<{
+    id: string;
+    discount_cents: number;
+    discount_coupons: {
+      code: string;
+      name: string;
+    } | null;
+  }>;
 };
 
 const statusLabels: Record<OrderStatus, string> = {
@@ -84,6 +92,16 @@ function formatDeliveryAddress(order: AdminOrder) {
   }
 
   return [address.line1, address.city, address.state, address.postalCode].filter(Boolean).join(", ");
+}
+
+function getCouponLabel(order: AdminOrder) {
+  const redemption = order.discount_coupon_redemptions?.[0];
+
+  if (!redemption?.discount_coupons) {
+    return null;
+  }
+
+  return `${redemption.discount_coupons.code} - ${redemption.discount_coupons.name}`;
 }
 
 export function AdminOrderManager() {
@@ -261,7 +279,12 @@ export function AdminOrderManager() {
               <div>
                 <span>Totais</span>
                 <small>Subtotal: {formatMoneyBRL(order.subtotal_cents)}</small>
-                {order.discount_cents > 0 ? <small>Desconto: -{formatMoneyBRL(order.discount_cents)}</small> : null}
+                {order.discount_cents > 0 ? (
+                  <small>
+                    Desconto: -{formatMoneyBRL(order.discount_cents)}
+                    {getCouponLabel(order) ? ` (${getCouponLabel(order)})` : ""}
+                  </small>
+                ) : null}
                 {order.shipping_cents > 0 ? <small>Entrega: {formatMoneyBRL(order.shipping_cents)}</small> : null}
                 <strong>Total: {formatMoneyBRL(order.total_cents)}</strong>
               </div>

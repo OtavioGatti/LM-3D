@@ -21,7 +21,14 @@ adminOrdersRouter.get("/", async (_req, res, next) => {
         `
         *,
         order_items (*),
-        payments (*)
+        payments (*),
+        discount_coupon_redemptions (
+          *,
+          discount_coupons (
+            code,
+            name
+          )
+        )
       `
       )
       .order("created_at", { ascending: false });
@@ -48,7 +55,14 @@ adminOrdersRouter.patch("/:id", async (req, res, next) => {
         `
         *,
         order_items (*),
-        payments (*)
+        payments (*),
+        discount_coupon_redemptions (
+          *,
+          discount_coupons (
+            code,
+            name
+          )
+        )
       `
       )
       .single();

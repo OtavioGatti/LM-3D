@@ -29,6 +29,8 @@ type CouponForm = {
   max_redemptions: string;
   unlimited: boolean;
   is_active: boolean;
+  starts_at: string;
+  ends_at: string;
 };
 
 const emptyForm: CouponForm = {
@@ -39,7 +41,9 @@ const emptyForm: CouponForm = {
   min_order: "0",
   max_redemptions: "",
   unlimited: true,
-  is_active: true
+  is_active: true,
+  starts_at: "",
+  ends_at: ""
 };
 
 function cents(value: string) {
@@ -48,6 +52,14 @@ function cents(value: string) {
 
 function moneyInput(value: number) {
   return (value / 100).toFixed(2).replace(".", ",");
+}
+
+function datetimeInput(value: string | null) {
+  return value ? value.slice(0, 16) : "";
+}
+
+function datetimePayload(value: string) {
+  return value ? new Date(value).toISOString() : null;
 }
 
 export function AdminCouponManager() {
@@ -86,7 +98,9 @@ export function AdminCouponManager() {
           form.discount_type === "percent" ? Number(form.discount_value) : cents(form.discount_value),
         min_order_cents: cents(form.min_order),
         max_redemptions: form.unlimited ? null : Number(form.max_redemptions || 1),
-        is_active: form.is_active
+        is_active: form.is_active,
+        starts_at: datetimePayload(form.starts_at),
+        ends_at: datetimePayload(form.ends_at)
       };
 
       await adminApiFetch(form.id ? `/admin/coupons/${form.id}` : "/admin/coupons", {
@@ -116,7 +130,9 @@ export function AdminCouponManager() {
       min_order: moneyInput(coupon.min_order_cents),
       max_redemptions: coupon.max_redemptions ? String(coupon.max_redemptions) : "",
       unlimited: coupon.max_redemptions === null,
-      is_active: coupon.is_active
+      is_active: coupon.is_active,
+      starts_at: datetimeInput(coupon.starts_at),
+      ends_at: datetimeInput(coupon.ends_at)
     });
     setMode("form");
   }
@@ -142,7 +158,7 @@ export function AdminCouponManager() {
         <form className="admin-form" onSubmit={handleSubmit}>
           <div className="form-grid">
             <label>
-              Codigo
+              Código
               <input
                 onChange={(event) => setForm({ ...form, code: event.target.value })}
                 placeholder="LM10"
@@ -154,7 +170,7 @@ export function AdminCouponManager() {
               Nome interno
               <input
                 onChange={(event) => setForm({ ...form, name: event.target.value })}
-                placeholder="Promocao de lancamento"
+                placeholder="Promoção de lançamento"
                 required
                 value={form.name}
               />
@@ -184,7 +200,7 @@ export function AdminCouponManager() {
               />
             </label>
             <label>
-              Pedido minimo
+              Pedido mínimo
               <input
                 inputMode="decimal"
                 onChange={(event) => setForm({ ...form, min_order: event.target.value })}
@@ -200,6 +216,24 @@ export function AdminCouponManager() {
                 placeholder="100"
                 type="number"
                 value={form.max_redemptions}
+              />
+            </label>
+          </div>
+          <div className="form-grid">
+            <label>
+              Início da validade
+              <input
+                onChange={(event) => setForm({ ...form, starts_at: event.target.value })}
+                type="datetime-local"
+                value={form.starts_at}
+              />
+            </label>
+            <label>
+              Fim da validade
+              <input
+                onChange={(event) => setForm({ ...form, ends_at: event.target.value })}
+                type="datetime-local"
+                value={form.ends_at}
               />
             </label>
           </div>
@@ -239,6 +273,7 @@ export function AdminCouponManager() {
               <article className="admin-list-card" key={coupon.id}>
                 <div>
                   <strong>{coupon.code}</strong>
+                  <span>{coupon.name}</span>
                   <span>
                     {coupon.discount_type === "percent"
                       ? `${coupon.discount_value}%`
