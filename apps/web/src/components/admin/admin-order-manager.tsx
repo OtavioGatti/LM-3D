@@ -5,7 +5,9 @@ import {
   PAYMENT_STATUSES,
   type OrderStatus,
   type PaymentStatus,
-  formatMoneyBRL
+  formatMoneyBRL,
+  getBrazilianPhoneHref,
+  getBrazilianWhatsAppHref
 } from "@lm-3d/shared";
 import { ChevronDown, ChevronUp, Mail, MessageCircle, Phone, Save, Search, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -79,10 +81,6 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
   refunded: "Reembolsado",
   charged_back: "Contestação"
 };
-
-function onlyDigits(value: string) {
-  return value.replace(/\D/g, "");
-}
 
 function formatDeliveryAddress(order: AdminOrder) {
   const address = order.delivery_address;
@@ -226,6 +224,8 @@ export function AdminOrderManager() {
       <div className="admin-order-list">
         {filteredOrders.map((order) => {
           const isExpanded = expandedOrderId === order.id;
+          const phoneHref = order.customer_phone ? getBrazilianPhoneHref(order.customer_phone) : null;
+          const whatsappHref = order.customer_phone ? getBrazilianWhatsAppHref(order.customer_phone) : null;
           const firstItem = order.order_items[0];
           const extraItemsCount = Math.max(order.order_items.length - 1, 0);
           const itemSummary = firstItem
@@ -276,21 +276,20 @@ export function AdminOrderManager() {
                       <Mail aria-hidden="true" size={16} />
                       E-mail
                     </a>
-                    {order.customer_phone ? (
+                    {phoneHref || whatsappHref ? (
                       <>
-                        <a className="text-link" href={`tel:${onlyDigits(order.customer_phone)}`}>
-                          <Phone aria-hidden="true" size={16} />
-                          Ligar
-                        </a>
-                        <a
-                          className="text-link"
-                          href={`https://wa.me/55${onlyDigits(order.customer_phone)}`}
-                          rel="noreferrer"
-                          target="_blank"
-                        >
-                          <MessageCircle aria-hidden="true" size={16} />
-                          WhatsApp
-                        </a>
+                        {phoneHref ? (
+                          <a className="text-link" href={phoneHref}>
+                            <Phone aria-hidden="true" size={16} />
+                            Ligar
+                          </a>
+                        ) : null}
+                        {whatsappHref ? (
+                          <a className="text-link" href={whatsappHref} rel="noreferrer" target="_blank">
+                            <MessageCircle aria-hidden="true" size={16} />
+                            WhatsApp
+                          </a>
+                        ) : null}
                       </>
                     ) : null}
                   </div>

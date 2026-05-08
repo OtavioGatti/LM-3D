@@ -1,7 +1,7 @@
 "use client";
 
-import { formatMoneyBRL } from "@lm-3d/shared";
-import { ExternalLink } from "lucide-react";
+import { formatMoneyBRL, getBrazilianPhoneHref, getBrazilianWhatsAppHref } from "@lm-3d/shared";
+import { ExternalLink, Mail, MessageCircle, Phone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
 
@@ -181,6 +181,32 @@ export function AdminCustomRequestManager() {
                 </strong>
                 <span className="status-pill">{statusLabels[request.status]}</span>
               </div>
+            </div>
+
+            <div className="admin-contact-actions">
+              {request.customer_email ? (
+                <a className="text-link" href={`mailto:${request.customer_email}`}>
+                  <Mail aria-hidden="true" size={16} />
+                  E-mail
+                </a>
+              ) : null}
+              {request.customer_phone && getBrazilianPhoneHref(request.customer_phone) ? (
+                <a className="text-link" href={getBrazilianPhoneHref(request.customer_phone) ?? undefined}>
+                  <Phone aria-hidden="true" size={16} />
+                  Ligar
+                </a>
+              ) : null}
+              {request.customer_phone && getBrazilianWhatsAppHref(request.customer_phone) ? (
+                <a
+                  className="text-link"
+                  href={getBrazilianWhatsAppHref(request.customer_phone) ?? undefined}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <MessageCircle aria-hidden="true" size={16} />
+                  WhatsApp
+                </a>
+              ) : null}
             </div>
 
             <div className="order-items-list">

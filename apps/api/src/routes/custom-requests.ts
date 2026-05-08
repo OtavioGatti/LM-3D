@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
+import { formatBrazilianPhone } from "@lm-3d/shared";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
 
 const customRequestSchema = z.object({
@@ -36,6 +37,8 @@ function createRequestCode() {
 customRequestsRouter.post("/", async (req, res, next) => {
   try {
     const payload = customRequestSchema.parse(req.body);
+    const customerPhone = payload.customer_phone ? formatBrazilianPhone(payload.customer_phone) : null;
+    const customerContact = payload.customer_email ? payload.customer_contact : customerPhone ?? payload.customer_contact;
     const supabase = getSupabaseAdminClient();
     const token = getBearerToken(req.header("authorization"));
     const {
@@ -46,6 +49,8 @@ customRequestsRouter.post("/", async (req, res, next) => {
       .from("custom_requests")
       .insert({
         ...payload,
+        customer_contact: customerContact,
+        customer_phone: customerPhone,
         code: createRequestCode(),
         user_id: user?.id ?? null,
         status: "new"

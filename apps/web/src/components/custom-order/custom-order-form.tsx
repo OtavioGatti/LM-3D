@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { Send } from "lucide-react";
+import { formatBrazilianPhone } from "@lm-3d/shared";
 import { createCustomRequest } from "@/lib/api/custom-requests";
 
 type CustomOrderFormState = {
@@ -31,11 +32,20 @@ const emptyForm: CustomOrderFormState = {
 function contactFields(contact: string) {
   const trimmed = contact.trim();
   const looksLikeEmail = trimmed.includes("@");
+  const formattedPhone = looksLikeEmail ? null : formatBrazilianPhone(trimmed);
 
   return {
     customer_email: looksLikeEmail ? trimmed : null,
-    customer_phone: looksLikeEmail ? null : trimmed
+    customer_phone: formattedPhone
   };
+}
+
+function formatContactInput(value: string) {
+  if (value.includes("@") || /[a-zA-Z]/.test(value)) {
+    return value;
+  }
+
+  return formatBrazilianPhone(value);
 }
 
 export function CustomOrderForm() {
@@ -87,8 +97,8 @@ export function CustomOrderForm() {
         WhatsApp ou e-mail
         <input
           autoComplete="email tel"
-          onChange={(event) => setForm({ ...form, contact: event.target.value })}
-          placeholder="Como Lucas pode falar com você"
+          onChange={(event) => setForm({ ...form, contact: formatContactInput(event.target.value) })}
+          placeholder="(11) 99999-9999 ou seu e-mail"
           required
           value={form.contact}
         />

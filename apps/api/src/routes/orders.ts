@@ -1,4 +1,4 @@
-import { isPublicProductStatus, type ProductStatus } from "@lm-3d/shared";
+import { formatBrazilianPhone, isPublicProductStatus, type ProductStatus } from "@lm-3d/shared";
 import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
@@ -117,6 +117,7 @@ function calculateCouponDiscount(coupon: CouponRow, subtotalCents: number) {
 ordersRouter.post("/", async (req, res, next) => {
   try {
     const payload = checkoutOrderSchema.parse(req.body);
+    const customerPhone = payload.customer.phone ? formatBrazilianPhone(payload.customer.phone) : null;
     const supabase = getSupabaseAdminClient();
     const token = getBearerToken(req.header("authorization"));
 
@@ -216,7 +217,7 @@ ordersRouter.post("/", async (req, res, next) => {
         user_id: user.id,
         customer_name: payload.customer.name,
         customer_email: payload.customer.email,
-        customer_phone: payload.customer.phone || null,
+        customer_phone: customerPhone,
         status: "pending_payment",
         payment_status: "pending",
         subtotal_cents: subtotalCents,

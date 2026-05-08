@@ -1,6 +1,6 @@
 "use client";
 
-import { formatMoneyBRL, type ProductDetails } from "@lm-3d/shared";
+import { formatBrazilianPhone, formatMoneyBRL, type ProductDetails } from "@lm-3d/shared";
 import { ArrowRight, Clock, LockKeyhole, MessageSquareText, ShieldCheck, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -338,8 +338,9 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             WhatsApp ou telefone
             <input
               autoComplete="tel"
-              onChange={(event) => setForm({ ...form, phone: event.target.value })}
-              placeholder="Para confirmar personalizações"
+              inputMode="tel"
+              onChange={(event) => setForm({ ...form, phone: formatBrazilianPhone(event.target.value) })}
+              placeholder="(11) 99999-9999"
               value={form.phone}
             />
           </label>
