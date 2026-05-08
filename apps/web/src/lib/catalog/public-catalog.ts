@@ -16,6 +16,7 @@ type PublicProductImageRow = {
   storage_path: string | null;
   alt: string | null;
   sort_order: number;
+  is_primary: boolean;
 };
 
 type PublicProductCategoryRow = {
@@ -104,7 +105,13 @@ function productionTime(min: number, max: number) {
 }
 
 export function mapPublicProduct(row: PublicProductRow, allSlugs: string[]): ProductDetails {
-  const sortedImages = [...(row.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order);
+  const sortedImages = [...(row.product_images ?? [])].sort((a, b) => {
+    if (a.is_primary !== b.is_primary) {
+      return a.is_primary ? -1 : 1;
+    }
+
+    return a.sort_order - b.sort_order;
+  });
   const images = sortedImages.length
     ? sortedImages.map((image) => mapImage(image, row.name))
     : [mapImage(undefined, row.name)];
@@ -200,7 +207,8 @@ export async function getPublicProducts() {
         public_url,
         storage_path,
         alt,
-        sort_order
+        sort_order,
+        is_primary
       ),
       product_categories (
         category:categories (
@@ -287,7 +295,8 @@ export async function loadPublicCatalogFromBrowser() {
           public_url,
           storage_path,
           alt,
-          sort_order
+          sort_order,
+          is_primary
         ),
         product_categories (
           category:categories (

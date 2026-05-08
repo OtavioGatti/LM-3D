@@ -1481,10 +1481,33 @@ img {
   padding: 10px;
 }
 
+.product-image-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--surface-ink);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.product-image-grid input {
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 10px;
+  background: var(--surface);
+}
+
 .product-image-grid span {
   color: var(--muted);
   font-size: 0.84rem;
   font-weight: 900;
+}
+
+.product-image-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px !important;
+  padding: 0 !important;
 }
 
 .product-image-grid button {
@@ -1498,6 +1521,11 @@ img {
   background: var(--surface);
   color: var(--text);
   font-weight: 800;
+}
+
+.product-image-grid button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
 }
 
 .admin-order-list {
