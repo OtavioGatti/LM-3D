@@ -71,18 +71,14 @@ export default function AccountPage() {
           <div className="owner-callout">
             <ShieldCheck aria-hidden="true" size={22} />
             <div>
-              <strong>Perfil owner ativo</strong>
+              <strong>Acesso administrativo ativo</strong>
               <span>Você pode acessar as opções administrativas da LM-3D.</span>
             </div>
             <Link href="/admin" className="button button-primary">
               Abrir admin
             </Link>
           </div>
-        ) : (
-          <div className="form-note">
-            Conta de cliente ativa. As opções administrativas aparecem apenas para owner.
-          </div>
-        )}
+        ) : null}
 
         <button className="button button-secondary" type="button" onClick={handleSignOut}>
           Sair

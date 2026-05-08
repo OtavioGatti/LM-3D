@@ -46,7 +46,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
           <p className="admin-security-note">
-            Acesso protegido por Supabase Auth, RLS e role owner.
+            Acesso protegido por Supabase Auth, RLS e permissão administrativa.
           </p>
           <AdminSignOut />
         </aside>

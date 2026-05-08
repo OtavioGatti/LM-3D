@@ -91,7 +91,7 @@ export function AdminAuthGate({ children }: { children: React.ReactNode }) {
         <div className="admin-auth-card">
           <ShieldAlert aria-hidden="true" size={28} />
           <h1>Acesso restrito</h1>
-          <p>Esta conta está logada, mas não tem role owner no perfil Supabase.</p>
+          <p>Esta conta não tem permissão para acessar o painel administrativo.</p>
           <Link href="/conta" className="button button-secondary">
             Ver minha conta
           </Link>
