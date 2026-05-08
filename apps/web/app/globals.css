@@ -1637,11 +1637,91 @@ img {
 
 .admin-order-card {
   display: grid;
-  gap: 16px;
-  padding: 18px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+  overflow: hidden;
+}
+
+.admin-order-card[data-expanded="true"] {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  box-shadow: 0 18px 45px rgba(0, 74, 63, 0.08);
+}
+
+.admin-order-summary-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 18px;
+  align-items: center;
+  width: 100%;
+  min-height: 88px;
+  padding: 18px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-order-summary-button:hover,
+.admin-order-summary-button:focus-visible {
+  background: var(--surface-strong);
+}
+
+.admin-order-summary-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  outline-offset: -3px;
+}
+
+.admin-order-summary-main,
+.admin-order-summary-meta {
+  display: grid;
+  gap: 5px;
+}
+
+.admin-order-summary-main span,
+.admin-order-summary-main small,
+.admin-order-summary-meta span {
+  color: var(--muted);
+}
+
+.admin-order-summary-main small {
+  line-height: 1.35;
+}
+
+.admin-order-summary-meta {
+  justify-items: end;
+  min-width: 170px;
+}
+
+.admin-order-summary-meta > strong {
+  color: var(--surface-ink);
+  font-size: 1.08rem;
+}
+
+.admin-order-summary-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.admin-order-expand-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  color: var(--accent);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.admin-order-expanded-content {
+  display: grid;
+  gap: 16px;
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--border);
 }
 
 .admin-order-card-header {
@@ -1935,6 +2015,19 @@ img {
   .order-toolbar,
   .admin-order-details-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-order-summary-button {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    min-height: auto;
+  }
+
+  .admin-order-summary-meta,
+  .admin-order-summary-status,
+  .admin-order-expand-copy {
+    justify-items: start;
+    justify-content: flex-start;
   }
 
   .cart-item {

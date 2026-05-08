@@ -7,7 +7,7 @@ import {
   type PaymentStatus,
   formatMoneyBRL
 } from "@lm-3d/shared";
-import { Mail, MessageCircle, Phone, Save, Search, Truck } from "lucide-react";
+import { ChevronDown, ChevronUp, Mail, MessageCircle, Phone, Save, Search, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
 
@@ -109,6 +109,7 @@ export function AdminOrderManager() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<OrderStatus | "todos">("todos");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | "todos">("todos");
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -142,6 +143,12 @@ export function AdminOrderManager() {
       return matchesStatus && matchesPayment && matchesQuery;
     });
   }, [orders, paymentStatus, query, status]);
+
+  useEffect(() => {
+    if (expandedOrderId && !filteredOrders.some((order) => order.id === expandedOrderId)) {
+      setExpandedOrderId(null);
+    }
+  }, [expandedOrderId, filteredOrders]);
 
   async function updateOrder(order: AdminOrder, updates: Partial<AdminOrder>) {
     setSavingId(order.id);
@@ -217,157 +224,189 @@ export function AdminOrderManager() {
       </div>
 
       <div className="admin-order-list">
-        {filteredOrders.map((order) => (
-          <article className="admin-order-card" key={order.id}>
-            <div className="admin-order-card-header">
-              <div>
-                <strong>{order.code}</strong>
-                <span>
-                  {order.customer_name} · {order.customer_email}
-                </span>
-                {order.customer_phone ? <span>{order.customer_phone}</span> : null}
-              </div>
-              <div>
-                <strong>{formatMoneyBRL(order.total_cents)}</strong>
-                <span>{new Intl.DateTimeFormat("pt-BR").format(new Date(order.created_at))}</span>
-              </div>
-            </div>
+        {filteredOrders.map((order) => {
+          const isExpanded = expandedOrderId === order.id;
+          const firstItem = order.order_items[0];
+          const extraItemsCount = Math.max(order.order_items.length - 1, 0);
+          const itemSummary = firstItem
+            ? `${firstItem.quantity}x ${firstItem.product_snapshot?.name ?? "Produto"}${
+                extraItemsCount > 0 ? ` + ${extraItemsCount} item(ns)` : ""
+              }`
+            : "Sem itens registrados";
 
-            <div className="admin-contact-actions">
-              <a className="text-link" href={`mailto:${order.customer_email}`}>
-                <Mail aria-hidden="true" size={16} />
-                E-mail
-              </a>
-              {order.customer_phone ? (
-                <>
-                  <a className="text-link" href={`tel:${onlyDigits(order.customer_phone)}`}>
-                    <Phone aria-hidden="true" size={16} />
-                    Ligar
-                  </a>
-                  <a
-                    className="text-link"
-                    href={`https://wa.me/55${onlyDigits(order.customer_phone)}`}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    <MessageCircle aria-hidden="true" size={16} />
-                    WhatsApp
-                  </a>
-                </>
-              ) : null}
-            </div>
-
-            <div className="order-items-list">
-              {order.order_items.map((item) => (
-                <div key={item.id}>
+          return (
+            <article className="admin-order-card" data-expanded={isExpanded} key={order.id}>
+              <button
+                aria-controls={`order-details-${order.id}`}
+                aria-expanded={isExpanded}
+                className="admin-order-summary-button"
+                onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                type="button"
+              >
+                <span className="admin-order-summary-main">
+                  <strong>{order.code}</strong>
                   <span>
-                    {item.quantity}x {item.product_snapshot?.name ?? "Produto"}
+                    {order.customer_name} · {order.customer_email}
                   </span>
-                  <strong>{formatMoneyBRL(item.line_total_cents)}</strong>
-                  {item.customization_notes ? <small>{item.customization_notes}</small> : null}
+                  {order.customer_phone ? <small>{order.customer_phone}</small> : null}
+                  <small>{itemSummary}</small>
+                </span>
+                <span className="admin-order-summary-meta">
+                  <strong>{formatMoneyBRL(order.total_cents)}</strong>
+                  <span>{new Intl.DateTimeFormat("pt-BR").format(new Date(order.created_at))}</span>
+                  <span className="admin-order-summary-status">
+                    <span className="status-pill">{statusLabels[order.status]}</span>
+                    <span className="status-pill">{paymentStatusLabels[order.payment_status]}</span>
+                  </span>
+                </span>
+                <span className="admin-order-expand-copy">
+                  {isExpanded ? (
+                    <ChevronUp aria-hidden="true" size={18} />
+                  ) : (
+                    <ChevronDown aria-hidden="true" size={18} />
+                  )}
+                  {isExpanded ? "Minimizar" : "Ver detalhes"}
+                </span>
+              </button>
+
+              {isExpanded ? (
+                <div className="admin-order-expanded-content" id={`order-details-${order.id}`}>
+                  <div className="admin-contact-actions">
+                    <a className="text-link" href={`mailto:${order.customer_email}`}>
+                      <Mail aria-hidden="true" size={16} />
+                      E-mail
+                    </a>
+                    {order.customer_phone ? (
+                      <>
+                        <a className="text-link" href={`tel:${onlyDigits(order.customer_phone)}`}>
+                          <Phone aria-hidden="true" size={16} />
+                          Ligar
+                        </a>
+                        <a
+                          className="text-link"
+                          href={`https://wa.me/55${onlyDigits(order.customer_phone)}`}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          <MessageCircle aria-hidden="true" size={16} />
+                          WhatsApp
+                        </a>
+                      </>
+                    ) : null}
+                  </div>
+
+                  <div className="order-items-list">
+                    {order.order_items.map((item) => (
+                      <div key={item.id}>
+                        <span>
+                          {item.quantity}x {item.product_snapshot?.name ?? "Produto"}
+                        </span>
+                        <strong>{formatMoneyBRL(item.line_total_cents)}</strong>
+                        {item.customization_notes ? <small>{item.customization_notes}</small> : null}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="admin-order-details-grid">
+                    <div>
+                      <span>Entrega</span>
+                      <strong>{order.delivery_method ?? "A combinar"}</strong>
+                      <small>{formatDeliveryAddress(order)}</small>
+                      {order.tracking_code ? <small>Rastreio: {order.tracking_code}</small> : null}
+                    </div>
+                    <div>
+                      <span>Totais</span>
+                      <small>Subtotal: {formatMoneyBRL(order.subtotal_cents)}</small>
+                      {order.discount_cents > 0 ? (
+                        <small>
+                          Desconto: -{formatMoneyBRL(order.discount_cents)}
+                          {getCouponLabel(order) ? ` (${getCouponLabel(order)})` : ""}
+                        </small>
+                      ) : null}
+                      {order.shipping_cents > 0 ? <small>Entrega: {formatMoneyBRL(order.shipping_cents)}</small> : null}
+                      <strong>Total: {formatMoneyBRL(order.total_cents)}</strong>
+                    </div>
+                    <div>
+                      <span>Observação do cliente</span>
+                      <small>{order.customer_notes || "Sem observações do cliente."}</small>
+                    </div>
+                  </div>
+
+                  <div className="form-grid">
+                    <label>
+                      Status do pedido
+                      <select
+                        value={order.status}
+                        onChange={(event) => void updateOrder(order, { status: event.target.value as OrderStatus })}
+                      >
+                        {ORDER_STATUSES.map((item) => (
+                          <option key={item} value={item}>
+                            {statusLabels[item]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Status do pagamento
+                      <select
+                        value={order.payment_status}
+                        onChange={(event) =>
+                          void updateOrder(order, { payment_status: event.target.value as PaymentStatus })
+                        }
+                      >
+                        {PAYMENT_STATUSES.map((item) => (
+                          <option key={item} value={item}>
+                            {paymentStatusLabels[item]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Entrega/retirada
+                      <input
+                        defaultValue={order.delivery_method ?? ""}
+                        onBlur={(event) => void updateOrder(order, { delivery_method: event.target.value })}
+                        placeholder="Ex.: Retirada, Correios, motoboy"
+                      />
+                    </label>
+                    <label>
+                      Código de rastreio
+                      <input
+                        defaultValue={order.tracking_code ?? ""}
+                        onBlur={(event) => void updateOrder(order, { tracking_code: event.target.value })}
+                      />
+                    </label>
+                    <label>
+                      Observação interna
+                      <textarea
+                        defaultValue={order.admin_notes ?? ""}
+                        onBlur={(event) => void updateOrder(order, { admin_notes: event.target.value })}
+                        rows={3}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="admin-inline-actions">
+                    <span className="status-pill">{statusLabels[order.status]}</span>
+                    <span className="status-pill">{paymentStatusLabels[order.payment_status]}</span>
+                    {order.delivery_method ? (
+                      <span className="status-pill">
+                        <Truck aria-hidden="true" size={14} />
+                        {order.delivery_method}
+                      </span>
+                    ) : null}
+                    {savingId === order.id ? (
+                      <span className="saving-pill">
+                        <Save aria-hidden="true" size={14} />
+                        Salvando
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="admin-order-details-grid">
-              <div>
-                <span>Entrega</span>
-                <strong>{order.delivery_method ?? "A combinar"}</strong>
-                <small>{formatDeliveryAddress(order)}</small>
-                {order.tracking_code ? <small>Rastreio: {order.tracking_code}</small> : null}
-              </div>
-              <div>
-                <span>Totais</span>
-                <small>Subtotal: {formatMoneyBRL(order.subtotal_cents)}</small>
-                {order.discount_cents > 0 ? (
-                  <small>
-                    Desconto: -{formatMoneyBRL(order.discount_cents)}
-                    {getCouponLabel(order) ? ` (${getCouponLabel(order)})` : ""}
-                  </small>
-                ) : null}
-                {order.shipping_cents > 0 ? <small>Entrega: {formatMoneyBRL(order.shipping_cents)}</small> : null}
-                <strong>Total: {formatMoneyBRL(order.total_cents)}</strong>
-              </div>
-              <div>
-                <span>Observação do cliente</span>
-                <small>{order.customer_notes || "Sem observações do cliente."}</small>
-              </div>
-            </div>
-
-            <div className="form-grid">
-              <label>
-                Status do pedido
-                <select
-                  value={order.status}
-                  onChange={(event) =>
-                    void updateOrder(order, { status: event.target.value as OrderStatus })
-                  }
-                >
-                  {ORDER_STATUSES.map((item) => (
-                    <option key={item} value={item}>
-                      {statusLabels[item]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Status do pagamento
-                <select
-                  value={order.payment_status}
-                  onChange={(event) =>
-                    void updateOrder(order, { payment_status: event.target.value as PaymentStatus })
-                  }
-                >
-                  {PAYMENT_STATUSES.map((item) => (
-                    <option key={item} value={item}>
-                      {paymentStatusLabels[item]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Entrega/retirada
-                <input
-                  defaultValue={order.delivery_method ?? ""}
-                  onBlur={(event) => void updateOrder(order, { delivery_method: event.target.value })}
-                  placeholder="Ex.: Retirada, Correios, motoboy"
-                />
-              </label>
-              <label>
-                Código de rastreio
-                <input
-                  defaultValue={order.tracking_code ?? ""}
-                  onBlur={(event) => void updateOrder(order, { tracking_code: event.target.value })}
-                />
-              </label>
-              <label>
-                Observação interna
-                <textarea
-                  defaultValue={order.admin_notes ?? ""}
-                  onBlur={(event) => void updateOrder(order, { admin_notes: event.target.value })}
-                  rows={3}
-                />
-              </label>
-            </div>
-
-            <div className="admin-inline-actions">
-              <span className="status-pill">{statusLabels[order.status]}</span>
-              <span className="status-pill">{paymentStatusLabels[order.payment_status]}</span>
-              {order.delivery_method ? (
-                <span className="status-pill">
-                  <Truck aria-hidden="true" size={14} />
-                  {order.delivery_method}
-                </span>
               ) : null}
-              {savingId === order.id ? (
-                <span className="saving-pill">
-                  <Save aria-hidden="true" size={14} />
-                  Salvando
-                </span>
-              ) : null}
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
 
       {!isLoading && filteredOrders.length === 0 ? (
