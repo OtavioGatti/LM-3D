@@ -1,6 +1,7 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getApiBaseUrl } from "./base-url";
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+const apiBaseUrl = getApiBaseUrl();
 
 function shouldUseDirectSupabase() {
   if (typeof window === "undefined") {
