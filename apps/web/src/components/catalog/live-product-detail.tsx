@@ -2,10 +2,12 @@
 
 import { formatMoneyBRL, type Category, type ProductDetails } from "@lm-3d/shared";
 import Link from "next/link";
-import { MessageCircle, ShieldCheck, Truck } from "lucide-react";
+import { MessageCircle, ShieldCheck, Truck, X, ZoomIn } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { loadPublicCatalogFromBrowser } from "@/lib/catalog/public-catalog";
+
+type GalleryImage = ProductDetails["images"][number];
 
 type LiveProductDetailProps = {
   initialProduct: ProductDetails;
@@ -15,6 +17,7 @@ type LiveProductDetailProps = {
 export function LiveProductDetail({ initialProduct, initialCategory }: LiveProductDetailProps) {
   const [product, setProduct] = useState(initialProduct);
   const [category, setCategory] = useState(initialCategory);
+  const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
 
   useEffect(() => {
     void loadPublicCatalogFromBrowser().then((catalog) => {
@@ -33,6 +36,24 @@ export function LiveProductDetail({ initialProduct, initialCategory }: LiveProdu
     });
   }, [initialProduct.slug]);
 
+  useEffect(() => {
+    if (!selectedImage) {
+      return;
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setSelectedImage(null);
+      }
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [selectedImage]);
+
   const gallery = useMemo(() => product.images, [product.images]);
 
   return (
@@ -40,7 +61,13 @@ export function LiveProductDetail({ initialProduct, initialCategory }: LiveProdu
       <div className="product-gallery">
         {gallery.map((image) => (
           <figure className="gallery-frame" key={image.src}>
-            <img src={image.src} alt={image.alt} />
+            <button type="button" className="gallery-image-button" onClick={() => setSelectedImage(image)}>
+              <img src={image.src} alt={image.alt} />
+              <span className="gallery-zoom-copy">
+                <ZoomIn aria-hidden="true" size={16} />
+                Ampliar foto
+              </span>
+            </button>
           </figure>
         ))}
       </div>
@@ -89,6 +116,18 @@ export function LiveProductDetail({ initialProduct, initialCategory }: LiveProdu
           </span>
         </div>
       </div>
+
+      {selectedImage ? (
+        <div className="image-lightbox" role="dialog" aria-modal="true" aria-label={`Foto ampliada de ${product.name}`} onClick={() => setSelectedImage(null)}>
+          <button type="button" className="image-lightbox-close" aria-label="Fechar foto ampliada" onClick={() => setSelectedImage(null)}>
+            <X aria-hidden="true" size={22} />
+          </button>
+          <figure className="image-lightbox-frame" onClick={(event) => event.stopPropagation()}>
+            <img src={selectedImage.src} alt={selectedImage.alt} />
+            <figcaption>{selectedImage.alt}</figcaption>
+          </figure>
+        </div>
+      ) : null}
     </>
   );
 }

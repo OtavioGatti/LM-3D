@@ -50,7 +50,7 @@ export function SiteFooter() {
         <div>
           <Link href="/" className="brand-mark">
             <span className="brand-logo-frame">
-              <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
+              <img src={assetPath("/images/lm-3d-symbol.png")} alt="" aria-hidden="true" />
             </span>
             <span>LM-3D</span>
           </Link>
