@@ -32,7 +32,7 @@ Credenciais sensiveis como `SUPABASE_SERVICE_ROLE_KEY` e `MERCADO_PAGO_ACCESS_TO
 
 - GitHub Pages publica o frontend estático usando `.github/workflows/pages.yml`.
 - Render pode publicar o backend usando `render.yaml`.
-- Vercel pode publicar o frontend com root no repositório ou em `apps/web`; há `vercel.json` nos dois níveis para buildar também o pacote `@lm-3d/shared`.
+- Vercel deve publicar o frontend como Next.js, preferencialmente com root em `apps/web`; o `vercel.json` desse diretório builda também o pacote `@lm-3d/shared`.
 - Depois do deploy do backend, configure `NEXT_PUBLIC_API_URL` no GitHub/Vercel apontando para `https://seu-backend.onrender.com/api`.
 - No Render, preencha as variáveis marcadas como secretas no painel. Mercado Pago fica pendente até a fase final.
 

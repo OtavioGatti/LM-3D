@@ -1,5 +1,4 @@
 {
   "installCommand": "npm ci",
-  "buildCommand": "npm run build --workspace @lm-3d/shared && npm run build --workspace @lm-3d/web",
-  "outputDirectory": "apps/web/out"
+  "buildCommand": "npm run build --workspace @lm-3d/shared && npm run build --workspace @lm-3d/web"
 }

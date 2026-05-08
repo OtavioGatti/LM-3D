@@ -3,7 +3,7 @@ const isGitHubPages = process.env.GITHUB_PAGES === "true";
 const basePath = isGitHubPages ? "/LM-3D" : "";
 
 const nextConfig = {
-  output: "export",
+  ...(isGitHubPages ? { output: "export" } : {}),
   basePath,
   assetPrefix: isGitHubPages ? `${basePath}/` : "",
   env: {
