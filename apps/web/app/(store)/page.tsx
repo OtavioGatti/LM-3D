@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Boxes, CreditCard, MessageCircle, Sparkles } from "lucide-react";
-import { ProductCard } from "@/components/product-card";
-import { SectionHeader } from "@/components/section-header";
+import { ArrowRight, BadgeCheck, Boxes, CreditCard, MessageCircle } from "lucide-react";
+import { HomeCatalogSections } from "@/components/home/home-catalog-sections";
 import { TrustRail } from "@/components/trust-rail";
 import { assetPath } from "@/lib/assets";
 import { getPublicCatalog } from "@/lib/catalog/public-catalog";
@@ -60,41 +59,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="section">
-        <div className="page-container">
-          <SectionHeader
-            title="Categorias em destaque"
-            description="Comece pelo tipo de peça que você procura ou envie uma ideia para personalizar."
-            actionHref="/catalogo"
-            actionLabel="Explorar tudo"
-          />
-          <div className="category-grid">
-            {categories.slice(0, 6).map((category) => (
-              <Link href={`/catalogo?categoria=${category.slug}`} className="category-card" key={category.id}>
-                <Sparkles aria-hidden="true" size={20} />
-                <h3>{category.name}</h3>
-                <p>{category.description}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section-muted">
-        <div className="page-container">
-          <SectionHeader
-            title="Produtos prontos para comprar"
-            description="Produtos cadastrados por Lucas, com prazo claro e possibilidade de personalização quando indicado."
-            actionHref="/catalogo"
-            actionLabel="Ver catálogo"
-          />
-          <div className="product-grid">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomeCatalogSections categories={categories} featuredProducts={featuredProducts} />
 
       <section className="section">
         <div className="page-container trust-grid">
