@@ -49,7 +49,9 @@ export function SiteFooter() {
       <div className="page-container footer-grid">
         <div>
           <Link href="/" className="brand-mark">
-            <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
+            <span className="brand-logo-frame">
+              <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
+            </span>
             <span>LM-3D</span>
           </Link>
           <p>Produtos impressos em 3D com cuidado, clareza de prazo e atendimento direto.</p>

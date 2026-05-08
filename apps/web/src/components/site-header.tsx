@@ -13,7 +13,9 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="page-container site-header-inner">
         <Link href="/" className="brand-mark" aria-label="LM-3D Home">
-          <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
+          <span className="brand-logo-frame">
+            <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
+          </span>
           <span>LM-3D</span>
         </Link>
         <nav aria-label="Navegação principal">

@@ -29,7 +29,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="admin-shell">
         <aside className="admin-sidebar">
           <Link href="/" className="admin-brand">
-            <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
+            <span className="brand-logo-frame">
+              <img src={assetPath("/images/lm-3d-logo.png")} alt="" aria-hidden="true" />
+            </span>
             <span>LM-3D Admin</span>
           </Link>
           <nav aria-label="Navegacao administrativa">
