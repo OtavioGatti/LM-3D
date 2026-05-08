@@ -1646,6 +1646,70 @@ img {
   grid-template-columns: minmax(240px, 1fr) 220px;
 }
 
+.order-toolbar {
+  grid-template-columns: minmax(260px, 1fr) 220px 200px;
+}
+
+.admin-order-summary-strip,
+.admin-contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-order-summary-strip {
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-strong);
+}
+
+.admin-order-summary-strip span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.admin-order-summary-strip strong {
+  color: var(--surface-ink);
+  font-size: 1.25rem;
+}
+
+.admin-contact-actions {
+  padding-bottom: 4px;
+}
+
+.admin-order-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-order-details-grid div {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+
+.admin-order-details-grid span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-order-details-grid strong {
+  color: var(--surface-ink);
+}
+
+.admin-order-details-grid small {
+  color: var(--muted);
+}
+
 .calculator-result {
   display: grid;
   gap: 12px;
@@ -1780,7 +1844,9 @@ img {
   .product-specs,
   .form-grid,
   .coupon-box,
-  .compact-toolbar {
+  .compact-toolbar,
+  .order-toolbar,
+  .admin-order-details-grid {
     grid-template-columns: 1fr;
   }
 
