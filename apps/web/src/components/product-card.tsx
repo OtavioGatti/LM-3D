@@ -18,7 +18,7 @@ export function ProductCard({ product }: { product: ProductSummary }) {
           {product.acceptsCustomization ? (
             <span>
               <Palette aria-hidden="true" size={14} />
-              Personalizavel
+              Personalizável
             </span>
           ) : null}
         </div>

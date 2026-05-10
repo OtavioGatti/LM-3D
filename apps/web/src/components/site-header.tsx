@@ -3,8 +3,11 @@ import { HeaderAuthActions } from "@/components/auth/header-auth-actions";
 import { assetPath } from "@/lib/assets";
 
 const navItems = [
-  { href: "/", label: "Home" },
+  { href: "/", label: "Início" },
   { href: "/catalogo", label: "Catálogo" },
+  { href: "/#materiais", label: "Materiais" },
+  { href: "/#sobre", label: "Sobre" },
+  { href: "/#como-funciona", label: "Como funciona" },
   { href: "/pedido-personalizado", label: "Pedido personalizado" }
 ];
 

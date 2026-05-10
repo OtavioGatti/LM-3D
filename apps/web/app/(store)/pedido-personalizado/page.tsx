@@ -1,5 +1,6 @@
 import { MessageCircle, UploadCloud } from "lucide-react";
 import { CustomOrderForm } from "@/components/custom-order/custom-order-form";
+import { assetPath } from "@/lib/assets";
 
 export const metadata = {
   title: "Pedido personalizado"
@@ -10,6 +11,9 @@ export default function CustomOrderPage() {
     <section className="section">
       <div className="page-container custom-order-layout">
         <div>
+          <div className="custom-order-visual">
+            <img src={assetPath("/images/lm-3d-custom-order-banner.png")} alt="" />
+          </div>
           <h1>Pedido personalizado</h1>
           <p className="page-intro">
             Um caminho claro para clientes que querem uma peça fora do catálogo: nome,

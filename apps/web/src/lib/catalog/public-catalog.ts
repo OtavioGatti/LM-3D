@@ -240,7 +240,7 @@ export async function getPublicCatalog() {
   return {
     categories,
     products,
-    featuredProducts: products.slice(0, 3)
+    featuredProducts: products.slice(0, 4)
   };
 }
 
@@ -324,6 +324,6 @@ export async function loadPublicCatalogFromBrowser() {
   return {
     categories: categoriesResult.data.map(mapCategory),
     products,
-    featuredProducts: products.slice(0, 3)
+    featuredProducts: products.slice(0, 4)
   };
 }

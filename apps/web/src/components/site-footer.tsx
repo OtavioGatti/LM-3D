@@ -1,5 +1,6 @@
 "use client";
 
+import { MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { assetPath } from "@/lib/assets";
@@ -46,27 +47,44 @@ export function SiteFooter() {
 
   return (
     <footer className="site-footer">
+      <img
+        src={assetPath("/images/lm-3d-footer-texture.png")}
+        alt=""
+        aria-hidden="true"
+        className="footer-bg-image"
+      />
       <div className="page-container footer-grid">
-        <div>
+        <div className="footer-brand-block">
           <Link href="/" className="brand-mark">
             <span className="brand-logo-frame">
               <img src={assetPath("/images/lm-3d-symbol.png")} alt="" aria-hidden="true" />
             </span>
             <span>LM-3D</span>
           </Link>
-          <p>Produtos impressos em 3D com cuidado, clareza de prazo e atendimento direto.</p>
+          <p>Peças personalizadas com qualidade, criatividade e tecnologia.</p>
+        </div>
+        <div>
+          <h2>Navegação</h2>
+          <Link href="/">Início</Link>
+          <Link href="/catalogo">Catálogo</Link>
+          <Link href="/#materiais">Materiais</Link>
+          <Link href="/#sobre">Sobre</Link>
+          <Link href="/#como-funciona">Como funciona</Link>
         </div>
         <div>
           <h2>Comprar</h2>
-          <Link href="/catalogo">Catálogo</Link>
           <Link href="/pedido-personalizado">Pedido personalizado</Link>
           <Link href="/carrinho">Carrinho</Link>
-        </div>
-        <div>
-          <h2>Conta</h2>
           {isSignedIn === false ? <Link href="/login">Entrar</Link> : null}
           <Link href="/conta">Minha conta</Link>
-          <span>Pagamentos via Mercado Pago nas próximas fases.</span>
+        </div>
+        <div className="footer-contact">
+          <h2>Fale conosco</h2>
+          <span>Envie sua ideia para Lucas avaliar material, prazo e viabilidade.</span>
+          <Link href="/pedido-personalizado" className="footer-quote-link">
+            <MessageCircle aria-hidden="true" size={18} />
+            Pedir orçamento
+          </Link>
         </div>
       </div>
     </footer>
