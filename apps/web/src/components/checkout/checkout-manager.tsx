@@ -220,6 +220,12 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
       });
 
       clearCartItems();
+
+      if (response.payment?.checkoutUrl) {
+        window.location.assign(response.payment.checkoutUrl);
+        return;
+      }
+
       router.push(
         `/pedido-confirmado?code=${encodeURIComponent(response.order.code)}&payment=${encodeURIComponent(
           response.order.paymentStatus
@@ -304,8 +310,8 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           <div>
             <h1>Finalizar pedido</h1>
             <p>
-              Lucas recebe os dados do pedido, confirma detalhes de personalização e libera o
-              pagamento quando o Mercado Pago estiver conectado.
+              Revisamos os dados, vinculamos o pedido a sua conta e seguimos para o pagamento
+              seguro via Mercado Pago.
             </p>
           </div>
 
@@ -473,7 +479,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           </div>
           <div className="summary-note">
             <Clock aria-hidden="true" size={18} />
-            O pagamento fica pendente até conectarmos o Mercado Pago na etapa final.
+            O Mercado Pago abre em uma página segura para concluir o pagamento.
           </div>
         </aside>
       </div>

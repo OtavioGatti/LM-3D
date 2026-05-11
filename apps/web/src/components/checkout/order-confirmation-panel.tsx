@@ -17,8 +17,8 @@ export function OrderConfirmationPanel() {
         {code
           ? `Anotamos o pedido ${code}.`
           : "Seu pedido foi recebido e ficará disponível para acompanhamento."}{" "}
-        Lucas confere os detalhes, confirma personalizações e combina pagamento assim que o
-        checkout Mercado Pago estiver ativo.
+        Se o pagamento já foi concluído no Mercado Pago, o status será atualizado automaticamente
+        assim que a confirmação chegar.
       </p>
 
       <div className="checkout-steps">
@@ -26,7 +26,7 @@ export function OrderConfirmationPanel() {
           <Clock aria-hidden="true" size={18} /> Pagamento: {payment ?? "pendente"}
         </span>
         <span>
-          <MessageSquareText aria-hidden="true" size={18} /> Próximo passo: contato do Lucas
+          <MessageSquareText aria-hidden="true" size={18} /> Próximo passo: acompanhar em Minha conta
         </span>
       </div>
 

@@ -36,6 +36,12 @@ export type CheckoutOrderResponse = {
     totalCents: number;
     discountCents: number;
   };
+  payment?: {
+    provider: "mercado_pago";
+    preferenceId: string;
+    checkoutUrl: string | null;
+    sandboxCheckoutUrl: string | null;
+  };
 };
 
 export async function createCheckoutOrder(payload: CheckoutOrderPayload) {

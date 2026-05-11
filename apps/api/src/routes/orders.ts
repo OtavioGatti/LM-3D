@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/http.js";
+import { createMercadoPagoPreference } from "../lib/mercado-pago.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
 
 type ProductRow = {
@@ -280,15 +281,41 @@ ordersRouter.post("/", async (req, res, next) => {
       throw itemsError;
     }
 
+    let preference: Awaited<ReturnType<typeof createMercadoPagoPreference>>;
+
+    try {
+      preference = await createMercadoPagoPreference({
+        orderId: order.id,
+        orderCode: order.code,
+        customerName: order.customer_name,
+        customerEmail: order.customer_email,
+        customerPhone,
+        totalCents: order.total_cents,
+        items: [
+          {
+            title: `Pedido ${order.code} - LM-3D`,
+            quantity: 1,
+            unitPriceCents: order.total_cents
+          }
+        ]
+      });
+    } catch (error) {
+      await supabase.from("orders").delete().eq("id", order.id);
+      throw error;
+    }
+
     const { error: paymentError } = await supabase.from("payments").insert({
       order_id: order.id,
       provider: "mercado_pago",
+      mercado_pago_preference_id: preference.id,
       external_reference: order.code,
       status: "pending",
       amount_cents: order.total_cents,
       currency: "BRL",
       raw_payload: {
-        setup_status: "checkout_created_before_mercado_pago_configuration"
+        preference: preference.rawPayload,
+        checkout_url: preference.checkoutUrl,
+        sandbox_checkout_url: preference.sandboxCheckoutUrl
       }
     });
 
@@ -305,6 +332,12 @@ ordersRouter.post("/", async (req, res, next) => {
         paymentStatus: order.payment_status,
         totalCents: order.total_cents,
         discountCents: order.discount_cents
+      },
+      payment: {
+        provider: "mercado_pago",
+        preferenceId: preference.id,
+        checkoutUrl: preference.checkoutUrl,
+        sandboxCheckoutUrl: preference.sandboxCheckoutUrl
       }
     });
   } catch (error) {
