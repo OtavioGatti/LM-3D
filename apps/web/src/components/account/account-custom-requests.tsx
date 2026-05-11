@@ -1,7 +1,7 @@
 "use client";
 
 import { formatMoneyBRL } from "@lm-3d/shared";
-import { ClipboardList, CreditCard } from "lucide-react";
+import { CheckCircle2, ClipboardList, CreditCard } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createCustomRequestCheckout } from "@/lib/api/custom-requests";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
@@ -18,6 +18,7 @@ type AccountCustomRequest = {
   reference_url: string | null;
   status: "new" | "contacted" | "quoted" | "converted" | "closed" | "canceled";
   estimated_price_cents: number | null;
+  quote_message: string | null;
   created_at: string;
 };
 
@@ -29,6 +30,27 @@ const statusLabels: Record<AccountCustomRequest["status"], string> = {
   closed: "Fechado",
   canceled: "Cancelado"
 };
+
+const statusSteps = [
+  { key: "new", label: "Recebido" },
+  { key: "contacted", label: "Em avaliação" },
+  { key: "quoted", label: "Orçado" },
+  { key: "converted", label: "Pedido gerado" }
+] as const;
+
+function statusStepIndex(status: AccountCustomRequest["status"]) {
+  if (status === "canceled") {
+    return -1;
+  }
+
+  if (status === "closed") {
+    return 2;
+  }
+
+  const index = statusSteps.findIndex((step) => step.key === status);
+
+  return index === -1 ? 0 : index;
+}
 
 export function AccountCustomRequests() {
   const [requests, setRequests] = useState<AccountCustomRequest[]>([]);
@@ -43,10 +65,23 @@ export function AccountCustomRequests() {
         return;
       }
 
-      const { data, error } = await getSupabaseBrowserClient()
-        .from("custom_requests")
-        .select(
-          `
+      const supabase = getSupabaseBrowserClient();
+      const selectWithQuoteMessage = `
+          id,
+          code,
+          title,
+          description,
+          quantity,
+          desired_material,
+          desired_colors,
+          deadline,
+          reference_url,
+          status,
+          estimated_price_cents,
+          quote_message,
+          created_at
+        `;
+      const selectWithoutQuoteMessage = `
           id,
           code,
           title,
@@ -59,9 +94,21 @@ export function AccountCustomRequests() {
           status,
           estimated_price_cents,
           created_at
-        `
-        )
+        `;
+      let { data, error } = await supabase
+        .from("custom_requests")
+        .select(selectWithQuoteMessage)
         .order("created_at", { ascending: false });
+
+      if (error?.message.includes("quote_message")) {
+        const fallback = await supabase
+          .from("custom_requests")
+          .select(selectWithoutQuoteMessage)
+          .order("created_at", { ascending: false });
+
+        data = (fallback.data ?? []).map((request) => ({ ...request, quote_message: null }));
+        error = fallback.error;
+      }
 
       if (error) {
         setMessage(error.message);
@@ -140,6 +187,31 @@ export function AccountCustomRequests() {
           </div>
 
           <p>{request.description}</p>
+
+          <div className="request-timeline" aria-label={`Andamento do orçamento ${request.code}`}>
+            {statusSteps.map((step, index) => {
+              const currentIndex = statusStepIndex(request.status);
+              const isDone = currentIndex >= index;
+              const isCurrent = currentIndex === index;
+
+              return (
+                <div className="request-timeline-step" data-active={isDone} key={step.key}>
+                  <span>
+                    {isDone ? <CheckCircle2 aria-hidden="true" size={14} /> : index + 1}
+                  </span>
+                  <strong>{step.label}</strong>
+                  {isCurrent ? <small>Etapa atual</small> : null}
+                </div>
+              );
+            })}
+          </div>
+
+          {request.quote_message ? (
+            <div className="quote-message">
+              <span>Mensagem do Lucas</span>
+              <p>{request.quote_message}</p>
+            </div>
+          ) : null}
 
           <div className="account-order-items">
             <div>

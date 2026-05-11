@@ -33,6 +33,7 @@ type CustomRequest = {
   reference_url: string | null;
   status: Exclude<CustomRequestStatus, "todos">;
   estimated_price_cents: number | null;
+  quote_message: string | null;
   admin_notes: string | null;
   created_at: string;
 };
@@ -110,6 +111,8 @@ export function AdminCustomRequestManager() {
               updates.estimated_price_cents === undefined
                 ? request.estimated_price_cents
                 : updates.estimated_price_cents,
+            quote_message:
+              updates.quote_message === undefined ? request.quote_message : updates.quote_message,
             admin_notes: updates.admin_notes === undefined ? request.admin_notes : updates.admin_notes
           })
         }
@@ -267,10 +270,21 @@ export function AdminCustomRequestManager() {
             </div>
 
             <label>
+              Mensagem para o cliente
+              <textarea
+                defaultValue={request.quote_message ?? ""}
+                onBlur={(event) => void updateRequest(request, { quote_message: event.target.value })}
+                placeholder="Ex.: Consigo produzir essa peça em PLA preto. O valor inclui acabamento e prazo estimado de 3 dias úteis após o pagamento."
+                rows={4}
+              />
+            </label>
+
+            <label>
               Notas internas
               <textarea
                 defaultValue={request.admin_notes ?? ""}
                 onBlur={(event) => void updateRequest(request, { admin_notes: event.target.value })}
+                placeholder="Observações visíveis apenas no painel administrativo."
                 rows={3}
               />
             </label>

@@ -14,6 +14,7 @@ const CUSTOM_REQUEST_STATUSES = [
 const customRequestUpdateSchema = z.object({
   status: z.enum(CUSTOM_REQUEST_STATUSES).optional(),
   estimated_price_cents: z.coerce.number().int().min(0).optional().nullable(),
+  quote_message: z.string().trim().max(1200).optional().nullable(),
   admin_notes: z.string().trim().optional().nullable()
 });
 

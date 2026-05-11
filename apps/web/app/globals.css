@@ -1822,6 +1822,79 @@ img {
   grid-column: 1 / -1;
 }
 
+.request-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.request-timeline-step {
+  display: grid;
+  gap: 6px;
+  min-height: 86px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-strong);
+  color: var(--muted);
+}
+
+.request-timeline-step span {
+  display: inline-flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.request-timeline-step[data-active="true"] {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: var(--accent-soft);
+  color: var(--surface-ink);
+}
+
+.request-timeline-step[data-active="true"] span {
+  border-color: transparent;
+  background: var(--accent);
+  color: #fff;
+}
+
+.request-timeline-step strong {
+  color: inherit;
+}
+
+.request-timeline-step small {
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.quote-message {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent-soft), #fff);
+}
+
+.quote-message span {
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.quote-message p {
+  color: var(--surface-ink);
+  line-height: 1.6;
+}
+
 .account-order-totals {
   display: flex;
   flex-wrap: wrap;
@@ -2528,6 +2601,7 @@ img {
   .trust-grid,
   .home-proof-row,
   .about-metrics,
+  .request-timeline,
   .admin-stats-grid,
   .dashboard-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2593,6 +2667,7 @@ img {
   .dashboard-stats-grid,
   .catalog-toolbar,
   .product-specs,
+  .request-timeline,
   .form-grid,
   .coupon-box,
   .compact-toolbar,
