@@ -9,7 +9,17 @@ import {
   getBrazilianPhoneHref,
   getBrazilianWhatsAppHref
 } from "@lm-3d/shared";
-import { ChevronDown, ChevronUp, Mail, MessageCircle, Phone, Save, Search, Truck } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Mail,
+  MessageCircle,
+  Phone,
+  RefreshCw,
+  Save,
+  Search,
+  Truck
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
 
@@ -109,6 +119,7 @@ export function AdminOrderManager() {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | "todos">("todos");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState("");
+  const [checkingPaymentId, setCheckingPaymentId] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -172,6 +183,31 @@ export function AdminOrderManager() {
       setMessage(error instanceof Error ? error.message : "Não foi possível atualizar o pedido.");
     } finally {
       setSavingId("");
+    }
+  }
+
+  async function verifyPayment(order: AdminOrder) {
+    setCheckingPaymentId(order.id);
+    setMessage("");
+
+    try {
+      const response = await adminApiFetch<{ order: AdminOrder; message: string }>(
+        `/admin/orders/${order.id}/verify-payment`,
+        {
+          method: "POST"
+        }
+      );
+
+      setOrders((current) => current.map((item) => (item.id === order.id ? response.order : item)));
+      setMessage(response.message);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel verificar o pagamento no Mercado Pago."
+      );
+    } finally {
+      setCheckingPaymentId("");
     }
   }
 
@@ -386,6 +422,15 @@ export function AdminOrderManager() {
                   </div>
 
                   <div className="admin-inline-actions">
+                    <button
+                      className="secondary-button"
+                      disabled={checkingPaymentId === order.id}
+                      onClick={() => void verifyPayment(order)}
+                      type="button"
+                    >
+                      <RefreshCw aria-hidden="true" size={14} />
+                      {checkingPaymentId === order.id ? "Verificando..." : "Verificar pagamento"}
+                    </button>
                     <span className="status-pill">{statusLabels[order.status]}</span>
                     <span className="status-pill">{paymentStatusLabels[order.payment_status]}</span>
                     {order.delivery_method ? (

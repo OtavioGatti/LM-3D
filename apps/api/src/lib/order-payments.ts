@@ -1,5 +1,13 @@
 import type { PaymentStatus } from "@lm-3d/shared";
-import { createMercadoPagoPreference, type MercadoPagoPreferenceItem } from "./mercado-pago.js";
+import {
+  createMercadoPagoPreference,
+  getMercadoPagoPayment,
+  mapMercadoPagoOrderStatus,
+  mapMercadoPagoPaymentStatus,
+  type MercadoPagoPaymentResponse,
+  type MercadoPagoPreferenceItem
+} from "./mercado-pago.js";
+import { HttpError } from "./http.js";
 import type { SupabaseAdminClient } from "./supabase.js";
 
 type OrderPaymentInput = {
@@ -23,6 +31,16 @@ type ExistingPayment = {
     checkout_url?: string | null;
     sandbox_checkout_url?: string | null;
   } | null;
+};
+
+type SyncableOrder = {
+  id: string;
+  code: string;
+  total_cents: number;
+};
+
+type PaymentRow = {
+  id: string;
 };
 
 export async function ensureMercadoPagoPreferenceForOrder({
@@ -119,4 +137,149 @@ export async function findCustomRequestIdForOrder(
   }
 
   return null;
+}
+
+function getPaymentOrderCode(payment: MercadoPagoPaymentResponse) {
+  return (
+    payment.external_reference ??
+    (typeof payment.metadata?.order_code === "string" ? payment.metadata.order_code : null)
+  );
+}
+
+export async function applyMercadoPagoPaymentToOrder({
+  supabase,
+  order,
+  payment
+}: {
+  supabase: SupabaseAdminClient;
+  order: SyncableOrder;
+  payment: MercadoPagoPaymentResponse;
+}) {
+  const paymentOrderCode = getPaymentOrderCode(payment);
+
+  if (paymentOrderCode !== order.code) {
+    throw new HttpError(
+      400,
+      "PAYMENT_ORDER_MISMATCH",
+      "O pagamento recebido nao pertence a este pedido."
+    );
+  }
+
+  const paymentStatus = mapMercadoPagoPaymentStatus(payment.status);
+  const orderStatus = mapMercadoPagoOrderStatus(paymentStatus);
+  const amountCents = Math.round((payment.transaction_amount ?? 0) * 100);
+
+  if (amountCents !== order.total_cents) {
+    throw new HttpError(
+      400,
+      "PAYMENT_AMOUNT_MISMATCH",
+      "O valor aprovado no Mercado Pago nao confere com o total do pedido."
+    );
+  }
+
+  const { data: existingPayment, error: existingPaymentError } = await supabase
+    .from("payments")
+    .select("id")
+    .eq("order_id", order.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingPaymentError) {
+    throw existingPaymentError;
+  }
+
+  const paymentPayload = {
+    order_id: order.id,
+    provider: "mercado_pago",
+    mercado_pago_payment_id: String(payment.id),
+    external_reference: order.code,
+    status: paymentStatus,
+    status_detail: payment.status_detail ?? null,
+    amount_cents: amountCents,
+    currency: payment.currency_id ?? "BRL",
+    paid_at: payment.date_approved ?? null,
+    raw_payload: payment
+  };
+
+  let paymentRow: PaymentRow | null = null;
+
+  if (existingPayment) {
+    const { data: updatedPayment, error: paymentUpdateError } = await supabase
+      .from("payments")
+      .update(paymentPayload)
+      .eq("id", existingPayment.id)
+      .select("id")
+      .single();
+
+    if (paymentUpdateError) {
+      throw paymentUpdateError;
+    }
+
+    paymentRow = updatedPayment as PaymentRow;
+  } else {
+    const { data: createdPayment, error: paymentCreateError } = await supabase
+      .from("payments")
+      .insert(paymentPayload)
+      .select("id")
+      .single();
+
+    if (paymentCreateError) {
+      throw paymentCreateError;
+    }
+
+    paymentRow = createdPayment as PaymentRow;
+  }
+
+  const { data: updatedOrder, error: orderUpdateError } = await supabase
+    .from("orders")
+    .update({
+      status: orderStatus,
+      payment_status: paymentStatus
+    })
+    .eq("id", order.id)
+    .select("id, code, status, payment_status, total_cents")
+    .single();
+
+  if (orderUpdateError) {
+    throw orderUpdateError;
+  }
+
+  const customRequestId = await findCustomRequestIdForOrder(supabase, order.id);
+
+  if (paymentStatus === "approved" && customRequestId) {
+    const { error: requestUpdateError } = await supabase
+      .from("custom_requests")
+      .update({ status: "converted" })
+      .eq("id", customRequestId);
+
+    if (requestUpdateError) {
+      throw requestUpdateError;
+    }
+  }
+
+  return {
+    order: updatedOrder,
+    payment: paymentRow,
+    paymentStatus,
+    orderStatus,
+    amountCents
+  };
+}
+
+export async function syncMercadoPagoPaymentForOrder({
+  supabase,
+  order,
+  paymentId
+}: {
+  supabase: SupabaseAdminClient;
+  order: SyncableOrder;
+  paymentId: string;
+}) {
+  const payment = await getMercadoPagoPayment(paymentId);
+
+  return applyMercadoPagoPaymentToOrder({
+    supabase,
+    order,
+    payment
+  });
 }

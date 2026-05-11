@@ -2,11 +2,9 @@ import { Router } from "express";
 import { HttpError } from "../lib/http.js";
 import {
   getMercadoPagoPayment,
-  mapMercadoPagoOrderStatus,
-  mapMercadoPagoPaymentStatus,
   verifyMercadoPagoWebhookSignature
 } from "../lib/mercado-pago.js";
-import { findCustomRequestIdForOrder } from "../lib/order-payments.js";
+import { applyMercadoPagoPaymentToOrder } from "../lib/order-payments.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
 
 type MercadoPagoWebhookBody = {
@@ -21,10 +19,7 @@ type MercadoPagoWebhookBody = {
 type OrderRow = {
   id: string;
   code: string;
-};
-
-type PaymentRow = {
-  id: string;
+  total_cents: number;
 };
 
 export const mercadoPagoWebhooksRouter = Router();
@@ -118,7 +113,7 @@ mercadoPagoWebhooksRouter.post("/mercado-pago", async (req, res, next) => {
 
     const { data: orderData, error: orderError } = await supabase
       .from("orders")
-      .select("id, code")
+      .select("id, code, total_cents")
       .eq("code", orderCode)
       .maybeSingle();
 
@@ -132,87 +127,11 @@ mercadoPagoWebhooksRouter.post("/mercado-pago", async (req, res, next) => {
       throw new HttpError(404, "ORDER_NOT_FOUND", "Pedido do pagamento nao encontrado.");
     }
 
-    const paymentStatus = mapMercadoPagoPaymentStatus(payment.status);
-    const orderStatus = mapMercadoPagoOrderStatus(paymentStatus);
-    const amountCents = Math.round((payment.transaction_amount ?? 0) * 100);
-    const paidAt = payment.date_approved ?? null;
-
-    const { data: existingPayment, error: existingPaymentError } = await supabase
-      .from("payments")
-      .select("id")
-      .eq("order_id", order.id)
-      .maybeSingle();
-
-    if (existingPaymentError) {
-      throw existingPaymentError;
-    }
-
-    const paymentPayload = {
-      order_id: order.id,
-      provider: "mercado_pago",
-      mercado_pago_payment_id: String(payment.id),
-      external_reference: order.code,
-      status: paymentStatus,
-      status_detail: payment.status_detail ?? null,
-      amount_cents: amountCents,
-      currency: payment.currency_id ?? "BRL",
-      paid_at: paidAt,
-      raw_payload: payment
-    };
-
-    let paymentRow: PaymentRow | null = null;
-
-    if (existingPayment) {
-      const { data: updatedPayment, error: paymentUpdateError } = await supabase
-        .from("payments")
-        .update(paymentPayload)
-        .eq("id", existingPayment.id)
-        .select("id")
-        .single();
-
-      if (paymentUpdateError) {
-        throw paymentUpdateError;
-      }
-
-      paymentRow = updatedPayment as PaymentRow;
-    } else {
-      const { data: createdPayment, error: paymentCreateError } = await supabase
-        .from("payments")
-        .insert(paymentPayload)
-        .select("id")
-        .single();
-
-      if (paymentCreateError) {
-        throw paymentCreateError;
-      }
-
-      paymentRow = createdPayment as PaymentRow;
-    }
-
-    const { error: orderUpdateError } = await supabase
-      .from("orders")
-      .update({
-        status: orderStatus,
-        payment_status: paymentStatus
-      })
-      .eq("id", order.id);
-
-    if (orderUpdateError) {
-      throw orderUpdateError;
-    }
-
-    const customRequestId = await findCustomRequestIdForOrder(supabase, order.id);
-
-    if (paymentStatus === "approved" && customRequestId) {
-      const { error: requestUpdateError } = await supabase
-        .from("custom_requests")
-        .update({ status: "converted" })
-        .eq("id", customRequestId);
-
-      if (requestUpdateError) {
-        throw requestUpdateError;
-      }
-    }
+    const { payment: paymentRow } = await applyMercadoPagoPaymentToOrder({
+      supabase,
+      order,
+      payment
+    });
 
     await supabase
       .from("payment_events")

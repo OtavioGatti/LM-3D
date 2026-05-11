@@ -229,6 +229,41 @@ export async function getMercadoPagoPayment(paymentId: string) {
   return data;
 }
 
+export async function searchMercadoPagoPaymentsByExternalReference(externalReference: string) {
+  if (!env.MERCADO_PAGO_ACCESS_TOKEN) {
+    throw new HttpError(
+      503,
+      "MERCADO_PAGO_NOT_CONFIGURED",
+      "Mercado Pago ainda nao foi configurado no backend."
+    );
+  }
+
+  const url = new URL("/v1/payments/search", MERCADO_PAGO_API_BASE_URL);
+  url.searchParams.set("external_reference", externalReference);
+  url.searchParams.set("sort", "date_created");
+  url.searchParams.set("criteria", "desc");
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${env.MERCADO_PAGO_ACCESS_TOKEN}`
+    }
+  });
+
+  const data = (await response.json().catch(() => null)) as
+    | { results?: MercadoPagoPaymentResponse[]; message?: string }
+    | null;
+
+  if (!response.ok) {
+    throw new HttpError(
+      502,
+      "MERCADO_PAGO_PAYMENT_SEARCH_FAILED",
+      data?.message ?? "Nao foi possivel buscar pagamentos no Mercado Pago."
+    );
+  }
+
+  return data?.results ?? [];
+}
+
 export function verifyMercadoPagoWebhookSignature(input: {
   dataId: string | null;
   requestId: string | null;
