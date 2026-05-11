@@ -92,3 +92,45 @@ export async function createCheckoutOrder(payload: CheckoutOrderPayload) {
 
   return response.json() as Promise<CheckoutOrderResponse>;
 }
+
+export async function syncMercadoPagoPayment(orderCode: string, paymentId: string) {
+  if (!hasSupabaseBrowserConfig()) {
+    throw new Error("O login precisa estar configurado para atualizar o pedido.");
+  }
+
+  const session = (await getSupabaseBrowserClient().auth.getSession()).data.session;
+
+  if (!session) {
+    throw new Error("Entre para atualizar o pagamento do pedido.");
+  }
+
+  const response = await fetch(
+    `${apiBaseUrl}/orders/${encodeURIComponent(orderCode)}/payment-sync`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({ paymentId })
+    }
+  );
+
+  if (!response.ok) {
+    const errorPayload = (await response.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
+
+    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel atualizar o pagamento.");
+  }
+
+  return response.json() as Promise<{
+    order: {
+      id: string;
+      code: string;
+      status: string;
+      paymentStatus: string;
+      totalCents: number;
+    };
+  }>;
+}

@@ -1,8 +1,9 @@
-import type { PaymentStatus } from "@lm-3d/shared";
 import { Router } from "express";
 import { HttpError } from "../lib/http.js";
 import {
   getMercadoPagoPayment,
+  mapMercadoPagoOrderStatus,
+  mapMercadoPagoPaymentStatus,
   verifyMercadoPagoWebhookSignature
 } from "../lib/mercado-pago.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
@@ -26,50 +27,6 @@ type PaymentRow = {
 };
 
 export const mercadoPagoWebhooksRouter = Router();
-
-function mapMercadoPagoPaymentStatus(status: string): PaymentStatus {
-  if (status === "approved") {
-    return "approved";
-  }
-
-  if (status === "rejected") {
-    return "rejected";
-  }
-
-  if (status === "cancelled" || status === "canceled") {
-    return "cancelled";
-  }
-
-  if (status === "refunded") {
-    return "refunded";
-  }
-
-  if (status === "charged_back") {
-    return "charged_back";
-  }
-
-  return "pending";
-}
-
-function mapOrderStatus(paymentStatus: PaymentStatus) {
-  if (paymentStatus === "approved") {
-    return "paid";
-  }
-
-  if (paymentStatus === "rejected") {
-    return "payment_failed";
-  }
-
-  if (paymentStatus === "cancelled") {
-    return "canceled";
-  }
-
-  if (paymentStatus === "refunded" || paymentStatus === "charged_back") {
-    return "refunded";
-  }
-
-  return "pending_payment";
-}
 
 function getResourceId(body: MercadoPagoWebhookBody, queryId: unknown) {
   if (typeof queryId === "string" && queryId.trim()) {
@@ -175,7 +132,7 @@ mercadoPagoWebhooksRouter.post("/mercado-pago", async (req, res, next) => {
     }
 
     const paymentStatus = mapMercadoPagoPaymentStatus(payment.status);
-    const orderStatus = mapOrderStatus(paymentStatus);
+    const orderStatus = mapMercadoPagoOrderStatus(paymentStatus);
     const amountCents = Math.round((payment.transaction_amount ?? 0) * 100);
     const paidAt = payment.date_approved ?? null;
 

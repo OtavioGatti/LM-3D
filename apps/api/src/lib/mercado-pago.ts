@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import type { PaymentStatus } from "@lm-3d/shared";
 import { env } from "../config/env.js";
 import { HttpError } from "./http.js";
 
@@ -39,6 +40,50 @@ export type MercadoPagoPaymentResponse = {
 
 export function hasMercadoPagoConfig() {
   return Boolean(env.MERCADO_PAGO_ACCESS_TOKEN);
+}
+
+export function mapMercadoPagoPaymentStatus(status: string): PaymentStatus {
+  if (status === "approved") {
+    return "approved";
+  }
+
+  if (status === "rejected") {
+    return "rejected";
+  }
+
+  if (status === "cancelled" || status === "canceled") {
+    return "cancelled";
+  }
+
+  if (status === "refunded") {
+    return "refunded";
+  }
+
+  if (status === "charged_back") {
+    return "charged_back";
+  }
+
+  return "pending";
+}
+
+export function mapMercadoPagoOrderStatus(paymentStatus: PaymentStatus) {
+  if (paymentStatus === "approved") {
+    return "paid";
+  }
+
+  if (paymentStatus === "rejected") {
+    return "payment_failed";
+  }
+
+  if (paymentStatus === "cancelled") {
+    return "canceled";
+  }
+
+  if (paymentStatus === "refunded" || paymentStatus === "charged_back") {
+    return "refunded";
+  }
+
+  return "pending_payment";
 }
 
 function centsToAmount(cents: number) {

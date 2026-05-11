@@ -3,7 +3,12 @@ import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/http.js";
-import { createMercadoPagoPreference } from "../lib/mercado-pago.js";
+import {
+  createMercadoPagoPreference,
+  getMercadoPagoPayment,
+  mapMercadoPagoOrderStatus,
+  mapMercadoPagoPaymentStatus
+} from "../lib/mercado-pago.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
 
 type ProductRow = {
@@ -61,6 +66,10 @@ const checkoutOrderSchema = z.object({
     )
     .min(1)
     .max(40)
+});
+
+const paymentSyncSchema = z.object({
+  paymentId: z.string().trim().min(1).max(80)
 });
 
 export const ordersRouter = Router();
@@ -338,6 +347,133 @@ ordersRouter.post("/", async (req, res, next) => {
         preferenceId: preference.id,
         checkoutUrl: preference.checkoutUrl,
         sandboxCheckoutUrl: preference.sandboxCheckoutUrl
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+ordersRouter.post("/:code/payment-sync", async (req, res, next) => {
+  try {
+    const { code } = z.object({ code: z.string().trim().min(1).max(80) }).parse(req.params);
+    const { paymentId } = paymentSyncSchema.parse(req.body);
+    const supabase = getSupabaseAdminClient();
+    const token = getBearerToken(req.header("authorization"));
+
+    if (!token) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Entre para atualizar o pagamento do pedido.");
+    }
+
+    const {
+      data: { user },
+      error: authError
+    } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessao expirou. Entre novamente.");
+    }
+
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("id, code, user_id, total_cents")
+      .eq("code", code)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (orderError) {
+      throw orderError;
+    }
+
+    if (!order) {
+      throw new HttpError(404, "ORDER_NOT_FOUND", "Pedido nao encontrado para esta conta.");
+    }
+
+    const payment = await getMercadoPagoPayment(paymentId);
+
+    if (payment.external_reference !== order.code) {
+      throw new HttpError(
+        400,
+        "PAYMENT_ORDER_MISMATCH",
+        "O pagamento recebido nao pertence a este pedido."
+      );
+    }
+
+    const paymentStatus = mapMercadoPagoPaymentStatus(payment.status);
+    const orderStatus = mapMercadoPagoOrderStatus(paymentStatus);
+    const amountCents = Math.round((payment.transaction_amount ?? 0) * 100);
+
+    if (amountCents !== order.total_cents) {
+      throw new HttpError(
+        400,
+        "PAYMENT_AMOUNT_MISMATCH",
+        "O valor aprovado no Mercado Pago nao confere com o total do pedido."
+      );
+    }
+
+    const { data: existingPayment, error: existingPaymentError } = await supabase
+      .from("payments")
+      .select("id")
+      .eq("order_id", order.id)
+      .maybeSingle();
+
+    if (existingPaymentError) {
+      throw existingPaymentError;
+    }
+
+    const paymentPayload = {
+      mercado_pago_payment_id: String(payment.id),
+      status: paymentStatus,
+      status_detail: payment.status_detail ?? null,
+      amount_cents: amountCents,
+      currency: payment.currency_id ?? "BRL",
+      paid_at: payment.date_approved ?? null,
+      raw_payload: payment
+    };
+
+    if (existingPayment) {
+      const { error: paymentUpdateError } = await supabase
+        .from("payments")
+        .update(paymentPayload)
+        .eq("id", existingPayment.id);
+
+      if (paymentUpdateError) {
+        throw paymentUpdateError;
+      }
+    } else {
+      const { error: paymentCreateError } = await supabase.from("payments").insert({
+        ...paymentPayload,
+        order_id: order.id,
+        provider: "mercado_pago",
+        external_reference: order.code
+      });
+
+      if (paymentCreateError) {
+        throw paymentCreateError;
+      }
+    }
+
+    const { data: updatedOrder, error: orderUpdateError } = await supabase
+      .from("orders")
+      .update({
+        status: orderStatus,
+        payment_status: paymentStatus
+      })
+      .eq("id", order.id)
+      .select("id, code, status, payment_status, total_cents")
+      .single();
+
+    if (orderUpdateError) {
+      throw orderUpdateError;
+    }
+
+    res.json({
+      order: {
+        id: updatedOrder.id,
+        code: updatedOrder.code,
+        status: updatedOrder.status,
+        paymentStatus: updatedOrder.payment_status,
+        totalCents: updatedOrder.total_cents
       }
     });
   } catch (error) {

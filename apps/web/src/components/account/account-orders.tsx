@@ -1,7 +1,7 @@
 "use client";
 
 import { formatMoneyBRL, type OrderStatus, type PaymentStatus } from "@lm-3d/shared";
-import { PackageCheck } from "lucide-react";
+import { PackageCheck, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
@@ -58,17 +58,18 @@ export function AccountOrders() {
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadOrders() {
-      if (!hasSupabaseBrowserConfig()) {
-        setIsLoading(false);
-        return;
-      }
+  async function loadOrders() {
+    if (!hasSupabaseBrowserConfig()) {
+      setIsLoading(false);
+      return;
+    }
 
-      const { data, error } = await getSupabaseBrowserClient()
-        .from("orders")
-        .select(
-          `
+    setIsLoading(true);
+
+    const { data, error } = await getSupabaseBrowserClient()
+      .from("orders")
+      .select(
+        `
           id,
           code,
           status,
@@ -89,19 +90,31 @@ export function AccountOrders() {
             customization_notes
           )
         `
-        )
-        .order("created_at", { ascending: false });
+      )
+      .order("created_at", { ascending: false });
 
-      if (error) {
-        setMessage(error.message);
-      } else {
-        setOrders((data ?? []) as unknown as AccountOrder[]);
-      }
-
-      setIsLoading(false);
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setMessage("");
+      setOrders((data ?? []) as unknown as AccountOrder[]);
     }
 
+    setIsLoading(false);
+  }
+
+  useEffect(() => {
     void loadOrders();
+
+    function refreshOnFocus() {
+      void loadOrders();
+    }
+
+    window.addEventListener("focus", refreshOnFocus);
+
+    return () => {
+      window.removeEventListener("focus", refreshOnFocus);
+    };
   }, []);
 
   return (
@@ -111,6 +124,10 @@ export function AccountOrders() {
           <h2>Meus pedidos</h2>
           <p>Status, itens e próximos passos ficam reunidos aqui.</p>
         </div>
+        <button className="button button-secondary" type="button" onClick={() => void loadOrders()}>
+          <RefreshCw aria-hidden="true" size={16} />
+          Atualizar status
+        </button>
       </div>
 
       {message ? <p className="form-error">{message}</p> : null}
@@ -166,3 +183,4 @@ export function AccountOrders() {
     </section>
   );
 }
+
