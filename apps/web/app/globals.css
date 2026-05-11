@@ -1883,7 +1883,7 @@ img {
   background: linear-gradient(135deg, var(--accent-soft), #fff);
 }
 
-.quote-message span {
+.quote-message > span {
   color: var(--accent-strong);
   font-size: 0.82rem;
   font-weight: 950;
@@ -1897,11 +1897,13 @@ img {
 
 .quote-message-body p {
   color: var(--surface-ink);
+  font-weight: 500;
   line-height: 1.6;
 }
 
 .quote-message-body strong {
-  font-weight: 950;
+  color: var(--surface-ink);
+  font-weight: 850;
 }
 
 .quote-message-spacer {

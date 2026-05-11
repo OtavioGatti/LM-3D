@@ -178,12 +178,21 @@ customRequestsRouter.post("/:code/checkout", async (req, res, next) => {
           quantity_requested: request.quantity,
           desired_material: request.desired_material,
           desired_colors: request.desired_colors,
+          quoted_deadline: request.quoted_deadline ?? null,
           reference_url: request.reference_url
         },
         quantity: 1,
         unit_price_cents: request.estimated_price_cents,
         line_total_cents: request.estimated_price_cents,
-        customization_notes: request.deadline ? `Prazo desejado: ${request.deadline}` : null
+        customization_notes:
+          request.quoted_deadline || request.deadline
+            ? [
+                request.quoted_deadline ? `Prazo informado: ${request.quoted_deadline}` : null,
+                request.deadline ? `Prazo desejado: ${request.deadline}` : null
+              ]
+                .filter(Boolean)
+                .join("\n")
+            : null
       });
 
       if (itemError) {

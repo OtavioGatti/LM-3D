@@ -15,6 +15,7 @@ type AccountCustomRequest = {
   desired_material: string | null;
   desired_colors: string | null;
   deadline: string | null;
+  quoted_deadline: string | null;
   reference_url: string | null;
   status: "new" | "contacted" | "quoted" | "converted" | "closed" | "canceled";
   estimated_price_cents: number | null;
@@ -84,7 +85,7 @@ function renderFormattedLine(line: string) {
       return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>;
     }
 
-    return <span key={`${part}-${index}`}>{part}</span>;
+    return part;
   });
 }
 
@@ -125,6 +126,7 @@ export function AccountCustomRequests() {
           desired_material,
           desired_colors,
           deadline,
+          quoted_deadline,
           reference_url,
           status,
           estimated_price_cents,
@@ -140,6 +142,7 @@ export function AccountCustomRequests() {
           desired_material,
           desired_colors,
           deadline,
+          quoted_deadline,
           reference_url,
           status,
           estimated_price_cents,
@@ -149,21 +152,41 @@ export function AccountCustomRequests() {
         .from("custom_requests")
         .select(selectWithQuoteMessage)
         .order("created_at", { ascending: false });
+      let requestsData = (data ?? []) as unknown as AccountCustomRequest[];
+
+      if (error?.message.includes("quoted_deadline")) {
+        const fallback = await supabase
+          .from("custom_requests")
+          .select(selectWithQuoteMessage.replace("quoted_deadline,", ""))
+          .order("created_at", { ascending: false });
+        const fallbackRows = (fallback.data ?? []) as unknown as Array<Record<string, unknown>>;
+
+        requestsData = fallbackRows.map((request) => ({
+          ...request,
+          quoted_deadline: null
+        })) as unknown as AccountCustomRequest[];
+        error = fallback.error;
+      }
 
       if (error?.message.includes("quote_message")) {
         const fallback = await supabase
           .from("custom_requests")
-          .select(selectWithoutQuoteMessage)
+          .select(selectWithoutQuoteMessage.replace("quoted_deadline,", ""))
           .order("created_at", { ascending: false });
+        const fallbackRows = (fallback.data ?? []) as unknown as Array<Record<string, unknown>>;
 
-        data = (fallback.data ?? []).map((request) => ({ ...request, quote_message: null }));
+        requestsData = fallbackRows.map((request) => ({
+          ...request,
+          quote_message: null,
+          quoted_deadline: null
+        })) as unknown as AccountCustomRequest[];
         error = fallback.error;
       }
 
       if (error) {
         setMessage(error.message);
       } else {
-        setRequests((data ?? []) as AccountCustomRequest[]);
+        setRequests(requestsData);
       }
 
       setIsLoading(false);
@@ -229,7 +252,8 @@ export function AccountCustomRequests() {
             {request.status === "quoted" && request.estimated_price_cents ? (
               <span>Pagamento liberado</span>
             ) : null}
-            {request.deadline ? <span>Prazo: {request.deadline}</span> : null}
+            {request.quoted_deadline ? <span>Prazo informado: {request.quoted_deadline}</span> : null}
+            {!request.quoted_deadline && request.deadline ? <span>Prazo desejado: {request.deadline}</span> : null}
           </div>
 
           <p>{request.description}</p>
@@ -263,6 +287,8 @@ export function AccountCustomRequests() {
             <div>
               <span>Material</span>
               <strong>{request.desired_material ?? "A combinar"}</strong>
+              {request.quoted_deadline ? <small>Prazo informado: {request.quoted_deadline}</small> : null}
+              {request.deadline ? <small>Prazo desejado: {request.deadline}</small> : null}
               {request.desired_colors ? <small>Cores: {request.desired_colors}</small> : null}
               {request.reference_url ? (
                 <small>

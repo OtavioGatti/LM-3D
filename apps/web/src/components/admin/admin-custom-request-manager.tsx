@@ -30,6 +30,7 @@ type CustomRequest = {
   desired_material: string | null;
   desired_colors: string | null;
   deadline: string | null;
+  quoted_deadline: string | null;
   reference_url: string | null;
   status: Exclude<CustomRequestStatus, "todos">;
   estimated_price_cents: number | null;
@@ -113,6 +114,8 @@ export function AdminCustomRequestManager() {
                 : updates.estimated_price_cents,
             quote_message:
               updates.quote_message === undefined ? request.quote_message : updates.quote_message,
+            quoted_deadline:
+              updates.quoted_deadline === undefined ? request.quoted_deadline : updates.quoted_deadline,
             admin_notes: updates.admin_notes === undefined ? request.admin_notes : updates.admin_notes
           })
         }
@@ -219,7 +222,10 @@ export function AdminCustomRequestManager() {
                 <small>{request.description}</small>
                 {request.desired_material ? <small>Material: {request.desired_material}</small> : null}
                 {request.desired_colors ? <small>Cores: {request.desired_colors}</small> : null}
-                {request.deadline ? <small>Prazo: {request.deadline}</small> : null}
+                {request.deadline ? <small>Prazo desejado: {request.deadline}</small> : null}
+                {request.quoted_deadline ? (
+                  <small>Prazo informado ao cliente: {request.quoted_deadline}</small>
+                ) : null}
                 {request.reference_url ? (
                   <small>
                     <a className="text-link" href={request.reference_url} rel="noreferrer" target="_blank">
@@ -265,6 +271,16 @@ export function AdminCustomRequestManager() {
                     })
                   }
                   placeholder="120,00"
+                />
+              </label>
+              <label>
+                Prazo informado ao cliente
+                <input
+                  defaultValue={request.quoted_deadline ?? ""}
+                  onBlur={(event) =>
+                    void updateRequest(request, { quoted_deadline: event.target.value || null })
+                  }
+                  placeholder="Ex.: 3 dias úteis após o pagamento"
                 />
               </label>
             </div>
