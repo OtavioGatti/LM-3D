@@ -78,6 +78,30 @@ function requestHighlight(request: AccountCustomRequest) {
   return "Em análise";
 }
 
+function renderFormattedLine(line: string) {
+  return line.split(/(\*\*.+?\*\*)/g).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>;
+    }
+
+    return <span key={`${part}-${index}`}>{part}</span>;
+  });
+}
+
+function FormattedQuoteMessage({ text }: { text: string }) {
+  return (
+    <div className="quote-message-body">
+      {text.split(/\r?\n/).map((line, index) =>
+        line.trim() ? (
+          <p key={`${line}-${index}`}>{renderFormattedLine(line)}</p>
+        ) : (
+          <span aria-hidden="true" className="quote-message-spacer" key={`blank-${index}`} />
+        )
+      )}
+    </div>
+  );
+}
+
 export function AccountCustomRequests() {
   const [requests, setRequests] = useState<AccountCustomRequest[]>([]);
   const [message, setMessage] = useState("");
@@ -231,7 +255,7 @@ export function AccountCustomRequests() {
           {request.quote_message ? (
             <div className="quote-message">
               <span>Mensagem do Lucas</span>
-              <p>{request.quote_message}</p>
+              <FormattedQuoteMessage text={request.quote_message} />
             </div>
           ) : null}
 

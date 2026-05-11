@@ -1890,9 +1890,23 @@ img {
   text-transform: uppercase;
 }
 
-.quote-message p {
+.quote-message-body {
+  display: grid;
+  gap: 4px;
+}
+
+.quote-message-body p {
   color: var(--surface-ink);
   line-height: 1.6;
+}
+
+.quote-message-body strong {
+  font-weight: 950;
+}
+
+.quote-message-spacer {
+  display: block;
+  height: 10px;
 }
 
 .account-order-totals {
