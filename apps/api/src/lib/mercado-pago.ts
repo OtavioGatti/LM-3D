@@ -53,6 +53,15 @@ function getCustomerFirstAndLastName(name: string) {
   return { firstName, lastName };
 }
 
+function isPublicHttpsUrl(url: URL) {
+  return (
+    url.protocol === "https:" &&
+    url.hostname !== "localhost" &&
+    url.hostname !== "127.0.0.1" &&
+    !url.hostname.endsWith(".local")
+  );
+}
+
 export async function createMercadoPagoPreference(input: CreatePreferenceInput) {
   if (!env.MERCADO_PAGO_ACCESS_TOKEN) {
     throw new HttpError(
@@ -76,6 +85,15 @@ export async function createMercadoPagoPreference(input: CreatePreferenceInput) 
   failureUrl.searchParams.set("code", input.orderCode);
 
   const notificationUrl = new URL("/api/webhooks/mercado-pago", env.API_PUBLIC_URL);
+  const canUseAutoReturn = isPublicHttpsUrl(successUrl);
+
+  if (env.NODE_ENV === "production" && !canUseAutoReturn) {
+    throw new HttpError(
+      503,
+      "APP_PUBLIC_URL_INVALID_FOR_MERCADO_PAGO",
+      "Configure APP_PUBLIC_URL no backend com a URL publica HTTPS da Vercel antes de criar pagamentos."
+    );
+  }
 
   const response = await fetch(`${MERCADO_PAGO_API_BASE_URL}/checkout/preferences`, {
     method: "POST",
@@ -107,7 +125,7 @@ export async function createMercadoPagoPreference(input: CreatePreferenceInput) 
         pending: pendingUrl.toString(),
         failure: failureUrl.toString()
       },
-      auto_return: "approved",
+      ...(canUseAutoReturn ? { auto_return: "approved" } : {}),
       metadata: {
         order_id: input.orderId,
         order_code: input.orderCode
@@ -198,4 +216,3 @@ export function verifyMercadoPagoWebhookSignature(input: {
 
   return received.length === expected.length && timingSafeEqual(received, expected);
 }
-
