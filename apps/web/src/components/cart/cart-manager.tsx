@@ -10,6 +10,7 @@ import {
   type StoredCartItem,
   writeCartItems
 } from "@/lib/cart/cart-storage";
+import { loadPublicCatalogFromBrowser } from "@/lib/catalog/public-catalog";
 
 type CartManagerProps = {
   products: ProductDetails[];
@@ -23,10 +24,12 @@ function updateQuantity(items: StoredCartItem[], productSlug: string, quantity: 
 
 export function CartManager({ products }: CartManagerProps) {
   const [items, setItems] = useState<StoredCartItem[]>([]);
+  const [liveProducts, setLiveProducts] = useState(products);
+  const [isCatalogRefreshing, setIsCatalogRefreshing] = useState(true);
 
   const productBySlug = useMemo(
-    () => new Map(products.map((product) => [product.slug, product])),
-    [products]
+    () => new Map(liveProducts.map((product) => [product.slug, product])),
+    [liveProducts]
   );
 
   const cartLines = items
@@ -57,6 +60,18 @@ export function CartManager({ products }: CartManagerProps) {
     };
   }, []);
 
+  useEffect(() => {
+    void loadPublicCatalogFromBrowser()
+      .then((catalog) => {
+        if (!catalog) {
+          return;
+        }
+
+        setLiveProducts(catalog.products);
+      })
+      .finally(() => setIsCatalogRefreshing(false));
+  }, []);
+
   function persist(nextItems: StoredCartItem[]) {
     setItems(nextItems);
     writeCartItems(nextItems);
@@ -68,6 +83,17 @@ export function CartManager({ products }: CartManagerProps) {
 
   function removeItem(productSlug: string) {
     persist(items.filter((item) => item.productSlug !== productSlug));
+  }
+
+  if (items.length > 0 && cartLines.length === 0 && isCatalogRefreshing) {
+    return (
+      <section className="section">
+        <div className="page-container empty-state cart-empty-state">
+          <h1>Atualizando carrinho</h1>
+          <p>Estamos conferindo os produtos mais recentes do catálogo.</p>
+        </div>
+      </section>
+    );
   }
 
   if (cartLines.length === 0) {

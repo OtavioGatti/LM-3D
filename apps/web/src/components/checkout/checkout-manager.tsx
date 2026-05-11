@@ -11,6 +11,7 @@ import {
   readCartItems,
   type StoredCartItem
 } from "@/lib/cart/cart-storage";
+import { loadPublicCatalogFromBrowser } from "@/lib/catalog/public-catalog";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 type CheckoutManagerProps = {
@@ -57,6 +58,8 @@ type CheckoutAuthStatus = "checking" | "signed-in" | "signed-out" | "unconfigure
 export function CheckoutManager({ products }: CheckoutManagerProps) {
   const router = useRouter();
   const [items, setItems] = useState<StoredCartItem[]>([]);
+  const [liveProducts, setLiveProducts] = useState(products);
+  const [isCatalogRefreshing, setIsCatalogRefreshing] = useState(true);
   const [form, setForm] = useState<CheckoutFormState>(emptyForm);
   const [message, setMessage] = useState("");
   const [couponMessage, setCouponMessage] = useState("");
@@ -65,8 +68,8 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const productBySlug = useMemo(
-    () => new Map(products.map((product) => [product.slug, product])),
-    [products]
+    () => new Map(liveProducts.map((product) => [product.slug, product])),
+    [liveProducts]
   );
 
   const cartLines = items
@@ -93,6 +96,18 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
 
   useEffect(() => {
     setItems(readCartItems());
+  }, []);
+
+  useEffect(() => {
+    void loadPublicCatalogFromBrowser()
+      .then((catalog) => {
+        if (!catalog) {
+          return;
+        }
+
+        setLiveProducts(catalog.products);
+      })
+      .finally(() => setIsCatalogRefreshing(false));
   }, []);
 
   useEffect(() => {
@@ -240,6 +255,18 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (items.length > 0 && cartLines.length === 0 && isCatalogRefreshing) {
+    return (
+      <section className="section">
+        <div className="page-container checkout-placeholder">
+          <LockKeyhole aria-hidden="true" size={36} />
+          <h1>Atualizando checkout</h1>
+          <p>Estamos conferindo os produtos mais recentes do catálogo.</p>
+        </div>
+      </section>
+    );
   }
 
   if (cartLines.length === 0) {
