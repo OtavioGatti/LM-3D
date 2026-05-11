@@ -1,8 +1,9 @@
 "use client";
 
 import { formatMoneyBRL } from "@lm-3d/shared";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, CreditCard } from "lucide-react";
 import { useEffect, useState } from "react";
+import { createCustomRequestCheckout } from "@/lib/api/custom-requests";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 type AccountCustomRequest = {
@@ -32,6 +33,7 @@ const statusLabels: Record<AccountCustomRequest["status"], string> = {
 export function AccountCustomRequests() {
   const [requests, setRequests] = useState<AccountCustomRequest[]>([]);
   const [message, setMessage] = useState("");
+  const [payingCode, setPayingCode] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -73,6 +75,25 @@ export function AccountCustomRequests() {
     void loadRequests();
   }, []);
 
+  async function payCustomRequest(request: AccountCustomRequest) {
+    setMessage("");
+    setPayingCode(request.code);
+
+    try {
+      const payload = await createCustomRequestCheckout(request.code);
+
+      if (!payload.payment.checkoutUrl) {
+        throw new Error("O Mercado Pago não retornou uma URL de pagamento.");
+      }
+
+      window.location.assign(payload.payment.checkoutUrl);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Não foi possível iniciar o pagamento.");
+    } finally {
+      setPayingCode("");
+    }
+  }
+
   return (
     <section className="account-orders">
       <div className="account-section-header">
@@ -99,7 +120,7 @@ export function AccountCustomRequests() {
             <div>
               <strong>{request.title}</strong>
               <span>
-                {request.code} · {new Intl.DateTimeFormat("pt-BR").format(new Date(request.created_at))}
+                {request.code} - {new Intl.DateTimeFormat("pt-BR").format(new Date(request.created_at))}
               </span>
             </div>
             <strong>
@@ -112,6 +133,9 @@ export function AccountCustomRequests() {
           <div className="checkout-assurance">
             <span>{statusLabels[request.status]}</span>
             <span>Quantidade: {request.quantity}</span>
+            {request.status === "quoted" && request.estimated_price_cents ? (
+              <span>Pagamento liberado</span>
+            ) : null}
             {request.deadline ? <span>Prazo: {request.deadline}</span> : null}
           </div>
 
@@ -132,6 +156,18 @@ export function AccountCustomRequests() {
               ) : null}
             </div>
           </div>
+
+          {request.status === "quoted" && request.estimated_price_cents ? (
+            <button
+              className="button button-primary"
+              disabled={payingCode === request.code}
+              onClick={() => void payCustomRequest(request)}
+              type="button"
+            >
+              <CreditCard aria-hidden="true" size={18} />
+              {payingCode === request.code ? "Abrindo pagamento..." : "Pagar orçamento"}
+            </button>
+          ) : null}
         </article>
       ))}
     </section>

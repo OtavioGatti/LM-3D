@@ -4,11 +4,14 @@ import { Router } from "express";
 import { z } from "zod";
 import { HttpError } from "../lib/http.js";
 import {
-  createMercadoPagoPreference,
   getMercadoPagoPayment,
   mapMercadoPagoOrderStatus,
   mapMercadoPagoPaymentStatus
 } from "../lib/mercado-pago.js";
+import {
+  ensureMercadoPagoPreferenceForOrder,
+  findCustomRequestIdForOrder
+} from "../lib/order-payments.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
 
 type ProductRow = {
@@ -74,7 +77,7 @@ const paymentSyncSchema = z.object({
 
 export const ordersRouter = Router();
 
-function getBearerToken(header: string | undefined) {
+export function getBearerToken(header: string | undefined) {
   if (!header?.startsWith("Bearer ")) {
     return null;
   }
@@ -82,7 +85,7 @@ function getBearerToken(header: string | undefined) {
   return header.slice("Bearer ".length).trim();
 }
 
-function createOrderCode() {
+export function createOrderCode() {
   const date = new Date();
   const stamp = [
     date.getUTCFullYear(),
@@ -290,16 +293,19 @@ ordersRouter.post("/", async (req, res, next) => {
       throw itemsError;
     }
 
-    let preference: Awaited<ReturnType<typeof createMercadoPagoPreference>>;
+    let preference: Awaited<ReturnType<typeof ensureMercadoPagoPreferenceForOrder>>;
 
     try {
-      preference = await createMercadoPagoPreference({
-        orderId: order.id,
-        orderCode: order.code,
-        customerName: order.customer_name,
-        customerEmail: order.customer_email,
-        customerPhone,
-        totalCents: order.total_cents,
+      preference = await ensureMercadoPagoPreferenceForOrder({
+        supabase,
+        order: {
+          id: order.id,
+          code: order.code,
+          customer_name: order.customer_name,
+          customer_email: order.customer_email,
+          customer_phone: customerPhone,
+          total_cents: order.total_cents
+        },
         items: [
           {
             title: `Pedido ${order.code} - LM-3D`,
@@ -311,26 +317,6 @@ ordersRouter.post("/", async (req, res, next) => {
     } catch (error) {
       await supabase.from("orders").delete().eq("id", order.id);
       throw error;
-    }
-
-    const { error: paymentError } = await supabase.from("payments").insert({
-      order_id: order.id,
-      provider: "mercado_pago",
-      mercado_pago_preference_id: preference.id,
-      external_reference: order.code,
-      status: "pending",
-      amount_cents: order.total_cents,
-      currency: "BRL",
-      raw_payload: {
-        preference: preference.rawPayload,
-        checkout_url: preference.checkoutUrl,
-        sandbox_checkout_url: preference.sandboxCheckoutUrl
-      }
-    });
-
-    if (paymentError) {
-      await supabase.from("orders").delete().eq("id", order.id);
-      throw paymentError;
     }
 
     res.status(201).json({
@@ -465,6 +451,19 @@ ordersRouter.post("/:code/payment-sync", async (req, res, next) => {
 
     if (orderUpdateError) {
       throw orderUpdateError;
+    }
+
+    const customRequestId = await findCustomRequestIdForOrder(supabase, order.id);
+
+    if (paymentStatus === "approved" && customRequestId) {
+      const { error: requestUpdateError } = await supabase
+        .from("custom_requests")
+        .update({ status: "converted" })
+        .eq("id", customRequestId);
+
+      if (requestUpdateError) {
+        throw requestUpdateError;
+      }
     }
 
     res.json({

@@ -4,6 +4,8 @@ import { HttpError } from "./http.js";
 
 let adminClient: SupabaseClient | null = null;
 
+export type SupabaseAdminClient = SupabaseClient;
+
 export function hasSupabaseAdminConfig() {
   return Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
 }

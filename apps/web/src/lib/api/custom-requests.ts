@@ -25,6 +25,28 @@ export type CustomRequestResponse = {
   };
 };
 
+export type CustomRequestCheckoutResponse = {
+  request: {
+    id: string;
+    code: string;
+    status: string;
+    estimatedPriceCents: number;
+  };
+  order: {
+    id: string;
+    code: string;
+    status: string;
+    paymentStatus: string;
+    totalCents: number;
+  };
+  payment: {
+    provider: "mercado_pago";
+    preferenceId: string;
+    checkoutUrl: string | null;
+    sandboxCheckoutUrl: string | null;
+  };
+};
+
 function isPagesWithoutBackend() {
   if (typeof window === "undefined") {
     return false;
@@ -104,4 +126,34 @@ export async function createCustomRequest(payload: CustomRequestPayload) {
 
     throw error;
   }
+}
+
+export async function createCustomRequestCheckout(code: string) {
+  if (!hasSupabaseBrowserConfig()) {
+    throw new Error("Entre para pagar o orçamento.");
+  }
+
+  const session = (await getSupabaseBrowserClient().auth.getSession()).data.session;
+
+  if (!session) {
+    throw new Error("Entre para pagar o orçamento.");
+  }
+
+  const response = await fetch(`${apiBaseUrl}/custom-requests/${encodeURIComponent(code)}/checkout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    }
+  });
+
+  if (!response.ok) {
+    const errorPayload = (await response.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
+
+    throw new Error(errorPayload?.error?.message ?? "Não foi possível iniciar o pagamento.");
+  }
+
+  return response.json() as Promise<CustomRequestCheckoutResponse>;
 }

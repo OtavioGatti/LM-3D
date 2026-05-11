@@ -5,7 +5,7 @@ import { HttpError } from "./http.js";
 
 const MERCADO_PAGO_API_BASE_URL = "https://api.mercadopago.com";
 
-type PreferenceItem = {
+export type MercadoPagoPreferenceItem = {
   title: string;
   quantity: number;
   unitPriceCents: number;
@@ -18,7 +18,7 @@ type CreatePreferenceInput = {
   customerEmail: string;
   customerPhone: string | null;
   totalCents: number;
-  items: PreferenceItem[];
+  items: MercadoPagoPreferenceItem[];
 };
 
 type MercadoPagoPreferenceResponse = {

@@ -6,6 +6,7 @@ import {
   mapMercadoPagoPaymentStatus,
   verifyMercadoPagoWebhookSignature
 } from "../lib/mercado-pago.js";
+import { findCustomRequestIdForOrder } from "../lib/order-payments.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
 
 type MercadoPagoWebhookBody = {
@@ -198,6 +199,19 @@ mercadoPagoWebhooksRouter.post("/mercado-pago", async (req, res, next) => {
 
     if (orderUpdateError) {
       throw orderUpdateError;
+    }
+
+    const customRequestId = await findCustomRequestIdForOrder(supabase, order.id);
+
+    if (paymentStatus === "approved" && customRequestId) {
+      const { error: requestUpdateError } = await supabase
+        .from("custom_requests")
+        .update({ status: "converted" })
+        .eq("id", customRequestId);
+
+      if (requestUpdateError) {
+        throw requestUpdateError;
+      }
     }
 
     await supabase
