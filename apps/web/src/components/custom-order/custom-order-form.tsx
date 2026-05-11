@@ -1,9 +1,11 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { Send } from "lucide-react";
 import { formatBrazilianPhone } from "@lm-3d/shared";
+import { LockKeyhole, Send, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { FormEvent, useEffect, useState } from "react";
 import { createCustomRequest } from "@/lib/api/custom-requests";
+import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 type CustomOrderFormState = {
   name: string;
@@ -29,6 +31,8 @@ const emptyForm: CustomOrderFormState = {
   referenceUrl: ""
 };
 
+type CustomOrderAuthStatus = "checking" | "signed-in" | "signed-out" | "unconfigured";
+
 function contactFields(contact: string) {
   const trimmed = contact.trim();
   const looksLikeEmail = trimmed.includes("@");
@@ -51,11 +55,57 @@ function formatContactInput(value: string) {
 export function CustomOrderForm() {
   const [form, setForm] = useState<CustomOrderFormState>(emptyForm);
   const [message, setMessage] = useState("");
+  const [authStatus, setAuthStatus] = useState<CustomOrderAuthStatus>("checking");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    async function loadSession() {
+      if (!hasSupabaseBrowserConfig()) {
+        setAuthStatus("unconfigured");
+        return;
+      }
+
+      const supabase = getSupabaseBrowserClient();
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        setAuthStatus("signed-out");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      setForm((current) => ({
+        ...current,
+        name:
+          current.name ||
+          profile?.full_name ||
+          (typeof session.user.user_metadata.full_name === "string"
+            ? session.user.user_metadata.full_name
+            : ""),
+        contact: current.contact || session.user.email || ""
+      }));
+      setAuthStatus("signed-in");
+    }
+
+    void loadSession().catch(() => setAuthStatus("signed-out"));
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+
+    if (authStatus !== "signed-in") {
+      setMessage("Entre ou crie uma conta para enviar e acompanhar seu orçamento.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -79,6 +129,40 @@ export function CustomOrderForm() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (authStatus === "checking") {
+    return (
+      <div className="lead-form custom-order-auth-card">
+        <LockKeyhole aria-hidden="true" size={32} />
+        <h2>Verificando sua conta</h2>
+        <p>Estamos conferindo seu login para vincular o orçamento ao seu perfil.</p>
+      </div>
+    );
+  }
+
+  if (authStatus !== "signed-in") {
+    return (
+      <div className="lead-form custom-order-auth-card">
+        <UserPlus aria-hidden="true" size={32} />
+        <h2>Entre para pedir orçamento</h2>
+        <p>
+          Assim o Lucas consegue responder pelo painel e você acompanha status, preço e pagamento
+          em Minha conta.
+        </p>
+        <div className="checkout-auth-actions">
+          <Link href="/login?redirect=/pedido-personalizado" className="button button-primary">
+            Entrar
+          </Link>
+          <Link href="/login?redirect=/pedido-personalizado&mode=signup" className="button button-secondary">
+            Criar conta
+          </Link>
+        </div>
+        {authStatus === "unconfigured" ? (
+          <p className="form-note">Login indisponível: configure o Supabase público no ambiente.</p>
+        ) : null}
+      </div>
+    );
   }
 
   return (

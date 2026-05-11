@@ -73,12 +73,17 @@ async function createCustomRequestDirect(payload: CustomRequestPayload) {
     data: { session }
   } = await supabase.auth.getSession();
 
+  if (!session) {
+    throw new Error("Entre ou crie uma conta para enviar um orçamento.");
+  }
+
   const { data, error } = await supabase
     .from("custom_requests")
     .insert({
       ...payload,
+      customer_email: payload.customer_email ?? session.user.email ?? null,
       code: createRequestCode(),
-      user_id: session?.user.id ?? null,
+      user_id: session.user.id,
       status: "new"
     })
     .select("id, code, status")
@@ -92,20 +97,26 @@ async function createCustomRequestDirect(payload: CustomRequestPayload) {
 }
 
 export async function createCustomRequest(payload: CustomRequestPayload) {
+  if (!hasSupabaseBrowserConfig()) {
+    throw new Error("Login indisponível. Configure o Supabase público para enviar orçamentos.");
+  }
+
+  const session = (await getSupabaseBrowserClient().auth.getSession()).data.session;
+
+  if (!session) {
+    throw new Error("Entre ou crie uma conta para enviar um orçamento.");
+  }
+
   if (isPagesWithoutBackend()) {
     return createCustomRequestDirect(payload);
   }
-
-  const session = hasSupabaseBrowserConfig()
-    ? (await getSupabaseBrowserClient().auth.getSession()).data.session
-    : null;
 
   try {
     const response = await fetch(`${apiBaseUrl}/custom-requests`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(session ? { Authorization: `Bearer ${session.access_token}` } : {})
+        Authorization: `Bearer ${session.access_token}`
       },
       body: JSON.stringify(payload)
     });

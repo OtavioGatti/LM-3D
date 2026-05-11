@@ -33,21 +33,34 @@ customRequestsRouter.post("/", async (req, res, next) => {
   try {
     const payload = customRequestSchema.parse(req.body);
     const customerPhone = payload.customer_phone ? formatBrazilianPhone(payload.customer_phone) : null;
-    const customerContact = payload.customer_email ? payload.customer_contact : customerPhone ?? payload.customer_contact;
     const supabase = getSupabaseAdminClient();
     const token = getBearerToken(req.header("authorization"));
+
+    if (!token) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Entre ou crie uma conta para enviar um orçamento.");
+    }
+
     const {
-      data: { user }
-    } = token ? await supabase.auth.getUser(token) : { data: { user: null } };
+      data: { user },
+      error: authError
+    } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessão expirou. Entre novamente.");
+    }
+
+    const customerEmail = payload.customer_email ?? user.email ?? null;
+    const customerContact = customerEmail ? payload.customer_contact : customerPhone ?? payload.customer_contact;
 
     const { data, error } = await supabase
       .from("custom_requests")
       .insert({
         ...payload,
         customer_contact: customerContact,
+        customer_email: customerEmail,
         customer_phone: customerPhone,
         code: createRequestCode(),
-        user_id: user?.id ?? null,
+        user_id: user.id,
         status: "new"
       })
       .select("id, code, status")
