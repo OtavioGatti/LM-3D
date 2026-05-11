@@ -52,6 +52,32 @@ function statusStepIndex(status: AccountCustomRequest["status"]) {
   return index === -1 ? 0 : index;
 }
 
+function requestHighlight(request: AccountCustomRequest) {
+  if (request.status === "canceled") {
+    return "Cancelado";
+  }
+
+  if (request.status === "closed") {
+    return "Fechado";
+  }
+
+  if (request.status === "converted") {
+    return "Pedido gerado";
+  }
+
+  if (request.status === "quoted") {
+    return request.estimated_price_cents
+      ? formatMoneyBRL(request.estimated_price_cents)
+      : "Orçado";
+  }
+
+  if (request.status === "contacted") {
+    return "Em avaliação";
+  }
+
+  return "Em análise";
+}
+
 export function AccountCustomRequests() {
   const [requests, setRequests] = useState<AccountCustomRequest[]>([]);
   const [message, setMessage] = useState("");
@@ -170,11 +196,7 @@ export function AccountCustomRequests() {
                 {request.code} - {new Intl.DateTimeFormat("pt-BR").format(new Date(request.created_at))}
               </span>
             </div>
-            <strong>
-              {request.estimated_price_cents
-                ? formatMoneyBRL(request.estimated_price_cents)
-                : "Em análise"}
-            </strong>
+            <strong>{requestHighlight(request)}</strong>
           </header>
 
           <div className="checkout-assurance">
