@@ -39,8 +39,12 @@ type CheckoutFormState = {
   name: string;
   email: string;
   phone: string;
+  document: string;
   deliveryMethod: "melhor_envio" | "retirada";
   addressLine: string;
+  addressNumber: string;
+  district: string;
+  complement: string;
   city: string;
   state: string;
   postalCode: string;
@@ -52,8 +56,12 @@ const emptyForm: CheckoutFormState = {
   name: "",
   email: "",
   phone: "",
+  document: "",
   deliveryMethod: "melhor_envio",
   addressLine: "",
+  addressNumber: "",
+  district: "",
+  complement: "",
   city: "",
   state: "",
   postalCode: "",
@@ -329,16 +337,24 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
 
       if (
         selectedShippingOption.provider === "melhor_envio" &&
-        (!form.addressLine.trim() || !form.city.trim() || !form.state.trim() || !form.postalCode.trim())
+        (!form.phone.trim() ||
+          !form.document.trim() ||
+          !form.addressLine.trim() ||
+          !form.addressNumber.trim() ||
+          !form.district.trim() ||
+          !form.city.trim() ||
+          !form.state.trim() ||
+          !form.postalCode.trim())
       ) {
-        throw new Error("Preencha o endereco completo para envio.");
+        throw new Error("Preencha telefone, CPF/CNPJ e endereco completo para envio.");
       }
 
       const response = await createCheckoutOrder({
         customer: {
           name: form.name,
           email: form.email,
-          phone: form.phone || null
+          phone: form.phone || null,
+          document: form.document || null
         },
         delivery: {
           method: selectedShippingOption.provider === "pickup" ? "retirada" : "melhor_envio",
@@ -346,6 +362,9 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             selectedShippingOption.provider === "melhor_envio"
               ? {
                   line1: form.addressLine || null,
+                  number: form.addressNumber || null,
+                  district: form.district || null,
+                  complement: form.complement || null,
                   city: form.city || null,
                   state: form.state || null,
                   postalCode: form.postalCode || null
@@ -499,16 +518,30 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             </label>
           </div>
 
-          <label>
-            WhatsApp ou telefone
-            <input
-              autoComplete="tel"
-              inputMode="tel"
-              onChange={(event) => setForm({ ...form, phone: formatBrazilianPhone(event.target.value) })}
-              placeholder="(11) 99999-9999"
-              value={form.phone}
-            />
-          </label>
+          <div className="form-grid">
+            <label>
+              WhatsApp ou telefone
+              <input
+                autoComplete="tel"
+                inputMode="tel"
+                onChange={(event) => setForm({ ...form, phone: formatBrazilianPhone(event.target.value) })}
+                placeholder="(11) 99999-9999"
+                required={selectedShippingOption?.provider === "melhor_envio"}
+                value={form.phone}
+              />
+            </label>
+            <label>
+              CPF ou CNPJ
+              <input
+                autoComplete="off"
+                inputMode="numeric"
+                onChange={(event) => setForm({ ...form, document: event.target.value })}
+                placeholder="Somente numeros"
+                required={selectedShippingOption?.provider === "melhor_envio"}
+                value={form.document}
+              />
+            </label>
+          </div>
 
           <div className="shipping-box">
             <div className="shipping-box-header">
@@ -549,13 +582,41 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
 
             <div className="form-grid">
               <label>
-                Endereço
+                Rua ou avenida
                 <input
                   autoComplete="street-address"
                   onChange={(event) => setForm({ ...form, addressLine: event.target.value })}
-                  placeholder="Rua, número, bairro"
+                  placeholder="Rua Cardoso de Melo"
                   required={selectedShippingOption?.provider === "melhor_envio"}
                   value={form.addressLine}
+                />
+              </label>
+              <label>
+                Numero
+                <input
+                  autoComplete="address-line2"
+                  onChange={(event) => setForm({ ...form, addressNumber: event.target.value })}
+                  placeholder="940"
+                  required={selectedShippingOption?.provider === "melhor_envio"}
+                  value={form.addressNumber}
+                />
+              </label>
+              <label>
+                Bairro
+                <input
+                  autoComplete="address-line3"
+                  onChange={(event) => setForm({ ...form, district: event.target.value })}
+                  required={selectedShippingOption?.provider === "melhor_envio"}
+                  value={form.district}
+                />
+              </label>
+              <label>
+                Complemento
+                <input
+                  autoComplete="address-line2"
+                  onChange={(event) => setForm({ ...form, complement: event.target.value })}
+                  placeholder="Apto, bloco, referencia"
+                  value={form.complement}
                 />
               </label>
               <label>

@@ -41,13 +41,17 @@ const checkoutOrderSchema = z.object({
   customer: z.object({
     name: z.string().trim().min(2).max(120),
     email: z.string().trim().email().max(180),
-    phone: z.string().trim().max(40).optional().nullable()
+    phone: z.string().trim().max(40).optional().nullable(),
+    document: z.string().trim().max(30).optional().nullable()
   }),
   delivery: z.object({
     method: z.enum(["retirada", "melhor_envio", "entrega_combinar"]).default("melhor_envio"),
     address: z
       .object({
         line1: z.string().trim().max(180).optional().nullable(),
+        number: z.string().trim().max(30).optional().nullable(),
+        district: z.string().trim().max(100).optional().nullable(),
+        complement: z.string().trim().max(100).optional().nullable(),
         city: z.string().trim().max(100).optional().nullable(),
         state: z.string().trim().max(60).optional().nullable(),
         postalCode: z.string().trim().max(30).optional().nullable()
@@ -196,6 +200,22 @@ async function resolveShippingSelection({
     throw new HttpError(400, "POSTAL_CODE_REQUIRED", "Informe o CEP para calcular o frete.");
   }
 
+  const address = payload.delivery.address;
+
+  if (
+    !address?.line1 ||
+    !address.number ||
+    !address.district ||
+    !address.city ||
+    !address.state
+  ) {
+    throw new HttpError(
+      400,
+      "SHIPPING_ADDRESS_REQUIRED",
+      "Preencha rua, numero, bairro, cidade, estado e CEP para envio."
+    );
+  }
+
   if (payload.shipping?.provider !== "melhor_envio" || !payload.shipping.serviceId) {
     throw new HttpError(400, "SHIPPING_OPTION_REQUIRED", "Escolha uma opcao de frete.");
   }
@@ -244,7 +264,7 @@ function isMissingShippingOrderColumn(error: unknown) {
     return false;
   }
 
-  return /shipping_(provider|service|company|delivery|origin|destination|quote)/.test(
+  return /customer_document|shipping_(provider|service|company|delivery|origin|destination|quote|melhor_envio|label)/.test(
     String(error.message)
   );
 }
@@ -260,6 +280,17 @@ function stripExtendedShippingColumns(payload: Record<string, unknown>) {
   delete stripped.shipping_origin_postal_code;
   delete stripped.shipping_destination_postal_code;
   delete stripped.shipping_quote;
+  delete stripped.customer_document;
+  delete stripped.shipping_melhor_envio_order_id;
+  delete stripped.shipping_melhor_envio_protocol;
+  delete stripped.shipping_melhor_envio_purchase_id;
+  delete stripped.shipping_melhor_envio_purchase_protocol;
+  delete stripped.shipping_melhor_envio_purchase_status;
+  delete stripped.shipping_label_status;
+  delete stripped.shipping_label_created_at;
+  delete stripped.shipping_label_purchased_at;
+  delete stripped.shipping_label_error;
+  delete stripped.shipping_label_payload;
 
   return stripped;
 }
@@ -325,11 +356,20 @@ ordersRouter.post("/", async (req, res, next) => {
   try {
     const payload = checkoutOrderSchema.parse(req.body);
     const customerPhone = payload.customer.phone ? formatBrazilianPhone(payload.customer.phone) : null;
+    const customerDocument = payload.customer.document?.replace(/\D/g, "") || null;
     const supabase = getSupabaseAdminClient();
     const token = getBearerToken(req.header("authorization"));
 
     if (!token) {
       throw new HttpError(401, "LOGIN_REQUIRED", "Entre ou crie uma conta para finalizar o pedido.");
+    }
+
+    if (payload.delivery.method === "melhor_envio" && !customerPhone) {
+      throw new HttpError(400, "CUSTOMER_PHONE_REQUIRED", "Informe o telefone para gerar a etiqueta.");
+    }
+
+    if (payload.delivery.method === "melhor_envio" && !customerDocument) {
+      throw new HttpError(400, "CUSTOMER_DOCUMENT_REQUIRED", "Informe CPF ou CNPJ para gerar a etiqueta.");
     }
 
     const {
@@ -418,6 +458,7 @@ ordersRouter.post("/", async (req, res, next) => {
         customer_name: payload.customer.name,
         customer_email: payload.customer.email,
         customer_phone: customerPhone,
+        customer_document: customerDocument,
         status: "pending_payment",
         payment_status: "pending",
         subtotal_cents: subtotalCents,

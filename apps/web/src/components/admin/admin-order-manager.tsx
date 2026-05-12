@@ -37,6 +37,9 @@ type OrderItem = {
 
 type DeliveryAddress = {
   line1?: string | null;
+  number?: string | null;
+  district?: string | null;
+  complement?: string | null;
   city?: string | null;
   state?: string | null;
   postalCode?: string | null;
@@ -66,6 +69,13 @@ type AdminOrder = {
   shipping_delivery_time_days?: number | null;
   shipping_origin_postal_code?: string | null;
   shipping_destination_postal_code?: string | null;
+  shipping_melhor_envio_order_id?: string | null;
+  shipping_melhor_envio_protocol?: string | null;
+  shipping_melhor_envio_purchase_id?: string | null;
+  shipping_melhor_envio_purchase_protocol?: string | null;
+  shipping_melhor_envio_purchase_status?: string | null;
+  shipping_label_status?: string | null;
+  shipping_label_error?: string | null;
   created_at: string;
   order_items: OrderItem[];
   discount_coupon_redemptions?: Array<{
@@ -106,7 +116,11 @@ function formatDeliveryAddress(order: AdminOrder) {
     return "Endereço a combinar";
   }
 
-  return [address.line1, address.city, address.state, address.postalCode].filter(Boolean).join(", ");
+  const street = [address.line1, address.number].filter(Boolean).join(", ");
+
+  return [street, address.district, address.complement, address.city, address.state, address.postalCode]
+    .filter(Boolean)
+    .join(", ");
 }
 
 function getCouponLabel(order: AdminOrder) {
@@ -129,6 +143,30 @@ function getShippingProviderLabel(order: AdminOrder) {
   }
 
   return null;
+}
+
+function getShippingLabelText(order: AdminOrder) {
+  if (order.shipping_provider !== "melhor_envio") {
+    return null;
+  }
+
+  if (order.shipping_label_status === "purchased") {
+    return "Etiqueta comprada";
+  }
+
+  if (order.shipping_label_status === "cart_created") {
+    return "Etiqueta no carrinho";
+  }
+
+  if (order.shipping_label_status === "creating" || order.shipping_label_status === "purchasing") {
+    return "Sincronizando etiqueta";
+  }
+
+  if (order.shipping_label_status === "failed") {
+    return "Falha na etiqueta";
+  }
+
+  return "Etiqueta pendente";
 }
 
 export function AdminOrderManager() {
@@ -373,6 +411,21 @@ export function AdminOrderManager() {
                       {order.shipping_destination_postal_code ? (
                         <small>CEP destino: {order.shipping_destination_postal_code}</small>
                       ) : null}
+                      {getShippingLabelText(order) ? (
+                        <small>Melhor Envio: {getShippingLabelText(order)}</small>
+                      ) : null}
+                      {order.shipping_melhor_envio_order_id ? (
+                        <small>ME pedido: {order.shipping_melhor_envio_order_id}</small>
+                      ) : null}
+                      {order.shipping_melhor_envio_protocol ? (
+                        <small>ME protocolo: {order.shipping_melhor_envio_protocol}</small>
+                      ) : null}
+                      {order.shipping_melhor_envio_purchase_protocol ? (
+                        <small>Compra ME: {order.shipping_melhor_envio_purchase_protocol}</small>
+                      ) : null}
+                      {order.shipping_label_error ? (
+                        <small>Erro ME: {order.shipping_label_error}</small>
+                      ) : null}
                       {order.tracking_code ? <small>Rastreio: {order.tracking_code}</small> : null}
                     </div>
                     <div>
@@ -464,6 +517,9 @@ export function AdminOrderManager() {
                         <Truck aria-hidden="true" size={14} />
                         {getShippingProviderLabel(order) ?? order.delivery_method}
                       </span>
+                    ) : null}
+                    {getShippingLabelText(order) ? (
+                      <span className="status-pill">{getShippingLabelText(order)}</span>
                     ) : null}
                     {savingId === order.id ? (
                       <span className="saving-pill">

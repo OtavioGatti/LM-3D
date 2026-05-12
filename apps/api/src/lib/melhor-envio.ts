@@ -27,6 +27,70 @@ type MelhorEnvioQuoteItem = {
   error?: string | null;
 };
 
+export type MelhorEnvioAddressPayload = {
+  name: string;
+  phone: string;
+  email: string;
+  document?: string;
+  company_document?: string;
+  state_register?: string;
+  address: string;
+  complement?: string;
+  number: string;
+  district: string;
+  city: string;
+  country_id: string;
+  postal_code: string;
+  state_abbr: string;
+};
+
+export type MelhorEnvioCartProductPayload = {
+  name: string;
+  quantity: number;
+  unitary_value: number;
+  weight?: number;
+};
+
+export type MelhorEnvioCartVolumePayload = {
+  height: number;
+  width: number;
+  length: number;
+  weight: number;
+};
+
+export type MelhorEnvioCartPayload = {
+  service: number;
+  agency?: number;
+  from: MelhorEnvioAddressPayload;
+  to: MelhorEnvioAddressPayload;
+  products: MelhorEnvioCartProductPayload[];
+  volumes: MelhorEnvioCartVolumePayload[];
+  options: {
+    receipt: boolean;
+    own_hand: boolean;
+    insurance_value: number;
+    non_commercial: boolean;
+  };
+};
+
+export type MelhorEnvioCartResponse = {
+  id?: string | number | null;
+  protocol?: string | number | null;
+  status?: string | null;
+  [key: string]: unknown;
+};
+
+export type MelhorEnvioCheckoutResponse = {
+  purchase?: {
+    id?: string | number | null;
+    protocol?: string | number | null;
+    status?: string | null;
+    orders?: Array<{ id?: string | number | null }>;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+};
+
 export type MelhorEnvioShippingOption = ShippingQuoteOption & {
   rawQuote: MelhorEnvioQuoteItem;
   packages: unknown[];
@@ -43,6 +107,14 @@ export type MelhorEnvioQuoteResult = {
 
 function onlyDigits(value: string) {
   return value.replace(/\D/g, "");
+}
+
+export function normalizeDocument(value: string | null | undefined) {
+  return value ? onlyDigits(value) : "";
+}
+
+export function normalizePhone(value: string | null | undefined) {
+  return value ? onlyDigits(value) : "";
 }
 
 export function normalizePostalCode(value: string) {
@@ -81,6 +153,73 @@ function getAccessToken() {
   }
 
   return env.MELHOR_ENVIO_ACCESS_TOKEN;
+}
+
+function requiredConfig(value: string | undefined, name: string) {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    throw new HttpError(
+      503,
+      "MELHOR_ENVIO_SENDER_NOT_CONFIGURED",
+      `Configure ${name} no Render para gerar etiquetas no Melhor Envio.`
+    );
+  }
+
+  return trimmed;
+}
+
+function normalizeStateAbbr(value: string) {
+  const state = value.trim().toUpperCase();
+
+  if (!/^[A-Z]{2}$/.test(state)) {
+    throw new HttpError(
+      400,
+      "INVALID_STATE_ABBR",
+      "Informe o estado do envio com 2 letras, por exemplo SP."
+    );
+  }
+
+  return state;
+}
+
+export function getMelhorEnvioSenderAddress(): MelhorEnvioAddressPayload {
+  const sender: MelhorEnvioAddressPayload = {
+    name: requiredConfig(env.MELHOR_ENVIO_SENDER_NAME, "MELHOR_ENVIO_SENDER_NAME"),
+    phone: normalizePhone(requiredConfig(env.MELHOR_ENVIO_SENDER_PHONE, "MELHOR_ENVIO_SENDER_PHONE")),
+    email: requiredConfig(env.MELHOR_ENVIO_SENDER_EMAIL, "MELHOR_ENVIO_SENDER_EMAIL"),
+    address: requiredConfig(env.MELHOR_ENVIO_SENDER_ADDRESS, "MELHOR_ENVIO_SENDER_ADDRESS"),
+    number: requiredConfig(env.MELHOR_ENVIO_SENDER_NUMBER, "MELHOR_ENVIO_SENDER_NUMBER"),
+    district: requiredConfig(env.MELHOR_ENVIO_SENDER_DISTRICT, "MELHOR_ENVIO_SENDER_DISTRICT"),
+    city: requiredConfig(env.MELHOR_ENVIO_SENDER_CITY, "MELHOR_ENVIO_SENDER_CITY"),
+    country_id: "BR",
+    postal_code: getStoreOriginPostalCode(),
+    state_abbr: normalizeStateAbbr(
+      requiredConfig(env.MELHOR_ENVIO_SENDER_STATE, "MELHOR_ENVIO_SENDER_STATE")
+    )
+  };
+  const document = normalizeDocument(env.MELHOR_ENVIO_SENDER_DOCUMENT);
+  const companyDocument = normalizeDocument(env.MELHOR_ENVIO_SENDER_COMPANY_DOCUMENT);
+  const complement = env.MELHOR_ENVIO_SENDER_COMPLEMENT?.trim();
+  const stateRegister = env.MELHOR_ENVIO_SENDER_STATE_REGISTER?.trim();
+
+  if (document) {
+    sender.document = document;
+  }
+
+  if (companyDocument) {
+    sender.company_document = companyDocument;
+  }
+
+  if (stateRegister) {
+    sender.state_register = stateRegister;
+  }
+
+  if (complement) {
+    sender.complement = complement;
+  }
+
+  return sender;
 }
 
 function toPositiveNumber(value: unknown) {
@@ -180,6 +319,111 @@ function mapUnavailableQuoteItem(item: MelhorEnvioQuoteItem) {
   };
 }
 
+async function readMelhorEnvioResponse(response: Response) {
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
+}
+
+function getProviderMessage(data: unknown, fallback: string) {
+  if (!data) {
+    return fallback;
+  }
+
+  if (typeof data === "string") {
+    return data;
+  }
+
+  if (typeof data === "object") {
+    if ("message" in data && typeof data.message === "string" && data.message.trim()) {
+      return data.message;
+    }
+
+    const errors = "errors" in data ? data.errors : "error" in data ? data.error : null;
+
+    if (errors && typeof errors === "object") {
+      for (const value of Object.values(errors)) {
+        if (Array.isArray(value) && typeof value[0] === "string") {
+          return value[0];
+        }
+
+        if (typeof value === "string") {
+          return value;
+        }
+      }
+    }
+  }
+
+  return fallback;
+}
+
+async function requestMelhorEnvio<T>({
+  path,
+  body,
+  errorCode,
+  fallbackMessage,
+  timeoutMs = 20000
+}: {
+  path: string;
+  body: unknown;
+  errorCode: string;
+  fallbackMessage: string;
+  timeoutMs?: number;
+}) {
+  const token = getAccessToken();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  let response: Response;
+
+  try {
+    response = await fetch(`${env.MELHOR_ENVIO_BASE_URL}${path}`, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "User-Agent": env.MELHOR_ENVIO_USER_AGENT
+      },
+      body: JSON.stringify(body)
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new HttpError(
+        504,
+        "MELHOR_ENVIO_TIMEOUT",
+        "O Melhor Envio demorou para responder. Tente novamente."
+      );
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  const data = await readMelhorEnvioResponse(response);
+
+  if (!response.ok) {
+    const providerMessage = getProviderMessage(data, fallbackMessage);
+    const message =
+      response.status === 401 || /^unauthenticated\.?$/i.test(providerMessage.trim())
+        ? "Melhor Envio recusou o token de API. Confira MELHOR_ENVIO_ACCESS_TOKEN, MELHOR_ENVIO_BASE_URL e os escopos do aplicativo."
+        : providerMessage;
+
+    throw new HttpError(response.status, errorCode, message);
+  }
+
+  return data as T;
+}
+
 export function toPublicShippingOption(option: MelhorEnvioShippingOption): ShippingQuoteOption {
   return {
     id: option.id,
@@ -191,6 +435,40 @@ export function toPublicShippingOption(option: MelhorEnvioShippingOption): Shipp
     priceCents: option.priceCents,
     deliveryTimeDays: option.deliveryTimeDays
   };
+}
+
+export async function createMelhorEnvioCartItem(payload: MelhorEnvioCartPayload) {
+  const response = await requestMelhorEnvio<MelhorEnvioCartResponse>({
+    path: "/api/v2/me/cart",
+    body: payload,
+    errorCode: "MELHOR_ENVIO_CART_FAILED",
+    fallbackMessage: "Nao foi possivel inserir o frete no carrinho do Melhor Envio."
+  });
+  const orderId = response.id === undefined || response.id === null ? "" : String(response.id);
+
+  if (!orderId) {
+    throw new HttpError(
+      502,
+      "MELHOR_ENVIO_CART_INVALID_RESPONSE",
+      "O Melhor Envio nao retornou o ID da etiqueta criada."
+    );
+  }
+
+  return {
+    ...response,
+    id: orderId
+  };
+}
+
+export async function checkoutMelhorEnvioShipment(orderIds: string[]) {
+  return requestMelhorEnvio<MelhorEnvioCheckoutResponse>({
+    path: "/api/v2/me/shipment/checkout",
+    body: {
+      orders: orderIds
+    },
+    errorCode: "MELHOR_ENVIO_CHECKOUT_FAILED",
+    fallbackMessage: "Nao foi possivel comprar a etiqueta no Melhor Envio."
+  });
 }
 
 export async function quoteMelhorEnvioShipping({

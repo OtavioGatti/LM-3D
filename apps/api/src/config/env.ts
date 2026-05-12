@@ -20,6 +20,22 @@ const envSchema = z.object({
   MELHOR_ENVIO_USER_AGENT: z
     .string()
     .default("LM-3D (contato@lm-3d.com.br)"),
+  MELHOR_ENVIO_SENDER_NAME: z.string().optional(),
+  MELHOR_ENVIO_SENDER_PHONE: z.string().optional(),
+  MELHOR_ENVIO_SENDER_EMAIL: z.string().email().optional().or(z.literal("")),
+  MELHOR_ENVIO_SENDER_DOCUMENT: z.string().optional(),
+  MELHOR_ENVIO_SENDER_COMPANY_DOCUMENT: z.string().optional(),
+  MELHOR_ENVIO_SENDER_STATE_REGISTER: z.string().optional(),
+  MELHOR_ENVIO_SENDER_ADDRESS: z.string().optional(),
+  MELHOR_ENVIO_SENDER_NUMBER: z.string().optional(),
+  MELHOR_ENVIO_SENDER_COMPLEMENT: z.string().optional(),
+  MELHOR_ENVIO_SENDER_DISTRICT: z.string().optional(),
+  MELHOR_ENVIO_SENDER_CITY: z.string().optional(),
+  MELHOR_ENVIO_SENDER_STATE: z.string().optional(),
+  MELHOR_ENVIO_POSTING_AGENCY_ID: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().int().positive().optional()
+  ),
   STORE_ORIGIN_POSTAL_CODE: z.string().optional()
 });
 

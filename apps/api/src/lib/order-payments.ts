@@ -8,6 +8,7 @@ import {
   type MercadoPagoPreferenceItem
 } from "./mercado-pago.js";
 import { HttpError } from "./http.js";
+import { ensureMelhorEnvioShipmentForPaidOrder } from "./order-shipping.js";
 import type { SupabaseAdminClient } from "./supabase.js";
 
 type OrderPaymentInput = {
@@ -257,12 +258,29 @@ export async function applyMercadoPagoPaymentToOrder({
     }
   }
 
+  let melhorEnvioShipment = null;
+
+  if (paymentStatus === "approved") {
+    try {
+      melhorEnvioShipment = await ensureMelhorEnvioShipmentForPaidOrder({
+        supabase,
+        orderId: order.id
+      });
+    } catch (error) {
+      console.error("[melhor-envio] post-payment shipment sync failed", {
+        orderId: order.id,
+        error: error instanceof Error ? error.message : error
+      });
+    }
+  }
+
   return {
     order: updatedOrder,
     payment: paymentRow,
     paymentStatus,
     orderStatus,
-    amountCents
+    amountCents,
+    melhorEnvioShipment
   };
 }
 

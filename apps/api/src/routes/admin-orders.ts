@@ -47,6 +47,28 @@ function pickMostUsefulPayment(payments: Awaited<ReturnType<typeof searchMercado
   );
 }
 
+function getShipmentMessage(
+  shipment: Awaited<ReturnType<typeof syncMercadoPagoPaymentForOrder>>["melhorEnvioShipment"]
+) {
+  if (!shipment || shipment.status === "skipped") {
+    return "";
+  }
+
+  if (shipment.status === "purchased") {
+    return " Etiqueta comprada no Melhor Envio.";
+  }
+
+  if (shipment.status === "cart_created") {
+    return " Etiqueta inserida no carrinho do Melhor Envio.";
+  }
+
+  if (shipment.status === "in_progress") {
+    return " A etiqueta ja esta sendo sincronizada.";
+  }
+
+  return ` Melhor Envio: ${shipment.message}`;
+}
+
 async function getOrderWithRelations(orderId: string) {
   return getSupabaseAdminClient()
     .from("orders")
@@ -149,7 +171,7 @@ adminOrdersRouter.post("/:id/verify-payment", async (req, res, next) => {
       paymentId = String(mercadoPagoPayment.id);
     }
 
-    const { paymentStatus } = await syncMercadoPagoPaymentForOrder({
+    const { paymentStatus, melhorEnvioShipment } = await syncMercadoPagoPaymentForOrder({
       supabase,
       order,
       paymentId
@@ -165,7 +187,9 @@ adminOrdersRouter.post("/:id/verify-payment", async (req, res, next) => {
       order: updatedOrder,
       message:
         paymentStatus === "approved"
-          ? "Pagamento aprovado no Mercado Pago e pedido atualizado."
+          ? `Pagamento aprovado no Mercado Pago e pedido atualizado.${getShipmentMessage(
+              melhorEnvioShipment
+            )}`
           : "Pagamento consultado no Mercado Pago. O pedido foi atualizado com o status atual."
     });
   } catch (error) {

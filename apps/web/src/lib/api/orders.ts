@@ -8,11 +8,15 @@ export type CheckoutOrderPayload = {
     name: string;
     email: string;
     phone?: string | null;
+    document?: string | null;
   };
   delivery: {
     method: "retirada" | "melhor_envio" | "entrega_combinar";
     address?: {
       line1?: string | null;
+      number?: string | null;
+      district?: string | null;
+      complement?: string | null;
       city?: string | null;
       state?: string | null;
       postalCode?: string | null;
