@@ -1,9 +1,17 @@
 "use client";
 
-import { formatMoneyBRL } from "@lm-3d/shared";
-import { CheckCircle2, ClipboardList, CreditCard } from "lucide-react";
+import {
+  formatBrazilianPhone,
+  formatMoneyBRL,
+  PICKUP_SHIPPING_OPTION,
+  type ShippingQuoteOption
+} from "@lm-3d/shared";
+import { CheckCircle2, ClipboardList, CreditCard, MapPin, PackageCheck, Truck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { createCustomRequestCheckout } from "@/lib/api/custom-requests";
+import {
+  createCustomRequestCheckout,
+  quoteCustomRequestShipping
+} from "@/lib/api/custom-requests";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 
 type AccountCustomRequest = {
@@ -21,6 +29,30 @@ type AccountCustomRequest = {
   estimated_price_cents: number | null;
   quote_message: string | null;
   created_at: string;
+};
+
+type PaymentShippingForm = {
+  phone: string;
+  document: string;
+  addressLine: string;
+  addressNumber: string;
+  district: string;
+  complement: string;
+  city: string;
+  state: string;
+  postalCode: string;
+};
+
+const emptyPaymentShippingForm: PaymentShippingForm = {
+  phone: "",
+  document: "",
+  addressLine: "",
+  addressNumber: "",
+  district: "",
+  complement: "",
+  city: "",
+  state: "",
+  postalCode: ""
 };
 
 const statusLabels: Record<AccountCustomRequest["status"], string> = {
@@ -107,6 +139,14 @@ export function AccountCustomRequests() {
   const [requests, setRequests] = useState<AccountCustomRequest[]>([]);
   const [message, setMessage] = useState("");
   const [payingCode, setPayingCode] = useState("");
+  const [paymentPanelCode, setPaymentPanelCode] = useState("");
+  const [shippingForm, setShippingForm] = useState(emptyPaymentShippingForm);
+  const [shippingOptions, setShippingOptions] = useState<ShippingQuoteOption[]>([
+    PICKUP_SHIPPING_OPTION
+  ]);
+  const [selectedShippingOptionId, setSelectedShippingOptionId] = useState(PICKUP_SHIPPING_OPTION.id);
+  const [shippingMessage, setShippingMessage] = useState("");
+  const [isQuotingShipping, setIsQuotingShipping] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -195,12 +235,110 @@ export function AccountCustomRequests() {
     void loadRequests();
   }, []);
 
+  function openPaymentPanel(request: AccountCustomRequest) {
+    setMessage("");
+    setShippingMessage("");
+    setPaymentPanelCode((current) => (current === request.code ? "" : request.code));
+    setShippingOptions([PICKUP_SHIPPING_OPTION]);
+    setSelectedShippingOptionId(PICKUP_SHIPPING_OPTION.id);
+  }
+
+  function formatDeliveryTime(option: ShippingQuoteOption) {
+    if (option.provider === "pickup") {
+      return "sem custo";
+    }
+
+    if (option.deliveryTimeDays === null) {
+      return "prazo informado pela transportadora";
+    }
+
+    return `${option.deliveryTimeDays} dia(s) util(eis)`;
+  }
+
+  async function calculateCustomRequestShipping(request: AccountCustomRequest) {
+    setShippingMessage("");
+    setIsQuotingShipping(true);
+
+    try {
+      if (!shippingForm.postalCode.trim()) {
+        throw new Error("Informe o CEP para calcular o frete.");
+      }
+
+      const response = await quoteCustomRequestShipping(request.code, shippingForm.postalCode);
+      const options = response.options.some((option) => option.id === PICKUP_SHIPPING_OPTION.id)
+        ? response.options
+        : [PICKUP_SHIPPING_OPTION, ...response.options];
+      const carrierOption = options.find((option) => option.provider === "melhor_envio");
+
+      setShippingOptions(options);
+      setSelectedShippingOptionId(carrierOption?.id ?? PICKUP_SHIPPING_OPTION.id);
+      setShippingMessage(
+        carrierOption
+          ? "Fretes atualizados."
+          : response.unavailableServices[0]?.message ?? "Nao encontramos frete para este CEP agora."
+      );
+    } catch (error) {
+      setShippingOptions([PICKUP_SHIPPING_OPTION]);
+      setSelectedShippingOptionId(PICKUP_SHIPPING_OPTION.id);
+      setShippingMessage(error instanceof Error ? error.message : "Nao foi possivel calcular o frete.");
+    } finally {
+      setIsQuotingShipping(false);
+    }
+  }
+
   async function payCustomRequest(request: AccountCustomRequest) {
     setMessage("");
     setPayingCode(request.code);
 
     try {
-      const payload = await createCustomRequestCheckout(request.code);
+      const selectedShippingOption = shippingOptions.find(
+        (option) => option.id === selectedShippingOptionId
+      );
+
+      if (!selectedShippingOption) {
+        throw new Error("Escolha retirada em Assis/SP ou uma opcao de frete.");
+      }
+
+      if (
+        selectedShippingOption.provider === "melhor_envio" &&
+        (!shippingForm.phone.trim() ||
+          !shippingForm.document.trim() ||
+          !shippingForm.addressLine.trim() ||
+          !shippingForm.addressNumber.trim() ||
+          !shippingForm.district.trim() ||
+          !shippingForm.city.trim() ||
+          !shippingForm.state.trim() ||
+          !shippingForm.postalCode.trim())
+      ) {
+        throw new Error("Preencha telefone, CPF/CNPJ e endereco completo para envio.");
+      }
+
+      const payload = await createCustomRequestCheckout(request.code, {
+        customer: {
+          phone: shippingForm.phone || null,
+          document: shippingForm.document || null
+        },
+        delivery: {
+          method: selectedShippingOption.provider === "pickup" ? "retirada" : "melhor_envio",
+          address:
+            selectedShippingOption.provider === "melhor_envio"
+              ? {
+                  line1: shippingForm.addressLine || null,
+                  number: shippingForm.addressNumber || null,
+                  district: shippingForm.district || null,
+                  complement: shippingForm.complement || null,
+                  city: shippingForm.city || null,
+                  state: shippingForm.state || null,
+                  postalCode: shippingForm.postalCode || null
+                }
+              : null
+        },
+        shipping: {
+          optionId: selectedShippingOption.id,
+          provider: selectedShippingOption.provider,
+          serviceId: selectedShippingOption.serviceId
+        }
+      });
 
       if (!payload.payment.checkoutUrl) {
         throw new Error("O Mercado Pago não retornou uma URL de pagamento.");
@@ -302,15 +440,194 @@ export function AccountCustomRequests() {
           </div>
 
           {request.status === "quoted" && request.estimated_price_cents ? (
+            <>
             <button
               className="button button-primary"
               disabled={payingCode === request.code}
-              onClick={() => void payCustomRequest(request)}
+              onClick={() => openPaymentPanel(request)}
               type="button"
             >
               <CreditCard aria-hidden="true" size={18} />
-              {payingCode === request.code ? "Abrindo pagamento..." : "Pagar orçamento"}
+              {paymentPanelCode === request.code ? "Fechar opcoes de entrega" : "Pagar orcamento"}
             </button>
+            {paymentPanelCode === request.code ? (
+              <div className="shipping-box">
+                <div className="shipping-box-header">
+                  <Truck aria-hidden="true" size={22} />
+                  <div>
+                    <h2>Entrega do orcamento</h2>
+                    <p>Escolha retirada gratuita ou calcule o frete antes do Mercado Pago.</p>
+                  </div>
+                </div>
+
+                <div className="shipping-option-list">
+                  {shippingOptions.map((option) => {
+                    const isSelected = selectedShippingOptionId === option.id;
+
+                    return (
+                      <button
+                        aria-pressed={isSelected}
+                        className="shipping-option-button"
+                        data-selected={isSelected}
+                        key={option.id}
+                        onClick={() => setSelectedShippingOptionId(option.id)}
+                        type="button"
+                      >
+                        <span>
+                          {option.provider === "pickup" ? (
+                            <PackageCheck aria-hidden="true" size={18} />
+                          ) : (
+                            <Truck aria-hidden="true" size={18} />
+                          )}
+                          <strong>{option.label}</strong>
+                        </span>
+                        <small>{formatDeliveryTime(option)}</small>
+                        <strong>{formatMoneyBRL(option.priceCents)}</strong>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="form-grid">
+                  <label>
+                    WhatsApp ou telefone
+                    <input
+                      autoComplete="tel"
+                      inputMode="tel"
+                      onChange={(event) =>
+                        setShippingForm({
+                          ...shippingForm,
+                          phone: formatBrazilianPhone(event.target.value)
+                        })
+                      }
+                      placeholder="(11) 99999-9999"
+                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                      value={shippingForm.phone}
+                    />
+                  </label>
+                  <label>
+                    CPF ou CNPJ
+                    <input
+                      inputMode="numeric"
+                      onChange={(event) =>
+                        setShippingForm({ ...shippingForm, document: event.target.value })
+                      }
+                      placeholder="Somente numeros"
+                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                      value={shippingForm.document}
+                    />
+                  </label>
+                  <label>
+                    Rua ou avenida
+                    <input
+                      onChange={(event) =>
+                        setShippingForm({ ...shippingForm, addressLine: event.target.value })
+                      }
+                      placeholder="Rua Cardoso de Melo"
+                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                      value={shippingForm.addressLine}
+                    />
+                  </label>
+                  <label>
+                    Numero
+                    <input
+                      onChange={(event) =>
+                        setShippingForm({ ...shippingForm, addressNumber: event.target.value })
+                      }
+                      placeholder="940"
+                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                      value={shippingForm.addressNumber}
+                    />
+                  </label>
+                  <label>
+                    Bairro
+                    <input
+                      onChange={(event) =>
+                        setShippingForm({ ...shippingForm, district: event.target.value })
+                      }
+                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                      value={shippingForm.district}
+                    />
+                  </label>
+                  <label>
+                    Complemento
+                    <input
+                      onChange={(event) =>
+                        setShippingForm({ ...shippingForm, complement: event.target.value })
+                      }
+                      placeholder="Apto, bloco, referencia"
+                      value={shippingForm.complement}
+                    />
+                  </label>
+                  <label>
+                    Cidade
+                    <input
+                      onChange={(event) =>
+                        setShippingForm({ ...shippingForm, city: event.target.value })
+                      }
+                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                      value={shippingForm.city}
+                    />
+                  </label>
+                  <label>
+                    Estado
+                    <input
+                      onChange={(event) =>
+                        setShippingForm({ ...shippingForm, state: event.target.value })
+                      }
+                      placeholder="SP"
+                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                      value={shippingForm.state}
+                    />
+                  </label>
+                  <label>
+                    CEP
+                    <input
+                      inputMode="numeric"
+                      onChange={(event) =>
+                        setShippingForm({ ...shippingForm, postalCode: event.target.value })
+                      }
+                      placeholder="19800-000"
+                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                      value={shippingForm.postalCode}
+                    />
+                  </label>
+                </div>
+
+                <button
+                  className="button button-secondary"
+                  disabled={isQuotingShipping}
+                  onClick={() => void calculateCustomRequestShipping(request)}
+                  type="button"
+                >
+                  <MapPin aria-hidden="true" size={18} />
+                  {isQuotingShipping ? "Calculando frete..." : "Calcular frete"}
+                </button>
+                {shippingMessage ? <p className="form-note">{shippingMessage}</p> : null}
+
+                <div className="summary-total">
+                  <span>Total com entrega</span>
+                  <strong>
+                    {formatMoneyBRL(
+                      request.estimated_price_cents +
+                        (shippingOptions.find((option) => option.id === selectedShippingOptionId)
+                          ?.priceCents ?? 0)
+                    )}
+                  </strong>
+                </div>
+
+                <button
+                  className="button button-primary"
+                  disabled={payingCode === request.code}
+                  onClick={() => void payCustomRequest(request)}
+                  type="button"
+                >
+                  <CreditCard aria-hidden="true" size={18} />
+                  {payingCode === request.code ? "Abrindo pagamento..." : "Ir para o Mercado Pago"}
+                </button>
+              </div>
+            ) : null}
+            </>
           ) : null}
         </article>
       ))}

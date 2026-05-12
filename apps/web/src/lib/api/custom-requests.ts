@@ -1,3 +1,4 @@
+import type { ShippingQuoteResponse } from "@lm-3d/shared";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
 import { getApiBaseUrl } from "./base-url";
 
@@ -38,6 +39,8 @@ export type CustomRequestCheckoutResponse = {
     status: string;
     paymentStatus: string;
     totalCents: number;
+    shippingCents: number;
+    deliveryMethod: string | null;
   };
   payment: {
     provider: "mercado_pago";
@@ -45,6 +48,30 @@ export type CustomRequestCheckoutResponse = {
     checkoutUrl: string | null;
     sandboxCheckoutUrl: string | null;
   };
+};
+
+export type CustomRequestCheckoutPayload = {
+  customer: {
+    phone?: string | null;
+    document?: string | null;
+  };
+  delivery: {
+    method: "retirada" | "melhor_envio";
+    address?: {
+      line1?: string | null;
+      number?: string | null;
+      district?: string | null;
+      complement?: string | null;
+      city?: string | null;
+      state?: string | null;
+      postalCode?: string | null;
+    } | null;
+  };
+  shipping?: {
+    optionId: string;
+    provider: "pickup" | "melhor_envio";
+    serviceId?: string | null;
+  } | null;
 };
 
 function isPagesWithoutBackend() {
@@ -67,17 +94,24 @@ function createRequestCode() {
   return `ORC-${suffix}`;
 }
 
-async function createCustomRequestDirect(payload: CustomRequestPayload) {
-  const supabase = getSupabaseBrowserClient();
-  const {
-    data: { session }
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    throw new Error("Entre ou crie uma conta para enviar um orçamento.");
+async function getSessionOrThrow(message: string) {
+  if (!hasSupabaseBrowserConfig()) {
+    throw new Error(message);
   }
 
-  const { data, error } = await supabase
+  const session = (await getSupabaseBrowserClient().auth.getSession()).data.session;
+
+  if (!session) {
+    throw new Error(message);
+  }
+
+  return session;
+}
+
+async function createCustomRequestDirect(payload: CustomRequestPayload) {
+  const session = await getSessionOrThrow("Entre ou crie uma conta para enviar um orcamento.");
+
+  const { data, error } = await getSupabaseBrowserClient()
     .from("custom_requests")
     .insert({
       ...payload,
@@ -97,15 +131,9 @@ async function createCustomRequestDirect(payload: CustomRequestPayload) {
 }
 
 export async function createCustomRequest(payload: CustomRequestPayload) {
-  if (!hasSupabaseBrowserConfig()) {
-    throw new Error("Login indisponível. Configure o Supabase público para enviar orçamentos.");
-  }
-
-  const session = (await getSupabaseBrowserClient().auth.getSession()).data.session;
-
-  if (!session) {
-    throw new Error("Entre ou crie uma conta para enviar um orçamento.");
-  }
+  const session = await getSessionOrThrow(
+    "Entre ou crie uma conta para enviar um orcamento."
+  );
 
   if (isPagesWithoutBackend()) {
     return createCustomRequestDirect(payload);
@@ -126,7 +154,7 @@ export async function createCustomRequest(payload: CustomRequestPayload) {
         error?: { message?: string };
       } | null;
 
-      throw new Error(errorPayload?.error?.message ?? "Não foi possível enviar o orçamento.");
+      throw new Error(errorPayload?.error?.message ?? "Nao foi possivel enviar o orcamento.");
     }
 
     return response.json() as Promise<CustomRequestResponse>;
@@ -139,23 +167,49 @@ export async function createCustomRequest(payload: CustomRequestPayload) {
   }
 }
 
-export async function createCustomRequestCheckout(code: string) {
-  if (!hasSupabaseBrowserConfig()) {
-    throw new Error("Entre para pagar o orçamento.");
+export async function quoteCustomRequestShipping(code: string, postalCode: string) {
+  const session = await getSessionOrThrow("Entre para calcular o frete do orcamento.");
+
+  const response = await fetch(
+    `${apiBaseUrl}/custom-requests/${encodeURIComponent(code)}/shipping-quote`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        address: {
+          postalCode
+        }
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const errorPayload = (await response.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
+
+    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel calcular o frete.");
   }
 
-  const session = (await getSupabaseBrowserClient().auth.getSession()).data.session;
+  return response.json() as Promise<ShippingQuoteResponse>;
+}
 
-  if (!session) {
-    throw new Error("Entre para pagar o orçamento.");
-  }
+export async function createCustomRequestCheckout(
+  code: string,
+  payload: CustomRequestCheckoutPayload
+) {
+  const session = await getSessionOrThrow("Entre para pagar o orcamento.");
 
   const response = await fetch(`${apiBaseUrl}/custom-requests/${encodeURIComponent(code)}/checkout`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${session.access_token}`
-    }
+    },
+    body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
@@ -163,7 +217,7 @@ export async function createCustomRequestCheckout(code: string) {
       error?: { message?: string };
     } | null;
 
-    throw new Error(errorPayload?.error?.message ?? "Não foi possível iniciar o pagamento.");
+    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel iniciar o pagamento.");
   }
 
   return response.json() as Promise<CustomRequestCheckoutResponse>;

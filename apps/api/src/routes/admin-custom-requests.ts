@@ -16,6 +16,10 @@ const customRequestUpdateSchema = z.object({
   estimated_price_cents: z.coerce.number().int().min(0).optional().nullable(),
   quote_message: z.string().trim().max(1200).optional().nullable(),
   quoted_deadline: z.string().trim().max(160).optional().nullable(),
+  quoted_weight_grams: z.coerce.number().int().positive().optional().nullable(),
+  quoted_package_width_cm: z.coerce.number().positive().optional().nullable(),
+  quoted_package_height_cm: z.coerce.number().positive().optional().nullable(),
+  quoted_package_length_cm: z.coerce.number().positive().optional().nullable(),
   admin_notes: z.string().trim().optional().nullable()
 });
 

@@ -34,6 +34,10 @@ type CustomRequest = {
   reference_url: string | null;
   status: Exclude<CustomRequestStatus, "todos">;
   estimated_price_cents: number | null;
+  quoted_weight_grams: number | null;
+  quoted_package_width_cm: number | null;
+  quoted_package_height_cm: number | null;
+  quoted_package_length_cm: number | null;
   quote_message: string | null;
   admin_notes: string | null;
   created_at: string;
@@ -116,6 +120,22 @@ export function AdminCustomRequestManager() {
               updates.quote_message === undefined ? request.quote_message : updates.quote_message,
             quoted_deadline:
               updates.quoted_deadline === undefined ? request.quoted_deadline : updates.quoted_deadline,
+            quoted_weight_grams:
+              updates.quoted_weight_grams === undefined
+                ? request.quoted_weight_grams
+                : updates.quoted_weight_grams,
+            quoted_package_width_cm:
+              updates.quoted_package_width_cm === undefined
+                ? request.quoted_package_width_cm
+                : updates.quoted_package_width_cm,
+            quoted_package_height_cm:
+              updates.quoted_package_height_cm === undefined
+                ? request.quoted_package_height_cm
+                : updates.quoted_package_height_cm,
+            quoted_package_length_cm:
+              updates.quoted_package_length_cm === undefined
+                ? request.quoted_package_length_cm
+                : updates.quoted_package_length_cm,
             admin_notes: updates.admin_notes === undefined ? request.admin_notes : updates.admin_notes
           })
         }
@@ -281,6 +301,58 @@ export function AdminCustomRequestManager() {
                     void updateRequest(request, { quoted_deadline: event.target.value || null })
                   }
                   placeholder="Ex.: 3 dias úteis após o pagamento"
+                />
+              </label>
+              <label>
+                Peso para envio (g)
+                <input
+                  defaultValue={request.quoted_weight_grams ?? ""}
+                  inputMode="numeric"
+                  onBlur={(event) =>
+                    void updateRequest(request, {
+                      quoted_weight_grams: event.target.value ? Number(event.target.value) : null
+                    })
+                  }
+                  placeholder="250"
+                />
+              </label>
+              <label>
+                Largura pacote (cm)
+                <input
+                  defaultValue={request.quoted_package_width_cm ?? ""}
+                  inputMode="decimal"
+                  onBlur={(event) =>
+                    void updateRequest(request, {
+                      quoted_package_width_cm: event.target.value ? Number(event.target.value.replace(",", ".")) : null
+                    })
+                  }
+                  placeholder="16"
+                />
+              </label>
+              <label>
+                Altura pacote (cm)
+                <input
+                  defaultValue={request.quoted_package_height_cm ?? ""}
+                  inputMode="decimal"
+                  onBlur={(event) =>
+                    void updateRequest(request, {
+                      quoted_package_height_cm: event.target.value ? Number(event.target.value.replace(",", ".")) : null
+                    })
+                  }
+                  placeholder="8"
+                />
+              </label>
+              <label>
+                Comprimento pacote (cm)
+                <input
+                  defaultValue={request.quoted_package_length_cm ?? ""}
+                  inputMode="decimal"
+                  onBlur={(event) =>
+                    void updateRequest(request, {
+                      quoted_package_length_cm: event.target.value ? Number(event.target.value.replace(",", ".")) : null
+                    })
+                  }
+                  placeholder="20"
                 />
               </label>
             </div>
