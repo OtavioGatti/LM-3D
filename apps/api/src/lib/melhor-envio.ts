@@ -91,6 +91,8 @@ export type MelhorEnvioCheckoutResponse = {
   [key: string]: unknown;
 };
 
+export type MelhorEnvioTrackingResponse = unknown;
+
 export type MelhorEnvioShippingOption = ShippingQuoteOption & {
   rawQuote: MelhorEnvioQuoteItem;
   packages: unknown[];
@@ -482,6 +484,17 @@ export async function checkoutMelhorEnvioShipment(orderIds: string[]) {
     },
     errorCode: "MELHOR_ENVIO_CHECKOUT_FAILED",
     fallbackMessage: "Nao foi possivel comprar a etiqueta no Melhor Envio."
+  });
+}
+
+export async function trackMelhorEnvioShipments(orderIds: string[]) {
+  return requestMelhorEnvio<MelhorEnvioTrackingResponse>({
+    path: "/api/v2/me/shipment/tracking",
+    body: {
+      orders: orderIds
+    },
+    errorCode: "MELHOR_ENVIO_TRACKING_FAILED",
+    fallbackMessage: "Nao foi possivel consultar o rastreio no Melhor Envio."
   });
 }
 

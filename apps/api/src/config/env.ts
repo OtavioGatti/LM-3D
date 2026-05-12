@@ -37,6 +37,15 @@ const envSchema = z.object({
     (value) => (value === "" ? undefined : value),
     z.coerce.number().int().positive().optional()
   ),
+  MELHOR_ENVIO_TRACKING_SYNC_ENABLED: z.string().default("true"),
+  MELHOR_ENVIO_TRACKING_SYNC_INTERVAL_MINUTES: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().int().positive().default(300)
+  ),
+  MELHOR_ENVIO_TRACKING_SYNC_BATCH_SIZE: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().int().positive().default(30)
+  ),
   STORE_ORIGIN_POSTAL_CODE: z.string().optional()
 });
 
