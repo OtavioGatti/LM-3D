@@ -17,6 +17,7 @@ const envSchema = z.object({
     .url()
     .default("https://sandbox.melhorenvio.com.br"),
   MELHOR_ENVIO_ACCESS_TOKEN: z.string().optional(),
+  MELHOR_ENVIO_ALLOWED_SERVICES: z.string().optional(),
   MELHOR_ENVIO_USER_AGENT: z
     .string()
     .default("LM-3D (contato@lm-3d.com.br)"),

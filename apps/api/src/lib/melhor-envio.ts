@@ -283,6 +283,20 @@ function buildProductPayload(product: MelhorEnvioQuoteProduct) {
   };
 }
 
+function getAllowedServicesPayload() {
+  const services = env.MELHOR_ENVIO_ALLOWED_SERVICES?.trim();
+
+  if (!services) {
+    return undefined;
+  }
+
+  return services
+    .split(",")
+    .map((service) => service.trim())
+    .filter(Boolean)
+    .join(",");
+}
+
 function mapQuoteItem(item: MelhorEnvioQuoteItem): MelhorEnvioShippingOption | null {
   const serviceId = item.id === undefined || item.id === null ? null : String(item.id);
   const serviceName = item.name?.trim() || "Servico de entrega";
@@ -480,6 +494,7 @@ export async function quoteMelhorEnvioShipping({
 }): Promise<MelhorEnvioQuoteResult> {
   const originPostalCode = getStoreOriginPostalCode();
   const token = getAccessToken();
+  const allowedServices = getAllowedServicesPayload();
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   let response: Response;
@@ -501,6 +516,7 @@ export async function quoteMelhorEnvioShipping({
         to: {
           postal_code: normalizePostalCode(destinationPostalCode)
         },
+        ...(allowedServices ? { services: allowedServices } : {}),
         products: products.map(buildProductPayload)
       })
     });
