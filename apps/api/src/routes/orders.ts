@@ -1,25 +1,28 @@
-import { formatBrazilianPhone, isPublicProductStatus, type ProductStatus } from "@lm-3d/shared";
+import {
+  formatBrazilianPhone,
+  isPublicProductStatus,
+  PICKUP_SHIPPING_OPTION,
+  type ProductStatus
+} from "@lm-3d/shared";
 import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
+import {
+  type CheckoutProductRow,
+  loadCheckoutProductsBySlug
+} from "../lib/checkout-products.js";
 import { HttpError } from "../lib/http.js";
+import {
+  getStoreOriginPostalCode,
+  normalizePostalCode,
+  quoteMelhorEnvioShipping,
+  toPublicShippingOption
+} from "../lib/melhor-envio.js";
 import {
   ensureMercadoPagoPreferenceForOrder,
   syncMercadoPagoPaymentForOrder
 } from "../lib/order-payments.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
-
-type ProductRow = {
-  id: string;
-  slug: string;
-  name: string;
-  short_description: string;
-  price_cents: number;
-  status: string;
-  material: string | null;
-  dimensions: string | null;
-  accepts_customization: boolean;
-};
 
 type CouponRow = {
   id: string;
@@ -41,7 +44,7 @@ const checkoutOrderSchema = z.object({
     phone: z.string().trim().max(40).optional().nullable()
   }),
   delivery: z.object({
-    method: z.enum(["retirada", "entrega_combinar"]).default("entrega_combinar"),
+    method: z.enum(["retirada", "melhor_envio", "entrega_combinar"]).default("melhor_envio"),
     address: z
       .object({
         line1: z.string().trim().max(180).optional().nullable(),
@@ -52,6 +55,14 @@ const checkoutOrderSchema = z.object({
       .optional()
       .nullable()
   }),
+  shipping: z
+    .object({
+      optionId: z.string().trim().min(1).max(120),
+      provider: z.enum(["pickup", "melhor_envio"]),
+      serviceId: z.string().trim().max(80).optional().nullable()
+    })
+    .optional()
+    .nullable(),
   notes: z.string().trim().max(1200).optional().nullable(),
   couponCode: z.string().trim().max(40).optional().nullable(),
   items: z
@@ -90,6 +101,194 @@ export function createOrderCode() {
   const suffix = randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase();
 
   return `LM3D-${stamp}-${suffix}`;
+}
+
+type CheckoutOrderPayload = z.infer<typeof checkoutOrderSchema>;
+
+type ShippingSelection = {
+  shippingCents: number;
+  deliveryMethod: string;
+  deliveryAddress: CheckoutOrderPayload["delivery"]["address"] | null | undefined;
+  provider: "pickup" | "melhor_envio" | null;
+  serviceId: string | null;
+  serviceName: string | null;
+  companyName: string | null;
+  deliveryTimeDays: number | null;
+  originPostalCode: string | null;
+  destinationPostalCode: string | null;
+  quoteSnapshot: Record<string, unknown>;
+};
+
+function buildQuoteProducts(
+  items: CheckoutOrderPayload["items"],
+  productBySlug: Map<string, CheckoutProductRow>
+) {
+  const quantityBySlug = new Map<string, number>();
+
+  for (const item of items) {
+    quantityBySlug.set(item.productSlug, (quantityBySlug.get(item.productSlug) ?? 0) + item.quantity);
+  }
+
+  return [...quantityBySlug.entries()].map(([slug, quantity]) => {
+    const product = productBySlug.get(slug);
+
+    if (!product) {
+      throw new HttpError(
+        400,
+        "PRODUCT_UNAVAILABLE",
+        "Um dos produtos do carrinho nao esta disponivel para compra."
+      );
+    }
+
+    return {
+      ...product,
+      quantity
+    };
+  });
+}
+
+async function resolveShippingSelection({
+  payload,
+  quoteProducts
+}: {
+  payload: CheckoutOrderPayload;
+  quoteProducts: ReturnType<typeof buildQuoteProducts>;
+}): Promise<ShippingSelection> {
+  if (payload.delivery.method === "retirada") {
+    return {
+      shippingCents: 0,
+      deliveryMethod: PICKUP_SHIPPING_OPTION.label,
+      deliveryAddress: null,
+      provider: "pickup",
+      serviceId: null,
+      serviceName: PICKUP_SHIPPING_OPTION.serviceName,
+      companyName: PICKUP_SHIPPING_OPTION.companyName,
+      deliveryTimeDays: null,
+      originPostalCode: null,
+      destinationPostalCode: null,
+      quoteSnapshot: {
+        selected: PICKUP_SHIPPING_OPTION
+      }
+    };
+  }
+
+  if (payload.delivery.method === "entrega_combinar") {
+    return {
+      shippingCents: 0,
+      deliveryMethod: "Entrega a combinar",
+      deliveryAddress: payload.delivery.address ?? null,
+      provider: null,
+      serviceId: null,
+      serviceName: null,
+      companyName: null,
+      deliveryTimeDays: null,
+      originPostalCode: null,
+      destinationPostalCode: payload.delivery.address?.postalCode
+        ? normalizePostalCode(payload.delivery.address.postalCode)
+        : null,
+      quoteSnapshot: {}
+    };
+  }
+
+  const postalCode = payload.delivery.address?.postalCode;
+
+  if (!postalCode) {
+    throw new HttpError(400, "POSTAL_CODE_REQUIRED", "Informe o CEP para calcular o frete.");
+  }
+
+  if (payload.shipping?.provider !== "melhor_envio" || !payload.shipping.serviceId) {
+    throw new HttpError(400, "SHIPPING_OPTION_REQUIRED", "Escolha uma opcao de frete.");
+  }
+
+  const destinationPostalCode = normalizePostalCode(postalCode);
+  const originPostalCode = getStoreOriginPostalCode();
+  const quote = await quoteMelhorEnvioShipping({
+    destinationPostalCode,
+    products: quoteProducts
+  });
+  const selectedOption = quote.options.find(
+    (option) =>
+      option.serviceId === payload.shipping?.serviceId ||
+      option.id === payload.shipping?.optionId
+  );
+
+  if (!selectedOption) {
+    throw new HttpError(
+      400,
+      "SHIPPING_OPTION_UNAVAILABLE",
+      "A opcao de frete escolhida nao esta mais disponivel. Calcule o frete novamente."
+    );
+  }
+
+  return {
+    shippingCents: selectedOption.priceCents,
+    deliveryMethod: selectedOption.label,
+    deliveryAddress: payload.delivery.address ?? null,
+    provider: "melhor_envio",
+    serviceId: selectedOption.serviceId,
+    serviceName: selectedOption.serviceName,
+    companyName: selectedOption.companyName,
+    deliveryTimeDays: selectedOption.deliveryTimeDays,
+    originPostalCode,
+    destinationPostalCode,
+    quoteSnapshot: {
+      selected: toPublicShippingOption(selectedOption),
+      rawQuote: selectedOption.rawQuote,
+      packages: selectedOption.packages
+    }
+  };
+}
+
+function isMissingShippingOrderColumn(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) {
+    return false;
+  }
+
+  return /shipping_(provider|service|company|delivery|origin|destination|quote)/.test(
+    String(error.message)
+  );
+}
+
+function stripExtendedShippingColumns(payload: Record<string, unknown>) {
+  const stripped = { ...payload };
+
+  delete stripped.shipping_provider;
+  delete stripped.shipping_service_id;
+  delete stripped.shipping_service_name;
+  delete stripped.shipping_company_name;
+  delete stripped.shipping_delivery_time_days;
+  delete stripped.shipping_origin_postal_code;
+  delete stripped.shipping_destination_postal_code;
+  delete stripped.shipping_quote;
+
+  return stripped;
+}
+
+async function insertOrderWithShippingDetails(
+  supabase: ReturnType<typeof getSupabaseAdminClient>,
+  payload: Record<string, unknown>
+) {
+  const { data, error } = await supabase.from("orders").insert(payload).select("*").single();
+
+  if (!error) {
+    return data;
+  }
+
+  if (!isMissingShippingOrderColumn(error)) {
+    throw error;
+  }
+
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("orders")
+    .insert(stripExtendedShippingColumns(payload))
+    .select("*")
+    .single();
+
+  if (fallbackError) {
+    throw fallbackError;
+  }
+
+  return fallbackData;
 }
 
 function calculateCouponDiscount(coupon: CouponRow, subtotalCents: number) {
@@ -144,19 +343,9 @@ ordersRouter.post("/", async (req, res, next) => {
 
     const requestedSlugs = [...new Set(payload.items.map((item) => item.productSlug))];
 
-    const { data: products, error: productError } = await supabase
-      .from("products")
-      .select(
-        "id, slug, name, short_description, price_cents, status, material, dimensions, accepts_customization"
-      )
-      .in("slug", requestedSlugs);
-
-    if (productError) {
-      throw productError;
-    }
-
+    const products = await loadCheckoutProductsBySlug(supabase, requestedSlugs);
     const productBySlug = new Map(
-      ((products ?? []) as ProductRow[])
+      products
         .filter((product) => isPublicProductStatus(product.status as ProductStatus))
         .map((product) => [product.slug, product])
     );
@@ -192,6 +381,11 @@ ordersRouter.post("/", async (req, res, next) => {
     });
 
     const subtotalCents = orderItems.reduce((total, item) => total + item.line_total_cents, 0);
+    const quoteProducts = buildQuoteProducts(payload.items, productBySlug);
+    const shippingSelection = await resolveShippingSelection({
+      payload,
+      quoteProducts
+    });
     const couponCode = payload.couponCode?.trim().toUpperCase() || null;
     let coupon: CouponRow | null = null;
     let discountCents = 0;
@@ -216,11 +410,9 @@ ordersRouter.post("/", async (req, res, next) => {
     }
 
     const code = createOrderCode();
-    const totalCents = subtotalCents - discountCents;
+    const totalCents = subtotalCents + shippingSelection.shippingCents - discountCents;
 
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({
+    const order = await insertOrderWithShippingDetails(supabase, {
         code,
         user_id: user.id,
         customer_name: payload.customer.name,
@@ -229,20 +421,21 @@ ordersRouter.post("/", async (req, res, next) => {
         status: "pending_payment",
         payment_status: "pending",
         subtotal_cents: subtotalCents,
-        shipping_cents: 0,
+        shipping_cents: shippingSelection.shippingCents,
         discount_cents: discountCents,
         total_cents: totalCents,
-        delivery_method:
-          payload.delivery.method === "retirada" ? "Retirada com Lucas" : "Entrega a combinar",
-        delivery_address: payload.delivery.address ?? null,
-        customer_notes: payload.notes || null
-      })
-      .select("*")
-      .single();
-
-    if (orderError) {
-      throw orderError;
-    }
+        delivery_method: shippingSelection.deliveryMethod,
+        delivery_address: shippingSelection.deliveryAddress ?? null,
+        customer_notes: payload.notes || null,
+        shipping_provider: shippingSelection.provider,
+        shipping_service_id: shippingSelection.serviceId,
+        shipping_service_name: shippingSelection.serviceName,
+        shipping_company_name: shippingSelection.companyName,
+        shipping_delivery_time_days: shippingSelection.deliveryTimeDays,
+        shipping_origin_postal_code: shippingSelection.originPostalCode,
+        shipping_destination_postal_code: shippingSelection.destinationPostalCode,
+        shipping_quote: shippingSelection.quoteSnapshot
+      });
 
     if (coupon) {
       const couponUpdate = supabase
@@ -321,7 +514,9 @@ ordersRouter.post("/", async (req, res, next) => {
         status: order.status,
         paymentStatus: order.payment_status,
         totalCents: order.total_cents,
-        discountCents: order.discount_cents
+        discountCents: order.discount_cents,
+        shippingCents: order.shipping_cents,
+        deliveryMethod: order.delivery_method
       },
       payment: {
         provider: "mercado_pago",

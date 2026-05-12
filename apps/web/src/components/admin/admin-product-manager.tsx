@@ -23,6 +23,9 @@ type AdminProduct = {
   material: string | null;
   dimensions: string | null;
   weight_grams: number | null;
+  package_width_cm?: number | null;
+  package_height_cm?: number | null;
+  package_length_cm?: number | null;
   production_time_days_min: number;
   production_time_days_max: number;
   stock_quantity: number;
@@ -53,6 +56,9 @@ type ProductFormState = {
   material: string;
   dimensions: string;
   weight_grams: string;
+  package_width_cm: string;
+  package_height_cm: string;
+  package_length_cm: string;
   production_time_days_min: string;
   production_time_days_max: string;
   stock_quantity: string;
@@ -73,6 +79,9 @@ const emptyForm: ProductFormState = {
   material: "PLA",
   dimensions: "",
   weight_grams: "",
+  package_width_cm: "",
+  package_height_cm: "",
+  package_length_cm: "",
   production_time_days_min: "1",
   production_time_days_max: "3",
   stock_quantity: "0",
@@ -143,6 +152,9 @@ export function AdminProductManager() {
         material: form.material,
         dimensions: form.dimensions || null,
         weight_grams: form.weight_grams ? Number(form.weight_grams) : null,
+        package_width_cm: form.package_width_cm ? Number(form.package_width_cm) : null,
+        package_height_cm: form.package_height_cm ? Number(form.package_height_cm) : null,
+        package_length_cm: form.package_length_cm ? Number(form.package_length_cm) : null,
         production_time_days_min: Number(form.production_time_days_min),
         production_time_days_max: Number(form.production_time_days_max),
         stock_quantity: Number(form.stock_quantity),
@@ -197,6 +209,9 @@ export function AdminProductManager() {
       material: product.material ?? "PLA",
       dimensions: product.dimensions ?? "",
       weight_grams: product.weight_grams ? String(product.weight_grams) : "",
+      package_width_cm: product.package_width_cm ? String(product.package_width_cm) : "",
+      package_height_cm: product.package_height_cm ? String(product.package_height_cm) : "",
+      package_length_cm: product.package_length_cm ? String(product.package_length_cm) : "",
       production_time_days_min: String(product.production_time_days_min),
       production_time_days_max: String(product.production_time_days_max),
       stock_quantity: String(product.stock_quantity),
@@ -312,8 +327,42 @@ export function AdminProductManager() {
               <input
                 min="0"
                 onChange={(event) => setForm({ ...form, weight_grams: event.target.value })}
+                required
                 type="number"
                 value={form.weight_grams}
+              />
+            </label>
+            <label>
+              Largura pacote (cm)
+              <input
+                min="0"
+                onChange={(event) => setForm({ ...form, package_width_cm: event.target.value })}
+                required
+                step="0.1"
+                type="number"
+                value={form.package_width_cm}
+              />
+            </label>
+            <label>
+              Altura pacote (cm)
+              <input
+                min="0"
+                onChange={(event) => setForm({ ...form, package_height_cm: event.target.value })}
+                required
+                step="0.1"
+                type="number"
+                value={form.package_height_cm}
+              />
+            </label>
+            <label>
+              Comprimento pacote (cm)
+              <input
+                min="0"
+                onChange={(event) => setForm({ ...form, package_length_cm: event.target.value })}
+                required
+                step="0.1"
+                type="number"
+                value={form.package_length_cm}
               />
             </label>
             <label>
@@ -348,6 +397,9 @@ export function AdminProductManager() {
               />
             </label>
           </div>
+          <p className="form-note">
+            Peso e medidas de pacote sao usados diretamente no calculo do Melhor Envio para este produto.
+          </p>
           <label>
             Dimensoes
             <input

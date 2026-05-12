@@ -11,7 +11,16 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   SUPABASE_JWT_SECRET: z.string().optional(),
   MERCADO_PAGO_ACCESS_TOKEN: z.string().optional(),
-  MERCADO_PAGO_WEBHOOK_SECRET: z.string().optional()
+  MERCADO_PAGO_WEBHOOK_SECRET: z.string().optional(),
+  MELHOR_ENVIO_BASE_URL: z
+    .string()
+    .url()
+    .default("https://sandbox.melhorenvio.com.br"),
+  MELHOR_ENVIO_ACCESS_TOKEN: z.string().optional(),
+  MELHOR_ENVIO_USER_AGENT: z
+    .string()
+    .default("LM-3D (contato@lm-3d.com.br)"),
+  STORE_ORIGIN_POSTAL_CODE: z.string().optional()
 });
 
 export const env = envSchema.parse(process.env);

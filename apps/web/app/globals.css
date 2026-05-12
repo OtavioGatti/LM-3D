@@ -1371,6 +1371,82 @@ img {
   grid-column: 1 / -1;
 }
 
+.shipping-box {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--background);
+}
+
+.shipping-box-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.shipping-box-header svg {
+  color: var(--accent);
+}
+
+.shipping-box-header h2,
+.shipping-box-header p {
+  margin: 0;
+}
+
+.shipping-box-header h2 {
+  color: var(--surface-ink);
+  font-size: 1rem;
+}
+
+.shipping-option-list {
+  display: grid;
+  gap: 10px;
+}
+
+.shipping-option-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 58px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+.shipping-option-button[data-selected="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.shipping-option-button > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.shipping-option-button svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.shipping-option-button strong {
+  color: var(--surface-ink);
+}
+
+.shipping-option-button small {
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .checkout-assurance span {
   display: inline-flex;
   align-items: center;
@@ -2696,6 +2772,10 @@ img {
     grid-template-columns: 1fr;
     gap: 12px;
     min-height: auto;
+  }
+
+  .shipping-option-button {
+    grid-template-columns: 1fr;
   }
 
   .admin-order-summary-meta,

@@ -14,6 +14,9 @@ const productPayloadSchema = z.object({
   material: z.string().trim().optional().default("PLA"),
   weight_grams: z.coerce.number().int().min(0).optional().nullable(),
   dimensions: z.string().trim().optional().nullable(),
+  package_width_cm: z.coerce.number().positive().optional().nullable(),
+  package_height_cm: z.coerce.number().positive().optional().nullable(),
+  package_length_cm: z.coerce.number().positive().optional().nullable(),
   production_time_days_min: z.coerce.number().int().min(0).default(1),
   production_time_days_max: z.coerce.number().int().min(0).default(3),
   stock_quantity: z.coerce.number().int().min(0).default(0),
@@ -31,6 +34,80 @@ const productPayloadSchema = z.object({
 const productUpdateSchema = productPayloadSchema.partial();
 
 export const adminProductsRouter = Router();
+
+function isMissingPackageColumn(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) {
+    return false;
+  }
+
+  return /package_(width|height|length)_cm/.test(String(error.message));
+}
+
+function stripPackageColumns<T extends Record<string, unknown>>(payload: T) {
+  const stripped = { ...payload };
+
+  delete stripped.package_width_cm;
+  delete stripped.package_height_cm;
+  delete stripped.package_length_cm;
+
+  return stripped;
+}
+
+async function insertProduct(payload: Record<string, unknown>) {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase.from("products").insert(payload).select("*").single();
+
+  if (!error) {
+    return data;
+  }
+
+  if (!isMissingPackageColumn(error)) {
+    throw error;
+  }
+
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("products")
+    .insert(stripPackageColumns(payload))
+    .select("*")
+    .single();
+
+  if (fallbackError) {
+    throw fallbackError;
+  }
+
+  return fallbackData;
+}
+
+async function updateProduct(id: string, payload: Record<string, unknown>) {
+  const supabase = getSupabaseAdminClient();
+  const { data, error } = await supabase
+    .from("products")
+    .update(payload)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (!error) {
+    return data;
+  }
+
+  if (!isMissingPackageColumn(error)) {
+    throw error;
+  }
+
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from("products")
+    .update(stripPackageColumns(payload))
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (fallbackError) {
+    throw fallbackError;
+  }
+
+  return fallbackData;
+}
 
 adminProductsRouter.get("/", async (_req, res, next) => {
   try {
@@ -63,18 +140,10 @@ adminProductsRouter.post("/", async (req, res, next) => {
     const supabase = getSupabaseAdminClient();
     const { category_ids: categoryIds, image_urls: imageUrls, ...productPayload } = payload;
 
-    const { data: product, error } = await supabase
-      .from("products")
-      .insert({
-        ...productPayload,
-        slug: toSlug(payload.slug ?? payload.name)
-      })
-      .select("*")
-      .single();
-
-    if (error) {
-      throw error;
-    }
+    const product = await insertProduct({
+      ...productPayload,
+      slug: toSlug(payload.slug ?? payload.name)
+    });
 
     if (categoryIds.length > 0) {
       const { error: categoryError } = await supabase.from("product_categories").insert(
@@ -121,16 +190,7 @@ adminProductsRouter.patch("/:id", async (req, res, next) => {
       ...(payload.slug ? { slug: toSlug(payload.slug) } : {})
     };
 
-    const { data: product, error } = await supabase
-      .from("products")
-      .update(updatePayload)
-      .eq("id", req.params.id)
-      .select("*")
-      .single();
-
-    if (error) {
-      throw error;
-    }
+    const product = await updateProduct(req.params.id, updatePayload);
 
     if (categoryIds) {
       await supabase.from("product_categories").delete().eq("product_id", req.params.id);

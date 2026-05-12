@@ -10,7 +10,7 @@ export type CheckoutOrderPayload = {
     phone?: string | null;
   };
   delivery: {
-    method: "retirada" | "entrega_combinar";
+    method: "retirada" | "melhor_envio" | "entrega_combinar";
     address?: {
       line1?: string | null;
       city?: string | null;
@@ -18,6 +18,11 @@ export type CheckoutOrderPayload = {
       postalCode?: string | null;
     } | null;
   };
+  shipping?: {
+    optionId: string;
+    provider: "pickup" | "melhor_envio";
+    serviceId?: string | null;
+  } | null;
   notes?: string | null;
   couponCode?: string | null;
   items: Array<{
@@ -35,6 +40,8 @@ export type CheckoutOrderResponse = {
     paymentStatus: string;
     totalCents: number;
     discountCents: number;
+    shippingCents: number;
+    deliveryMethod: string | null;
   };
   payment?: {
     provider: "mercado_pago";

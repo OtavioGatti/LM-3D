@@ -1,11 +1,28 @@
 "use client";
 
-import { formatBrazilianPhone, formatMoneyBRL, type ProductDetails } from "@lm-3d/shared";
-import { ArrowRight, Clock, LockKeyhole, MessageSquareText, ShieldCheck, UserPlus } from "lucide-react";
+import {
+  formatBrazilianPhone,
+  formatMoneyBRL,
+  PICKUP_SHIPPING_OPTION,
+  type ProductDetails,
+  type ShippingQuoteOption
+} from "@lm-3d/shared";
+import {
+  ArrowRight,
+  Clock,
+  LockKeyhole,
+  MapPin,
+  MessageSquareText,
+  PackageCheck,
+  ShieldCheck,
+  Truck,
+  UserPlus
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createCheckoutOrder } from "@/lib/api/orders";
+import { quoteShippingOptions } from "@/lib/api/shipping";
 import {
   clearCartItems,
   readCartItems,
@@ -22,7 +39,7 @@ type CheckoutFormState = {
   name: string;
   email: string;
   phone: string;
-  deliveryMethod: "entrega_combinar" | "retirada";
+  deliveryMethod: "melhor_envio" | "retirada";
   addressLine: string;
   city: string;
   state: string;
@@ -35,7 +52,7 @@ const emptyForm: CheckoutFormState = {
   name: "",
   email: "",
   phone: "",
-  deliveryMethod: "entrega_combinar",
+  deliveryMethod: "melhor_envio",
   addressLine: "",
   city: "",
   state: "",
@@ -64,8 +81,14 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
   const [message, setMessage] = useState("");
   const [couponMessage, setCouponMessage] = useState("");
   const [coupon, setCoupon] = useState<CouponPreview | null>(null);
+  const [shippingOptions, setShippingOptions] = useState<ShippingQuoteOption[]>([
+    PICKUP_SHIPPING_OPTION
+  ]);
+  const [selectedShippingOptionId, setSelectedShippingOptionId] = useState("");
+  const [shippingMessage, setShippingMessage] = useState("");
   const [authStatus, setAuthStatus] = useState<CheckoutAuthStatus>("checking");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isQuotingShipping, setIsQuotingShipping] = useState(false);
 
   const productBySlug = useMemo(
     () => new Map(liveProducts.map((product) => [product.slug, product])),
@@ -92,7 +115,15 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
         subtotal
       )
     : 0;
-  const estimatedTotal = subtotal - couponDiscount;
+  const selectedShippingOption = shippingOptions.find(
+    (option) => option.id === selectedShippingOptionId
+  );
+  const shippingCents = selectedShippingOption?.priceCents ?? 0;
+  const estimatedTotal = subtotal + shippingCents - couponDiscount;
+  const cartSignature = cartLines
+    .map((line) => `${line.product.slug}:${line.item.quantity}`)
+    .sort()
+    .join("|");
 
   useEffect(() => {
     setItems(readCartItems());
@@ -109,6 +140,14 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
       })
       .finally(() => setIsCatalogRefreshing(false));
   }, []);
+
+  useEffect(() => {
+    setShippingOptions([PICKUP_SHIPPING_OPTION]);
+    setShippingMessage("");
+    setSelectedShippingOptionId((current) =>
+      current === PICKUP_SHIPPING_OPTION.id ? current : ""
+    );
+  }, [cartSignature, form.postalCode]);
 
   useEffect(() => {
     async function loadSession() {
@@ -193,6 +232,83 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
     setCouponMessage("Cupom aplicado.");
   }
 
+  function formatDeliveryTime(option: ShippingQuoteOption) {
+    if (option.provider === "pickup") {
+      return "sem custo";
+    }
+
+    if (option.deliveryTimeDays === null) {
+      return "prazo informado pela transportadora";
+    }
+
+    return `${option.deliveryTimeDays} dia(s) util(eis)`;
+  }
+
+  function selectShippingOption(option: ShippingQuoteOption) {
+    setSelectedShippingOptionId(option.id);
+    setForm((current) => ({
+      ...current,
+      deliveryMethod: option.provider === "pickup" ? "retirada" : "melhor_envio"
+    }));
+  }
+
+  async function calculateShipping() {
+    setShippingMessage("");
+    setIsQuotingShipping(true);
+
+    try {
+      if (!form.postalCode.trim()) {
+        throw new Error("Informe o CEP para calcular o frete.");
+      }
+
+      const response = await quoteShippingOptions({
+        address: {
+          postalCode: form.postalCode
+        },
+        items: cartLines.map(({ item }) => ({
+          productSlug: item.productSlug,
+          quantity: item.quantity
+        }))
+      });
+      const options = response.options.some((option) => option.id === PICKUP_SHIPPING_OPTION.id)
+        ? response.options
+        : [PICKUP_SHIPPING_OPTION, ...response.options];
+      const carrierOption = options.find((option) => option.provider === "melhor_envio");
+      const nextSelectedId = options.some((option) => option.id === selectedShippingOptionId)
+        ? selectedShippingOptionId
+        : carrierOption?.id ?? PICKUP_SHIPPING_OPTION.id;
+      const nextSelectedOption = options.find((option) => option.id === nextSelectedId);
+
+      setShippingOptions(options);
+      setSelectedShippingOptionId(nextSelectedId);
+      if (nextSelectedOption) {
+        setForm((current) => ({
+          ...current,
+          deliveryMethod: nextSelectedOption.provider === "pickup" ? "retirada" : "melhor_envio"
+        }));
+      }
+
+      if (carrierOption) {
+        setShippingMessage("Fretes atualizados.");
+      } else {
+        setShippingMessage(
+          response.unavailableServices[0]?.message ??
+            "Nao encontramos frete por transportadora para este CEP agora."
+        );
+      }
+    } catch (error) {
+      setShippingOptions([PICKUP_SHIPPING_OPTION]);
+      setSelectedShippingOptionId((current) =>
+        current === PICKUP_SHIPPING_OPTION.id ? current : ""
+      );
+      setShippingMessage(
+        error instanceof Error ? error.message : "Nao foi possivel calcular o frete."
+      );
+    } finally {
+      setIsQuotingShipping(false);
+    }
+  }
+
   async function submitOrder(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
@@ -207,6 +323,17 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
         throw new Error("Entre ou crie uma conta para finalizar o pedido.");
       }
 
+      if (!selectedShippingOption) {
+        throw new Error("Escolha retirada em Assis/SP ou uma opcao de frete.");
+      }
+
+      if (
+        selectedShippingOption.provider === "melhor_envio" &&
+        (!form.addressLine.trim() || !form.city.trim() || !form.state.trim() || !form.postalCode.trim())
+      ) {
+        throw new Error("Preencha o endereco completo para envio.");
+      }
+
       const response = await createCheckoutOrder({
         customer: {
           name: form.name,
@@ -214,9 +341,9 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           phone: form.phone || null
         },
         delivery: {
-          method: form.deliveryMethod,
+          method: selectedShippingOption.provider === "pickup" ? "retirada" : "melhor_envio",
           address:
-            form.deliveryMethod === "entrega_combinar"
+            selectedShippingOption.provider === "melhor_envio"
               ? {
                   line1: form.addressLine || null,
                   city: form.city || null,
@@ -224,6 +351,11 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
                   postalCode: form.postalCode || null
                 }
               : null
+        },
+        shipping: {
+          optionId: selectedShippingOption.id,
+          provider: selectedShippingOption.provider,
+          serviceId: selectedShippingOption.serviceId
         },
         notes: form.notes || null,
         couponCode: form.couponCode || null,
@@ -378,23 +510,43 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             />
           </label>
 
-          <label>
-            Forma de entrega
-            <select
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  deliveryMethod: event.target.value as CheckoutFormState["deliveryMethod"]
-                })
-              }
-              value={form.deliveryMethod}
-            >
-              <option value="entrega_combinar">Entrega a combinar</option>
-              <option value="retirada">Retirada com Lucas</option>
-            </select>
-          </label>
+          <div className="shipping-box">
+            <div className="shipping-box-header">
+              <Truck aria-hidden="true" size={22} />
+              <div>
+                <h2>Entrega</h2>
+                <p>Escolha retirada gratuita ou calcule o envio por transportadora.</p>
+              </div>
+            </div>
 
-          {form.deliveryMethod === "entrega_combinar" ? (
+            <div className="shipping-option-list">
+              {shippingOptions.map((option) => {
+                const isSelected = selectedShippingOptionId === option.id;
+
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className="shipping-option-button"
+                    data-selected={isSelected}
+                    key={option.id}
+                    onClick={() => selectShippingOption(option)}
+                    type="button"
+                  >
+                    <span>
+                      {option.provider === "pickup" ? (
+                        <PackageCheck aria-hidden="true" size={18} />
+                      ) : (
+                        <Truck aria-hidden="true" size={18} />
+                      )}
+                      <strong>{option.label}</strong>
+                    </span>
+                    <small>{formatDeliveryTime(option)}</small>
+                    <strong>{formatMoneyBRL(option.priceCents)}</strong>
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="form-grid">
               <label>
                 Endereço
@@ -402,6 +554,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
                   autoComplete="street-address"
                   onChange={(event) => setForm({ ...form, addressLine: event.target.value })}
                   placeholder="Rua, número, bairro"
+                  required={selectedShippingOption?.provider === "melhor_envio"}
                   value={form.addressLine}
                 />
               </label>
@@ -410,6 +563,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
                 <input
                   autoComplete="address-level2"
                   onChange={(event) => setForm({ ...form, city: event.target.value })}
+                  required={selectedShippingOption?.provider === "melhor_envio"}
                   value={form.city}
                 />
               </label>
@@ -418,6 +572,8 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
                 <input
                   autoComplete="address-level1"
                   onChange={(event) => setForm({ ...form, state: event.target.value })}
+                  placeholder="SP"
+                  required={selectedShippingOption?.provider === "melhor_envio"}
                   value={form.state}
                 />
               </label>
@@ -426,11 +582,24 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
                 <input
                   autoComplete="postal-code"
                   onChange={(event) => setForm({ ...form, postalCode: event.target.value })}
+                  placeholder="19800-000"
+                  required={selectedShippingOption?.provider === "melhor_envio"}
                   value={form.postalCode}
                 />
               </label>
             </div>
-          ) : null}
+
+            <button
+              className="button button-secondary"
+              disabled={isQuotingShipping}
+              onClick={() => void calculateShipping()}
+              type="button"
+            >
+              <MapPin aria-hidden="true" size={18} />
+              {isQuotingShipping ? "Calculando frete..." : "Calcular frete"}
+            </button>
+            {shippingMessage ? <p className="form-note">{shippingMessage}</p> : null}
+          </div>
 
           <label>
             Observações gerais
@@ -466,7 +635,11 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             </span>
           </div>
 
-          <button className="button button-primary full-width" disabled={isSubmitting} type="submit">
+          <button
+            className="button button-primary full-width"
+            disabled={isSubmitting || !selectedShippingOption}
+            type="submit"
+          >
             {isSubmitting ? "Criando pedido..." : "Criar pedido"}
             <ArrowRight aria-hidden="true" size={18} />
           </button>
@@ -497,8 +670,10 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             </div>
           ) : null}
           <div className="summary-line">
-            <span>Entrega</span>
-            <strong>A combinar</strong>
+            <span>{selectedShippingOption?.label ?? "Entrega"}</span>
+            <strong>
+              {selectedShippingOption ? formatMoneyBRL(shippingCents) : "Escolha uma opcao"}
+            </strong>
           </div>
           <div className="summary-total">
             <span>Total estimado</span>

@@ -23,11 +23,16 @@ type AccountOrder = {
   status: OrderStatus;
   payment_status: PaymentStatus;
   subtotal_cents: number;
+  shipping_cents: number;
   discount_cents: number;
   total_cents: number;
   created_at: string;
   delivery_method: string | null;
   tracking_code: string | null;
+  shipping_provider?: string | null;
+  shipping_service_name?: string | null;
+  shipping_company_name?: string | null;
+  shipping_delivery_time_days?: number | null;
   customer_notes: string | null;
   order_items: AccountOrderItem[];
 };
@@ -53,6 +58,58 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
   charged_back: "Contestação"
 };
 
+function formatShippingLabel(order: AccountOrder) {
+  if (order.shipping_provider === "pickup") {
+    return "Retirada em Assis/SP";
+  }
+
+  if (order.shipping_provider === "melhor_envio") {
+    return [order.shipping_company_name, order.shipping_service_name].filter(Boolean).join(" - ") || null;
+  }
+
+  return order.delivery_method;
+}
+
+const accountOrderBaseSelect = `
+  id,
+  code,
+  status,
+  payment_status,
+  subtotal_cents,
+  shipping_cents,
+  discount_cents,
+  total_cents,
+  created_at,
+  delivery_method,
+  tracking_code,
+  customer_notes,
+  order_items (
+    id,
+    product_snapshot,
+    quantity,
+    unit_price_cents,
+    line_total_cents,
+    customization_notes
+  )
+`;
+
+const accountOrderShippingSelect = `
+  ${accountOrderBaseSelect},
+  shipping_provider,
+  shipping_service_name,
+  shipping_company_name,
+  shipping_delivery_time_days
+`;
+
+function isMissingShippingColumn(error: unknown) {
+  return (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    /shipping_(provider|service|company|delivery)/.test(String(error.message))
+  );
+}
+
 export function AccountOrders() {
   const [orders, setOrders] = useState<AccountOrder[]>([]);
   const [message, setMessage] = useState("");
@@ -66,35 +123,30 @@ export function AccountOrders() {
 
     setIsLoading(true);
 
-    const { data, error } = await getSupabaseBrowserClient()
+    const supabase = getSupabaseBrowserClient();
+    const { data, error } = await supabase
       .from("orders")
-      .select(
-        `
-          id,
-          code,
-          status,
-          payment_status,
-          subtotal_cents,
-          discount_cents,
-          total_cents,
-          created_at,
-          delivery_method,
-          tracking_code,
-          customer_notes,
-          order_items (
-            id,
-            product_snapshot,
-            quantity,
-            unit_price_cents,
-            line_total_cents,
-            customization_notes
-          )
-        `
-      )
+      .select(accountOrderShippingSelect)
       .order("created_at", { ascending: false });
 
     if (error) {
-      setMessage(error.message);
+      if (!isMissingShippingColumn(error)) {
+        setMessage(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      const fallback = await supabase
+        .from("orders")
+        .select(accountOrderBaseSelect)
+        .order("created_at", { ascending: false });
+
+      if (fallback.error) {
+        setMessage(fallback.error.message);
+      } else {
+        setMessage("");
+        setOrders((fallback.data ?? []) as unknown as AccountOrder[]);
+      }
     } else {
       setMessage("");
       setOrders((data ?? []) as unknown as AccountOrder[]);
@@ -154,7 +206,11 @@ export function AccountOrders() {
           <div className="checkout-assurance">
             <span>{orderStatusLabels[order.status]}</span>
             <span>Pagamento: {paymentStatusLabels[order.payment_status]}</span>
-            {order.delivery_method ? <span>{order.delivery_method}</span> : null}
+            {formatShippingLabel(order) ? <span>{formatShippingLabel(order)}</span> : null}
+            {order.shipping_delivery_time_days !== null &&
+            order.shipping_delivery_time_days !== undefined ? (
+              <span>Prazo: {order.shipping_delivery_time_days} dia(s) util(eis)</span>
+            ) : null}
             {order.tracking_code ? <span>Rastreio: {order.tracking_code}</span> : null}
           </div>
 
@@ -170,10 +226,15 @@ export function AccountOrders() {
             ))}
           </div>
 
-          {order.discount_cents > 0 ? (
+          {order.discount_cents > 0 || order.shipping_cents > 0 ? (
             <div className="account-order-totals">
               <span>Subtotal {formatMoneyBRL(order.subtotal_cents)}</span>
-              <strong>Desconto -{formatMoneyBRL(order.discount_cents)}</strong>
+              {order.shipping_cents > 0 ? (
+                <span>Frete {formatMoneyBRL(order.shipping_cents)}</span>
+              ) : null}
+              {order.discount_cents > 0 ? (
+                <strong>Desconto -{formatMoneyBRL(order.discount_cents)}</strong>
+              ) : null}
             </div>
           ) : null}
 
@@ -183,4 +244,3 @@ export function AccountOrders() {
     </section>
   );
 }
-

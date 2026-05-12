@@ -59,6 +59,13 @@ type AdminOrder = {
   tracking_code: string | null;
   delivery_method: string | null;
   delivery_address: DeliveryAddress | null;
+  shipping_provider?: string | null;
+  shipping_service_id?: string | null;
+  shipping_service_name?: string | null;
+  shipping_company_name?: string | null;
+  shipping_delivery_time_days?: number | null;
+  shipping_origin_postal_code?: string | null;
+  shipping_destination_postal_code?: string | null;
   created_at: string;
   order_items: OrderItem[];
   discount_coupon_redemptions?: Array<{
@@ -110,6 +117,18 @@ function getCouponLabel(order: AdminOrder) {
   }
 
   return `${redemption.discount_coupons.code} - ${redemption.discount_coupons.name}`;
+}
+
+function getShippingProviderLabel(order: AdminOrder) {
+  if (order.shipping_provider === "pickup") {
+    return "Retirada gratuita";
+  }
+
+  if (order.shipping_provider === "melhor_envio") {
+    return [order.shipping_company_name, order.shipping_service_name].filter(Boolean).join(" - ") || null;
+  }
+
+  return null;
 }
 
 export function AdminOrderManager() {
@@ -345,8 +364,15 @@ export function AdminOrderManager() {
                   <div className="admin-order-details-grid">
                     <div>
                       <span>Entrega</span>
-                      <strong>{order.delivery_method ?? "A combinar"}</strong>
+                      <strong>{getShippingProviderLabel(order) ?? order.delivery_method ?? "A combinar"}</strong>
                       <small>{formatDeliveryAddress(order)}</small>
+                      {order.shipping_delivery_time_days !== null &&
+                      order.shipping_delivery_time_days !== undefined ? (
+                        <small>Prazo: {order.shipping_delivery_time_days} dia(s) util(eis)</small>
+                      ) : null}
+                      {order.shipping_destination_postal_code ? (
+                        <small>CEP destino: {order.shipping_destination_postal_code}</small>
+                      ) : null}
                       {order.tracking_code ? <small>Rastreio: {order.tracking_code}</small> : null}
                     </div>
                     <div>
@@ -433,10 +459,10 @@ export function AdminOrderManager() {
                     </button>
                     <span className="status-pill">{statusLabels[order.status]}</span>
                     <span className="status-pill">{paymentStatusLabels[order.payment_status]}</span>
-                    {order.delivery_method ? (
+                    {(getShippingProviderLabel(order) ?? order.delivery_method) ? (
                       <span className="status-pill">
                         <Truck aria-hidden="true" size={14} />
-                        {order.delivery_method}
+                        {getShippingProviderLabel(order) ?? order.delivery_method}
                       </span>
                     ) : null}
                     {savingId === order.id ? (
