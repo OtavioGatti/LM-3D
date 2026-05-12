@@ -243,10 +243,14 @@ export async function quoteMelhorEnvioShipping({
   const data = (await response.json().catch(() => null)) as unknown;
 
   if (!response.ok) {
-    const message =
+    const providerMessage =
       data && typeof data === "object" && "message" in data
         ? String(data.message)
         : "Nao foi possivel calcular o frete no Melhor Envio.";
+    const message =
+      response.status === 401 || /^unauthenticated\.?$/i.test(providerMessage.trim())
+        ? "Melhor Envio recusou o token de API. Confira MELHOR_ENVIO_ACCESS_TOKEN e MELHOR_ENVIO_BASE_URL no Render."
+        : providerMessage;
 
     throw new HttpError(response.status, "MELHOR_ENVIO_QUOTE_FAILED", message);
   }
