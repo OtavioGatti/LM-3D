@@ -909,12 +909,15 @@ img {
 .catalog-toolbar label,
 .lead-form label,
 .admin-form label,
-.cart-item label {
+.cart-item label,
+.admin-auth-form label,
+.form-field {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   color: var(--surface-ink);
-  font-size: 0.9rem;
-  font-weight: 900;
+  font-size: 0.84rem;
+  font-weight: 950;
+  line-height: 1.25;
 }
 
 .catalog-toolbar input,
@@ -927,14 +930,23 @@ img {
 .admin-order-card input,
 .admin-order-card select,
 .admin-order-card textarea,
-.cart-item textarea {
+.cart-item textarea,
+.admin-auth-form input,
+.form-field input,
+.form-field select,
+.form-field textarea {
   width: 100%;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 88%, var(--surface-ink));
   border-radius: var(--radius);
   background: #fff;
   color: var(--text);
   font-size: 0.96rem;
+  font-weight: 720;
   outline: none;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease;
 }
 
 .catalog-toolbar input,
@@ -943,18 +955,62 @@ img {
 .admin-form input,
 .admin-form select,
 .admin-order-card input,
-.admin-order-card select {
-  min-height: 44px;
-  padding: 0 12px;
+.admin-order-card select,
+.admin-auth-form input,
+.form-field input,
+.form-field select {
+  min-height: 48px;
+  padding: 0 14px;
 }
 
 .lead-form textarea,
 .admin-form select[multiple],
 .admin-form textarea,
 .admin-order-card textarea,
-.cart-item textarea {
-  padding: 12px;
+.cart-item textarea,
+.form-field textarea {
+  padding: 14px;
   resize: vertical;
+}
+
+.catalog-toolbar input::placeholder,
+.lead-form input::placeholder,
+.lead-form textarea::placeholder,
+.admin-form input::placeholder,
+.admin-form textarea::placeholder,
+.admin-auth-form input::placeholder,
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: #8b9a94;
+  font-weight: 650;
+  opacity: 1;
+}
+
+.catalog-toolbar input:focus,
+.catalog-toolbar select:focus,
+.lead-form input:focus,
+.lead-form textarea:focus,
+.admin-form input:focus,
+.admin-form select:focus,
+.admin-form textarea:focus,
+.admin-order-card input:focus,
+.admin-order-card select:focus,
+.admin-order-card textarea:focus,
+.cart-item textarea:focus,
+.admin-auth-form input:focus,
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: var(--accent);
+  background: #fff;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.form-field input[aria-invalid="true"],
+.form-field select[aria-invalid="true"],
+.form-field textarea[aria-invalid="true"] {
+  border-color: #e11d48;
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.08);
 }
 
 .admin-form select[multiple] {
@@ -1745,6 +1801,13 @@ img {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 700;
+  line-height: 1.4;
+}
+
+.field-error {
+  color: #be123c;
+  font-size: 0.82rem;
+  font-weight: 800;
   line-height: 1.4;
 }
 

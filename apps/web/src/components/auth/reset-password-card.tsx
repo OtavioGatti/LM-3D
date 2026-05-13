@@ -8,6 +8,7 @@ import { getFriendlyAuthError } from "@/lib/auth/errors";
 import { buildLoginHref } from "@/lib/auth/redirect";
 import { validateAccountPassword, validatePasswordConfirmation } from "@/lib/auth/password";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
+import { TextField } from "@/components/ui/form-field";
 
 type ResetPasswordCardProps = {
   loginRedirectTo?: string;
@@ -29,7 +30,7 @@ export function ResetPasswordCard({ loginRedirectTo = "/conta" }: ResetPasswordC
     setSuccessMessage("");
 
     if (!isConfigured) {
-      setErrorMessage("Configure as variaveis publicas do Supabase antes de redefinir a senha.");
+      setErrorMessage("Configure as variáveis públicas do Supabase antes de redefinir a senha.");
       return;
     }
 
@@ -51,14 +52,14 @@ export function ResetPasswordCard({ loginRedirectTo = "/conta" }: ResetPasswordC
       } = await supabase.auth.getSession();
 
       if (!session) {
-        setErrorMessage("Link expirado ou ja utilizado. Solicite uma nova recuperacao de senha.");
+        setErrorMessage("Link expirado ou já utilizado. Solicite uma nova recuperação de senha.");
         return;
       }
 
       const { error } = await supabase.auth.updateUser({ password });
 
       if (error) {
-        setErrorMessage(getFriendlyAuthError(error.message, "Nao foi possivel atualizar a senha."));
+        setErrorMessage(getFriendlyAuthError(error.message, "Não foi possível atualizar a senha."));
         return;
       }
 
@@ -69,7 +70,7 @@ export function ResetPasswordCard({ loginRedirectTo = "/conta" }: ResetPasswordC
       await supabase.auth.signOut();
       window.setTimeout(() => router.replace(loginHref), 1200);
     } catch {
-      setErrorMessage("Nao foi possivel atualizar a senha. Solicite um novo link e tente novamente.");
+      setErrorMessage("Não foi possível atualizar a senha. Solicite um novo link e tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -81,34 +82,30 @@ export function ResetPasswordCard({ loginRedirectTo = "/conta" }: ResetPasswordC
         <KeyRound aria-hidden="true" size={30} />
         <span className="eyebrow">Conta LM-3D</span>
         <h1>Redefinir senha</h1>
-        <p>Crie uma nova senha para voltar a acessar sua conta com seguranca.</p>
+        <p>Crie uma nova senha para voltar a acessar sua conta com segurança.</p>
 
         <form className="admin-auth-form" onSubmit={handleSubmit}>
-          <label>
-            Nova senha
-            <input
-              autoComplete="new-password"
-              minLength={8}
-              name="password"
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              type="password"
-              value={password}
-            />
-            <small className="field-hint">Use pelo menos 8 caracteres, com letras e numeros.</small>
-          </label>
-          <label>
-            Confirmar nova senha
-            <input
-              autoComplete="new-password"
-              minLength={8}
-              name="password-confirmation"
-              onChange={(event) => setPasswordConfirmation(event.target.value)}
-              required
-              type="password"
-              value={passwordConfirmation}
-            />
-          </label>
+          <TextField
+            autoComplete="new-password"
+            hint="Use pelo menos 8 caracteres, com letras e números."
+            label="Nova senha"
+            minLength={8}
+            name="password"
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            type="password"
+            value={password}
+          />
+          <TextField
+            autoComplete="new-password"
+            label="Confirmar nova senha"
+            minLength={8}
+            name="password-confirmation"
+            onChange={(event) => setPasswordConfirmation(event.target.value)}
+            required
+            type="password"
+            value={passwordConfirmation}
+          />
 
           {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
           {successMessage ? <p className="form-success">{successMessage}</p> : null}

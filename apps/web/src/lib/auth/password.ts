@@ -6,7 +6,7 @@ export function validateAccountPassword(password: string) {
   }
 
   if (!/[a-z]/i.test(password) || !/[0-9]/.test(password)) {
-    return "Use uma senha com letras e numeros.";
+    return "Use uma senha com letras e números.";
   }
 
   return "";

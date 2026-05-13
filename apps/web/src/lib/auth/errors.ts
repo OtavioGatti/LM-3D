@@ -2,7 +2,7 @@ export function getFriendlyAuthError(message: string | undefined, fallback: stri
   const normalized = message?.toLowerCase() ?? "";
 
   if (normalized.includes("invalid login")) {
-    return "E-mail ou senha invalidos.";
+    return "E-mail ou senha inválidos.";
   }
 
   if (normalized.includes("email not confirmed")) {
@@ -10,7 +10,7 @@ export function getFriendlyAuthError(message: string | undefined, fallback: stri
   }
 
   if (normalized.includes("already registered") || normalized.includes("already exists")) {
-    return "Este e-mail ja esta cadastrado. Entre ou recupere sua senha.";
+    return "Este e-mail já está cadastrado. Entre ou recupere sua senha.";
   }
 
   if (normalized.includes("rate limit")) {

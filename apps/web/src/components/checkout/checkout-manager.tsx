@@ -29,7 +29,9 @@ import {
   type StoredCartItem
 } from "@/lib/cart/cart-storage";
 import { loadPublicCatalogFromBrowser } from "@/lib/catalog/public-catalog";
+import { formatBrazilianDocument, formatPostalCode, formatStateCode } from "@/lib/forms/formatters";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
+import { TextareaField, TextField } from "@/components/ui/form-field";
 
 type CheckoutManagerProps = {
   products: ProductDetails[];
@@ -310,7 +312,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
         current === PICKUP_SHIPPING_OPTION.id ? current : ""
       );
       setShippingMessage(
-        error instanceof Error ? error.message : "Nao foi possivel calcular o frete."
+        error instanceof Error ? error.message : "Não foi possível calcular o frete."
       );
     } finally {
       setIsQuotingShipping(false);
@@ -496,51 +498,49 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           {message ? <p className="form-error">{message}</p> : null}
 
           <div className="form-grid">
-            <label>
-              Nome completo
-              <input
-                autoComplete="name"
-                onChange={(event) => setForm({ ...form, name: event.target.value })}
-                required
-                value={form.name}
-              />
-            </label>
-            <label>
-              E-mail
-              <input
-                autoComplete="email"
-                inputMode="email"
-                onChange={(event) => setForm({ ...form, email: event.target.value })}
-                required
-                type="email"
-                value={form.email}
-              />
-            </label>
+            <TextField
+              autoComplete="name"
+              label="Nome completo"
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              required
+              value={form.name}
+            />
+            <TextField
+              autoComplete="email"
+              inputMode="email"
+              label="E-mail"
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
+              required
+              type="email"
+              value={form.email}
+            />
           </div>
 
           <div className="form-grid">
-            <label>
-              WhatsApp ou telefone
-              <input
-                autoComplete="tel"
-                inputMode="tel"
-                onChange={(event) => setForm({ ...form, phone: formatBrazilianPhone(event.target.value) })}
-                placeholder="(11) 99999-9999"
-                required={selectedShippingOption?.provider === "melhor_envio"}
-                value={form.phone}
-              />
-            </label>
-            <label>
-              CPF ou CNPJ
-              <input
-                autoComplete="off"
-                inputMode="numeric"
-                onChange={(event) => setForm({ ...form, document: event.target.value })}
-                placeholder="Somente numeros"
-                required={selectedShippingOption?.provider === "melhor_envio"}
-                value={form.document}
-              />
-            </label>
+            <TextField
+              autoComplete="tel"
+              hint="Necessário para transportadora e contato sobre a entrega."
+              inputMode="tel"
+              label="WhatsApp ou telefone"
+              onChange={(event) =>
+                setForm({ ...form, phone: formatBrazilianPhone(event.target.value) })
+              }
+              placeholder="(11) 99999-9999"
+              required={selectedShippingOption?.provider === "melhor_envio"}
+              value={form.phone}
+            />
+            <TextField
+              autoComplete="off"
+              hint="Usado somente para emissão da etiqueta de envio."
+              inputMode="numeric"
+              label="CPF ou CNPJ"
+              onChange={(event) =>
+                setForm({ ...form, document: formatBrazilianDocument(event.target.value) })
+              }
+              placeholder="000.000.000-00"
+              required={selectedShippingOption?.provider === "melhor_envio"}
+              value={form.document}
+            />
           </div>
 
           <div className="shipping-box">
@@ -581,73 +581,64 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             </div>
 
             <div className="form-grid">
-              <label>
-                Rua ou avenida
-                <input
-                  autoComplete="street-address"
-                  onChange={(event) => setForm({ ...form, addressLine: event.target.value })}
-                  placeholder="Rua Cardoso de Melo"
-                  required={selectedShippingOption?.provider === "melhor_envio"}
-                  value={form.addressLine}
-                />
-              </label>
-              <label>
-                Numero
-                <input
-                  autoComplete="address-line2"
-                  onChange={(event) => setForm({ ...form, addressNumber: event.target.value })}
-                  placeholder="940"
-                  required={selectedShippingOption?.provider === "melhor_envio"}
-                  value={form.addressNumber}
-                />
-              </label>
-              <label>
-                Bairro
-                <input
-                  autoComplete="address-line3"
-                  onChange={(event) => setForm({ ...form, district: event.target.value })}
-                  required={selectedShippingOption?.provider === "melhor_envio"}
-                  value={form.district}
-                />
-              </label>
-              <label>
-                Complemento
-                <input
-                  autoComplete="address-line2"
-                  onChange={(event) => setForm({ ...form, complement: event.target.value })}
-                  placeholder="Apto, bloco, referencia"
-                  value={form.complement}
-                />
-              </label>
-              <label>
-                Cidade
-                <input
-                  autoComplete="address-level2"
-                  onChange={(event) => setForm({ ...form, city: event.target.value })}
-                  required={selectedShippingOption?.provider === "melhor_envio"}
-                  value={form.city}
-                />
-              </label>
-              <label>
-                Estado
-                <input
-                  autoComplete="address-level1"
-                  onChange={(event) => setForm({ ...form, state: event.target.value })}
-                  placeholder="SP"
-                  required={selectedShippingOption?.provider === "melhor_envio"}
-                  value={form.state}
-                />
-              </label>
-              <label>
-                CEP
-                <input
-                  autoComplete="postal-code"
-                  onChange={(event) => setForm({ ...form, postalCode: event.target.value })}
-                  placeholder="19800-000"
-                  required={selectedShippingOption?.provider === "melhor_envio"}
-                  value={form.postalCode}
-                />
-              </label>
+              <TextField
+                autoComplete="street-address"
+                label="Rua ou avenida"
+                onChange={(event) => setForm({ ...form, addressLine: event.target.value })}
+                placeholder="Rua Cardoso de Melo"
+                required={selectedShippingOption?.provider === "melhor_envio"}
+                value={form.addressLine}
+              />
+              <TextField
+                autoComplete="address-line2"
+                label="Numero"
+                onChange={(event) => setForm({ ...form, addressNumber: event.target.value })}
+                placeholder="940"
+                required={selectedShippingOption?.provider === "melhor_envio"}
+                value={form.addressNumber}
+              />
+              <TextField
+                autoComplete="address-line3"
+                label="Bairro"
+                onChange={(event) => setForm({ ...form, district: event.target.value })}
+                required={selectedShippingOption?.provider === "melhor_envio"}
+                value={form.district}
+              />
+              <TextField
+                autoComplete="address-line2"
+                label="Complemento"
+                onChange={(event) => setForm({ ...form, complement: event.target.value })}
+                placeholder="Apto, bloco, referência"
+                value={form.complement}
+              />
+              <TextField
+                autoComplete="address-level2"
+                label="Cidade"
+                onChange={(event) => setForm({ ...form, city: event.target.value })}
+                required={selectedShippingOption?.provider === "melhor_envio"}
+                value={form.city}
+              />
+              <TextField
+                autoComplete="address-level1"
+                label="Estado"
+                maxLength={2}
+                onChange={(event) => setForm({ ...form, state: formatStateCode(event.target.value) })}
+                placeholder="SP"
+                required={selectedShippingOption?.provider === "melhor_envio"}
+                value={form.state}
+              />
+              <TextField
+                autoComplete="postal-code"
+                hint="Digite o CEP e calcule o frete antes de finalizar."
+                inputMode="numeric"
+                label="CEP"
+                onChange={(event) =>
+                  setForm({ ...form, postalCode: formatPostalCode(event.target.value) })
+                }
+                placeholder="19800-000"
+                required={selectedShippingOption?.provider === "melhor_envio"}
+                value={form.postalCode}
+              />
             </div>
 
             <button
@@ -662,25 +653,24 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
             {shippingMessage ? <p className="form-note">{shippingMessage}</p> : null}
           </div>
 
-          <label>
-            Observações gerais
-            <textarea
-              onChange={(event) => setForm({ ...form, notes: event.target.value })}
-              placeholder="Prazo desejado, presente, cor preferida ou qualquer detalhe importante."
-              rows={4}
-              value={form.notes}
-            />
-          </label>
+          <TextareaField
+            hint="Prazo desejado, presente, cor preferida ou qualquer detalhe importante."
+            label="Observações gerais"
+            onChange={(event) => setForm({ ...form, notes: event.target.value })}
+            placeholder="Conte algum detalhe que ajude na produção ou entrega."
+            rows={4}
+            value={form.notes}
+          />
 
           <div className="coupon-box">
-            <label>
-              Cupom de desconto
-              <input
-                onChange={(event) => setForm({ ...form, couponCode: event.target.value })}
-                placeholder="Ex.: LM10"
-                value={form.couponCode}
-              />
-            </label>
+            <TextField
+              label="Cupom de desconto"
+              onChange={(event) =>
+                setForm({ ...form, couponCode: event.target.value.toUpperCase() })
+              }
+              placeholder="Ex.: LM10"
+              value={form.couponCode}
+            />
             <button className="button button-secondary" type="button" onClick={() => void applyCoupon()}>
               Aplicar cupom
             </button>

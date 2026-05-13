@@ -6,6 +6,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { createCustomRequest } from "@/lib/api/custom-requests";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
+import { TextareaField, TextField } from "@/components/ui/form-field";
 
 type CustomOrderFormState = {
   name: string;
@@ -154,7 +155,10 @@ export function CustomOrderForm() {
           <Link href="/login?redirect=/pedido-personalizado" className="button button-primary">
             Entrar
           </Link>
-          <Link href="/login?redirect=/pedido-personalizado&mode=signup" className="button button-secondary">
+          <Link
+            href="/login?redirect=/pedido-personalizado&mode=signup"
+            className="button button-secondary"
+          >
             Criar conta
           </Link>
         </div>
@@ -167,90 +171,74 @@ export function CustomOrderForm() {
 
   return (
     <form className="lead-form" onSubmit={handleSubmit}>
-      <label>
-        Nome
-        <input
-          autoComplete="name"
-          onChange={(event) => setForm({ ...form, name: event.target.value })}
-          placeholder="Seu nome"
-          required
-          value={form.name}
-        />
-      </label>
-      <label>
-        WhatsApp ou e-mail
-        <input
-          autoComplete="email tel"
-          onChange={(event) => setForm({ ...form, contact: formatContactInput(event.target.value) })}
-          placeholder="(11) 99999-9999 ou seu e-mail"
-          required
-          value={form.contact}
-        />
-      </label>
-      <label>
-        Nome da ideia
-        <input
-          onChange={(event) => setForm({ ...form, title: event.target.value })}
-          placeholder="Ex.: suporte de controle com logo"
-          required
-          value={form.title}
-        />
-      </label>
-      <label>
-        O que você quer imprimir?
-        <textarea
-          onChange={(event) => setForm({ ...form, description: event.target.value })}
-          placeholder="Descreva tamanho, uso, quantidade, encaixes, nomes, acabamento e referências."
-          required
-          rows={6}
-          value={form.description}
-        />
-      </label>
+      <TextField
+        autoComplete="name"
+        label="Nome"
+        onChange={(event) => setForm({ ...form, name: event.target.value })}
+        placeholder="Seu nome"
+        required
+        value={form.name}
+      />
+      <TextField
+        autoComplete="email tel"
+        hint="Pode ser WhatsApp ou e-mail. Usaremos para responder o orçamento."
+        label="Contato"
+        onChange={(event) => setForm({ ...form, contact: formatContactInput(event.target.value) })}
+        placeholder="(11) 99999-9999 ou seu e-mail"
+        required
+        value={form.contact}
+      />
+      <TextField
+        label="Nome da ideia"
+        onChange={(event) => setForm({ ...form, title: event.target.value })}
+        placeholder="Ex.: suporte de controle com logo"
+        required
+        value={form.title}
+      />
+      <TextareaField
+        hint="Inclua tamanho, uso, encaixes, nomes, acabamento e referências."
+        label="O que você quer imprimir?"
+        onChange={(event) => setForm({ ...form, description: event.target.value })}
+        placeholder="Descreva sua ideia com os detalhes principais."
+        required
+        rows={6}
+        value={form.description}
+      />
       <div className="form-grid">
-        <label>
-          Quantidade
-          <input
-            min="1"
-            onChange={(event) => setForm({ ...form, quantity: event.target.value })}
-            required
-            type="number"
-            value={form.quantity}
-          />
-        </label>
-        <label>
-          Material desejado
-          <input
-            onChange={(event) => setForm({ ...form, material: event.target.value })}
-            placeholder="PLA, PETG..."
-            value={form.material}
-          />
-        </label>
+        <TextField
+          label="Quantidade"
+          min="1"
+          onChange={(event) => setForm({ ...form, quantity: event.target.value })}
+          required
+          type="number"
+          value={form.quantity}
+        />
+        <TextField
+          label="Material desejado"
+          onChange={(event) => setForm({ ...form, material: event.target.value })}
+          placeholder="PLA, PETG..."
+          value={form.material}
+        />
       </div>
-      <label>
-        Cores ou acabamento
-        <input
-          onChange={(event) => setForm({ ...form, colors: event.target.value })}
-          placeholder="Ex.: preto fosco, branco, pintura..."
-          value={form.colors}
-        />
-      </label>
-      <label>
-        Prazo desejado
-        <input
-          onChange={(event) => setForm({ ...form, deadline: event.target.value })}
-          placeholder="Ex.: até sexta, sem pressa, presente de aniversário..."
-          value={form.deadline}
-        />
-      </label>
-      <label>
-        Link de referência
-        <input
-          onChange={(event) => setForm({ ...form, referenceUrl: event.target.value })}
-          placeholder="URL de imagem, modelo 3D ou inspiração"
-          type="url"
-          value={form.referenceUrl}
-        />
-      </label>
+      <TextField
+        label="Cores ou acabamento"
+        onChange={(event) => setForm({ ...form, colors: event.target.value })}
+        placeholder="Ex.: preto fosco, branco, pintura..."
+        value={form.colors}
+      />
+      <TextField
+        label="Prazo desejado"
+        onChange={(event) => setForm({ ...form, deadline: event.target.value })}
+        placeholder="Ex.: sexta-feira, sem pressa, presente..."
+        value={form.deadline}
+      />
+      <TextField
+        label="Link de referência"
+        onChange={(event) => setForm({ ...form, referenceUrl: event.target.value })}
+        placeholder="URL de imagem, modelo 3D ou inspiração"
+        type="url"
+        value={form.referenceUrl}
+      />
 
       {message ? <p className="form-note">{message}</p> : null}
 
@@ -258,9 +246,7 @@ export function CustomOrderForm() {
         <Send aria-hidden="true" size={18} />
         {isSubmitting ? "Enviando..." : "Enviar ideia"}
       </button>
-      <p>
-        Lucas recebe a solicitação no admin, avalia viabilidade e responde com prazo e preço.
-      </p>
+      <p>Lucas recebe a solicitação no admin, avalia viabilidade e responde com prazo e preço.</p>
     </form>
   );
 }

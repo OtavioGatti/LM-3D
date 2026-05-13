@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { getFriendlyAuthError } from "@/lib/auth/errors";
 import { validateAccountPassword, validatePasswordConfirmation } from "@/lib/auth/password";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
+import { TextField } from "@/components/ui/form-field";
 
 type AuthMode = "signin" | "signup" | "recover";
 
@@ -43,7 +44,7 @@ function buildAuthRedirectUrl(path: string) {
 export function LoginCard({
   eyebrow = "Conta LM-3D",
   title = "Entrar",
-  description = "Acesse sua conta para acompanhar pedidos, personalizacoes e atendimento.",
+  description = "Acesse sua conta para acompanhar pedidos, personalizações e atendimento.",
   redirectTo = "/conta",
   initialMode = "signin"
 }: LoginCardProps) {
@@ -68,7 +69,7 @@ export function LoginCard({
   const submitCopy = isSubmitting
     ? "Processando..."
     : isRecover
-      ? "Enviar link de recuperacao"
+      ? "Enviar link de recuperação"
       : isSignUp
         ? "Criar conta"
         : "Entrar";
@@ -87,7 +88,7 @@ export function LoginCard({
     setSuccessMessage("");
 
     if (!isConfigured) {
-      setErrorMessage("Configure as variaveis publicas do Supabase antes de entrar.");
+      setErrorMessage("Configure as variáveis públicas do Supabase antes de entrar.");
       return;
     }
 
@@ -127,13 +128,13 @@ export function LoginCard({
 
         if (error) {
           setErrorMessage(
-            getFriendlyAuthError(error.message, "Nao foi possivel enviar o link de recuperacao.")
+            getFriendlyAuthError(error.message, "Não foi possível enviar o link de recuperação.")
           );
           return;
         }
 
         setSuccessMessage(
-          "Se este e-mail estiver cadastrado, voce recebera um link para redefinir a senha."
+          "Se este e-mail estiver cadastrado, você receberá um link para redefinir a senha."
         );
         return;
       }
@@ -151,7 +152,7 @@ export function LoginCard({
         });
 
         if (error) {
-          setErrorMessage(getFriendlyAuthError(error.message, "Nao foi possivel criar sua conta."));
+          setErrorMessage(getFriendlyAuthError(error.message, "Não foi possível criar sua conta."));
           return;
         }
 
@@ -170,13 +171,13 @@ export function LoginCard({
       });
 
       if (error) {
-        setErrorMessage(getFriendlyAuthError(error.message, "E-mail ou senha invalidos."));
+        setErrorMessage(getFriendlyAuthError(error.message, "E-mail ou senha inválidos."));
         return;
       }
 
       router.replace(redirectTo);
     } catch {
-      setErrorMessage("Nao foi possivel concluir a autenticacao. Tente novamente.");
+      setErrorMessage("Não foi possível concluir a autenticação. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }
@@ -192,7 +193,7 @@ export function LoginCard({
 
         <div
           className="auth-mode-switch auth-mode-switch-three"
-          aria-label="Escolha uma acao de conta"
+          aria-label="Escolha uma ação de conta"
         >
           <button
             aria-pressed={mode === "signin"}
@@ -222,62 +223,50 @@ export function LoginCard({
 
         <form className="admin-auth-form" onSubmit={handleSubmit}>
           {isSignUp ? (
-            <label>
-              Nome completo
-              <input
-                autoComplete="name"
-                minLength={3}
-                name="name"
-                onChange={(event) => setFullName(event.target.value)}
-                required
-                value={fullName}
-              />
-            </label>
-          ) : null}
-          <label>
-            E-mail
-            <input
-              autoComplete="email"
-              inputMode="email"
-              name="email"
-              onChange={(event) => setEmail(event.target.value)}
+            <TextField
+              autoComplete="name"
+              label="Nome completo"
+              minLength={3}
+              name="name"
+              onChange={(event) => setFullName(event.target.value)}
               required
-              type="email"
-              value={email}
+              value={fullName}
             />
-          </label>
+          ) : null}
+          <TextField
+            autoComplete="email"
+            inputMode="email"
+            label="E-mail"
+            name="email"
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            type="email"
+            value={email}
+          />
           {!isRecover ? (
-            <label>
-              Senha
-              <input
-                autoComplete={isSignUp ? "new-password" : "current-password"}
-                minLength={isSignUp ? 8 : 6}
-                name="password"
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                type="password"
-                value={password}
-              />
-              {isSignUp ? (
-                <small className="field-hint">
-                  Use pelo menos 8 caracteres, com letras e numeros.
-                </small>
-              ) : null}
-            </label>
+            <TextField
+              autoComplete={isSignUp ? "new-password" : "current-password"}
+              hint={isSignUp ? "Use pelo menos 8 caracteres, com letras e números." : undefined}
+              label="Senha"
+              minLength={isSignUp ? 8 : 6}
+              name="password"
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              type="password"
+              value={password}
+            />
           ) : null}
           {isSignUp ? (
-            <label>
-              Confirmar senha
-              <input
-                autoComplete="new-password"
-                minLength={8}
-                name="password-confirmation"
-                onChange={(event) => setPasswordConfirmation(event.target.value)}
-                required
-                type="password"
-                value={passwordConfirmation}
-              />
-            </label>
+            <TextField
+              autoComplete="new-password"
+              label="Confirmar senha"
+              minLength={8}
+              name="password-confirmation"
+              onChange={(event) => setPasswordConfirmation(event.target.value)}
+              required
+              type="password"
+              value={passwordConfirmation}
+            />
           ) : null}
 
           {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
