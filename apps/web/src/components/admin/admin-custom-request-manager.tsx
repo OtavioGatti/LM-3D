@@ -1,7 +1,14 @@
 "use client";
 
 import { formatMoneyBRL, getBrazilianPhoneHref, getBrazilianWhatsAppHref } from "@lm-3d/shared";
-import { ExternalLink, Mail, MessageCircle, Phone } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Mail,
+  MessageCircle,
+  Phone
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
 
@@ -46,7 +53,7 @@ type CustomRequest = {
 const statusLabels: Record<Exclude<CustomRequestStatus, "todos">, string> = {
   new: "Novo",
   contacted: "Contato feito",
-  quoted: "Orçado",
+  quoted: "Orcado",
   converted: "Convertido",
   closed: "Fechado",
   canceled: "Cancelado"
@@ -60,10 +67,42 @@ function parsePriceToCents(value: string) {
   return Math.round(Number(value.replace(/\./g, "").replace(",", ".")) * 100);
 }
 
+function parseNullableNumber(value: string) {
+  return value.trim() ? Number(value.replace(",", ".")) : null;
+}
+
+function getRequestSummary(request: CustomRequest) {
+  return `${request.quantity}x ${request.title}`;
+}
+
+function getPackageSummary(request: CustomRequest) {
+  const hasPackage =
+    request.quoted_weight_grams ||
+    request.quoted_package_width_cm ||
+    request.quoted_package_height_cm ||
+    request.quoted_package_length_cm;
+
+  if (!hasPackage) {
+    return null;
+  }
+
+  return [
+    request.quoted_weight_grams ? `${request.quoted_weight_grams}g` : null,
+    request.quoted_package_width_cm &&
+    request.quoted_package_height_cm &&
+    request.quoted_package_length_cm
+      ? `${request.quoted_package_width_cm} x ${request.quoted_package_height_cm} x ${request.quoted_package_length_cm} cm`
+      : null
+  ]
+    .filter(Boolean)
+    .join(" - ");
+}
+
 export function AdminCustomRequestManager() {
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<CustomRequestStatus>("todos");
+  const [expandedRequestId, setExpandedRequestId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [savingId, setSavingId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -91,15 +130,24 @@ export function AdminCustomRequestManager() {
         request.code,
         request.customer_name,
         request.customer_contact,
+        request.customer_email,
+        request.customer_phone,
         request.title,
         request.description
       ]
+        .filter(Boolean)
         .join(" ")
         .toLowerCase();
 
       return matchesStatus && (!normalizedQuery || searchable.includes(normalizedQuery));
     });
   }, [query, requests, status]);
+
+  useEffect(() => {
+    if (expandedRequestId && !filteredRequests.some((request) => request.id === expandedRequestId)) {
+      setExpandedRequestId(null);
+    }
+  }, [expandedRequestId, filteredRequests]);
 
   async function updateRequest(request: CustomRequest, updates: Partial<CustomRequest>) {
     setSavingId(request.id);
@@ -144,9 +192,9 @@ export function AdminCustomRequestManager() {
       setRequests((current) =>
         current.map((item) => (item.id === request.id ? response.request : item))
       );
-      setMessage(`Orçamento ${request.code} atualizado.`);
+      setMessage(`Orcamento ${request.code} atualizado.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Não foi possível atualizar.");
+      setMessage(error instanceof Error ? error.message : "Nao foi possivel atualizar.");
     } finally {
       setSavingId("");
     }
@@ -156,8 +204,8 @@ export function AdminCustomRequestManager() {
     <section className="admin-panel admin-management-panel">
       <div className="admin-management-header">
         <div>
-          <h2>Solicitações recebidas</h2>
-          <p>Ideias fora do catálogo para Lucas avaliar, orçar e converter em pedido.</p>
+          <h2>Solicitacoes recebidas</h2>
+          <p>Ideias fora do catalogo para Lucas avaliar, orcar e converter em pedido.</p>
         </div>
       </div>
 
@@ -166,7 +214,7 @@ export function AdminCustomRequestManager() {
           Buscar
           <input
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Cliente, código ou ideia"
+            placeholder="Cliente, codigo ou ideia"
             value={query}
           />
         </label>
@@ -186,205 +234,248 @@ export function AdminCustomRequestManager() {
       </div>
 
       {message ? <p className="form-note">{message}</p> : null}
-      {isLoading ? <p>Carregando orçamentos...</p> : null}
+      {isLoading ? <p>Carregando orcamentos...</p> : null}
+
+      <div className="admin-order-summary-strip">
+        <span>{filteredRequests.length} orcamento(s) na visao atual</span>
+        <strong>
+          {formatMoneyBRL(
+            filteredRequests.reduce(
+              (total, request) => total + (request.estimated_price_cents ?? 0),
+              0
+            )
+          )}
+        </strong>
+      </div>
 
       <div className="admin-order-list">
-        {filteredRequests.map((request) => (
-          <article className="admin-order-card" key={request.id}>
-            <div className="admin-order-card-header">
-              <div>
-                <strong>{request.code}</strong>
-                <span>
-                  {request.customer_name} · {request.customer_contact}
+        {filteredRequests.map((request) => {
+          const isExpanded = expandedRequestId === request.id;
+          const phoneHref = request.customer_phone ? getBrazilianPhoneHref(request.customer_phone) : null;
+          const whatsappHref = request.customer_phone
+            ? getBrazilianWhatsAppHref(request.customer_phone)
+            : null;
+
+          return (
+            <article className="admin-order-card" data-expanded={isExpanded} key={request.id}>
+              <button
+                aria-controls={`custom-request-details-${request.id}`}
+                aria-expanded={isExpanded}
+                className="admin-order-summary-button"
+                onClick={() => setExpandedRequestId(isExpanded ? null : request.id)}
+                type="button"
+              >
+                <span className="admin-order-summary-main">
+                  <strong>{request.code}</strong>
+                  <span>
+                    {request.customer_name} - {request.customer_contact}
+                  </span>
+                  {request.customer_phone ? <small>{request.customer_phone}</small> : null}
+                  <small>{getRequestSummary(request)}</small>
                 </span>
-                <span>{new Intl.DateTimeFormat("pt-BR").format(new Date(request.created_at))}</span>
-              </div>
-              <div>
-                <strong>
-                  {request.estimated_price_cents
-                    ? formatMoneyBRL(request.estimated_price_cents)
-                    : "Sem preço"}
-                </strong>
-                <span className="status-pill">{statusLabels[request.status]}</span>
-              </div>
-            </div>
+                <span className="admin-order-summary-meta">
+                  <strong>
+                    {request.estimated_price_cents
+                      ? formatMoneyBRL(request.estimated_price_cents)
+                      : "Sem preco"}
+                  </strong>
+                  <span>{new Intl.DateTimeFormat("pt-BR").format(new Date(request.created_at))}</span>
+                  <span className="admin-order-summary-status">
+                    <span className="status-pill">{statusLabels[request.status]}</span>
+                  </span>
+                </span>
+                <span className="admin-order-expand-copy">
+                  {isExpanded ? (
+                    <ChevronUp aria-hidden="true" size={18} />
+                  ) : (
+                    <ChevronDown aria-hidden="true" size={18} />
+                  )}
+                  {isExpanded ? "Minimizar" : "Ver detalhes"}
+                </span>
+              </button>
 
-            <div className="admin-contact-actions">
-              {request.customer_email ? (
-                <a className="text-link" href={`mailto:${request.customer_email}`}>
-                  <Mail aria-hidden="true" size={16} />
-                  E-mail
-                </a>
-              ) : null}
-              {request.customer_phone && getBrazilianPhoneHref(request.customer_phone) ? (
-                <a className="text-link" href={getBrazilianPhoneHref(request.customer_phone) ?? undefined}>
-                  <Phone aria-hidden="true" size={16} />
-                  Ligar
-                </a>
-              ) : null}
-              {request.customer_phone && getBrazilianWhatsAppHref(request.customer_phone) ? (
-                <a
-                  className="text-link"
-                  href={getBrazilianWhatsAppHref(request.customer_phone) ?? undefined}
-                  rel="noreferrer"
-                  target="_blank"
+              {isExpanded ? (
+                <div
+                  className="admin-order-expanded-content"
+                  id={`custom-request-details-${request.id}`}
                 >
-                  <MessageCircle aria-hidden="true" size={16} />
-                  WhatsApp
-                </a>
+                  <div className="admin-contact-actions">
+                    {request.customer_email ? (
+                      <a className="text-link" href={`mailto:${request.customer_email}`}>
+                        <Mail aria-hidden="true" size={16} />
+                        E-mail
+                      </a>
+                    ) : null}
+                    {phoneHref ? (
+                      <a className="text-link" href={phoneHref}>
+                        <Phone aria-hidden="true" size={16} />
+                        Ligar
+                      </a>
+                    ) : null}
+                    {whatsappHref ? (
+                      <a className="text-link" href={whatsappHref} rel="noreferrer" target="_blank">
+                        <MessageCircle aria-hidden="true" size={16} />
+                        WhatsApp
+                      </a>
+                    ) : null}
+                  </div>
+
+                  <div className="order-items-list">
+                    <div>
+                      <strong>{request.title}</strong>
+                      <span>Qtd. {request.quantity}</span>
+                      <small>{request.description}</small>
+                      {request.desired_material ? <small>Material: {request.desired_material}</small> : null}
+                      {request.desired_colors ? <small>Cores: {request.desired_colors}</small> : null}
+                      {request.deadline ? <small>Prazo desejado: {request.deadline}</small> : null}
+                      {request.quoted_deadline ? (
+                        <small>Prazo informado ao cliente: {request.quoted_deadline}</small>
+                      ) : null}
+                      {getPackageSummary(request) ? (
+                        <small>Pacote: {getPackageSummary(request)}</small>
+                      ) : null}
+                      {request.reference_url ? (
+                        <small>
+                          <a className="text-link" href={request.reference_url} rel="noreferrer" target="_blank">
+                            Referencia <ExternalLink aria-hidden="true" size={14} />
+                          </a>
+                        </small>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="form-grid">
+                    <label>
+                      Status
+                      <select
+                        onChange={(event) =>
+                          void updateRequest(request, {
+                            status: event.target.value as CustomRequest["status"]
+                          })
+                        }
+                        value={request.status}
+                      >
+                        {customRequestStatuses
+                          .filter((item) => item !== "todos")
+                          .map((item) => (
+                            <option key={item} value={item}>
+                              {statusLabels[item]}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    <label>
+                      Preco estimado
+                      <input
+                        defaultValue={
+                          request.estimated_price_cents
+                            ? (request.estimated_price_cents / 100).toFixed(2).replace(".", ",")
+                            : ""
+                        }
+                        inputMode="decimal"
+                        onBlur={(event) =>
+                          void updateRequest(request, {
+                            estimated_price_cents: parsePriceToCents(event.target.value)
+                          })
+                        }
+                        placeholder="120,00"
+                      />
+                    </label>
+                    <label>
+                      Prazo informado ao cliente
+                      <input
+                        defaultValue={request.quoted_deadline ?? ""}
+                        onBlur={(event) =>
+                          void updateRequest(request, { quoted_deadline: event.target.value || null })
+                        }
+                        placeholder="Ex.: 3 dias uteis apos o pagamento"
+                      />
+                    </label>
+                    <label>
+                      Peso para envio (g)
+                      <input
+                        defaultValue={request.quoted_weight_grams ?? ""}
+                        inputMode="numeric"
+                        onBlur={(event) =>
+                          void updateRequest(request, {
+                            quoted_weight_grams: event.target.value ? Number(event.target.value) : null
+                          })
+                        }
+                        placeholder="250"
+                      />
+                    </label>
+                    <label>
+                      Largura pacote (cm)
+                      <input
+                        defaultValue={request.quoted_package_width_cm ?? ""}
+                        inputMode="decimal"
+                        onBlur={(event) =>
+                          void updateRequest(request, {
+                            quoted_package_width_cm: parseNullableNumber(event.target.value)
+                          })
+                        }
+                        placeholder="16"
+                      />
+                    </label>
+                    <label>
+                      Altura pacote (cm)
+                      <input
+                        defaultValue={request.quoted_package_height_cm ?? ""}
+                        inputMode="decimal"
+                        onBlur={(event) =>
+                          void updateRequest(request, {
+                            quoted_package_height_cm: parseNullableNumber(event.target.value)
+                          })
+                        }
+                        placeholder="8"
+                      />
+                    </label>
+                    <label>
+                      Comprimento pacote (cm)
+                      <input
+                        defaultValue={request.quoted_package_length_cm ?? ""}
+                        inputMode="decimal"
+                        onBlur={(event) =>
+                          void updateRequest(request, {
+                            quoted_package_length_cm: parseNullableNumber(event.target.value)
+                          })
+                        }
+                        placeholder="20"
+                      />
+                    </label>
+                  </div>
+
+                  <label>
+                    Mensagem para o cliente
+                    <textarea
+                      defaultValue={request.quote_message ?? ""}
+                      onBlur={(event) => void updateRequest(request, { quote_message: event.target.value })}
+                      placeholder="Ex.: Consigo produzir essa peca em PLA preto. O valor inclui acabamento e prazo estimado de 3 dias uteis apos o pagamento."
+                      rows={4}
+                    />
+                  </label>
+
+                  <label>
+                    Notas internas
+                    <textarea
+                      defaultValue={request.admin_notes ?? ""}
+                      onBlur={(event) => void updateRequest(request, { admin_notes: event.target.value })}
+                      placeholder="Observacoes visiveis apenas no painel administrativo."
+                      rows={3}
+                    />
+                  </label>
+
+                  {savingId === request.id ? <span className="saving-pill">Salvando...</span> : null}
+                </div>
               ) : null}
-            </div>
-
-            <div className="order-items-list">
-              <div>
-                <strong>{request.title}</strong>
-                <span>Qtd. {request.quantity}</span>
-                <small>{request.description}</small>
-                {request.desired_material ? <small>Material: {request.desired_material}</small> : null}
-                {request.desired_colors ? <small>Cores: {request.desired_colors}</small> : null}
-                {request.deadline ? <small>Prazo desejado: {request.deadline}</small> : null}
-                {request.quoted_deadline ? (
-                  <small>Prazo informado ao cliente: {request.quoted_deadline}</small>
-                ) : null}
-                {request.reference_url ? (
-                  <small>
-                    <a className="text-link" href={request.reference_url} rel="noreferrer" target="_blank">
-                      Referência <ExternalLink aria-hidden="true" size={14} />
-                    </a>
-                  </small>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="form-grid">
-              <label>
-                Status
-                <select
-                  onChange={(event) =>
-                    void updateRequest(request, {
-                      status: event.target.value as CustomRequest["status"]
-                    })
-                  }
-                  value={request.status}
-                >
-                  {customRequestStatuses
-                    .filter((item) => item !== "todos")
-                    .map((item) => (
-                      <option key={item} value={item}>
-                        {statusLabels[item]}
-                      </option>
-                    ))}
-                </select>
-              </label>
-              <label>
-                Preço estimado
-                <input
-                  defaultValue={
-                    request.estimated_price_cents
-                      ? (request.estimated_price_cents / 100).toFixed(2).replace(".", ",")
-                      : ""
-                  }
-                  inputMode="decimal"
-                  onBlur={(event) =>
-                    void updateRequest(request, {
-                      estimated_price_cents: parsePriceToCents(event.target.value)
-                    })
-                  }
-                  placeholder="120,00"
-                />
-              </label>
-              <label>
-                Prazo informado ao cliente
-                <input
-                  defaultValue={request.quoted_deadline ?? ""}
-                  onBlur={(event) =>
-                    void updateRequest(request, { quoted_deadline: event.target.value || null })
-                  }
-                  placeholder="Ex.: 3 dias úteis após o pagamento"
-                />
-              </label>
-              <label>
-                Peso para envio (g)
-                <input
-                  defaultValue={request.quoted_weight_grams ?? ""}
-                  inputMode="numeric"
-                  onBlur={(event) =>
-                    void updateRequest(request, {
-                      quoted_weight_grams: event.target.value ? Number(event.target.value) : null
-                    })
-                  }
-                  placeholder="250"
-                />
-              </label>
-              <label>
-                Largura pacote (cm)
-                <input
-                  defaultValue={request.quoted_package_width_cm ?? ""}
-                  inputMode="decimal"
-                  onBlur={(event) =>
-                    void updateRequest(request, {
-                      quoted_package_width_cm: event.target.value ? Number(event.target.value.replace(",", ".")) : null
-                    })
-                  }
-                  placeholder="16"
-                />
-              </label>
-              <label>
-                Altura pacote (cm)
-                <input
-                  defaultValue={request.quoted_package_height_cm ?? ""}
-                  inputMode="decimal"
-                  onBlur={(event) =>
-                    void updateRequest(request, {
-                      quoted_package_height_cm: event.target.value ? Number(event.target.value.replace(",", ".")) : null
-                    })
-                  }
-                  placeholder="8"
-                />
-              </label>
-              <label>
-                Comprimento pacote (cm)
-                <input
-                  defaultValue={request.quoted_package_length_cm ?? ""}
-                  inputMode="decimal"
-                  onBlur={(event) =>
-                    void updateRequest(request, {
-                      quoted_package_length_cm: event.target.value ? Number(event.target.value.replace(",", ".")) : null
-                    })
-                  }
-                  placeholder="20"
-                />
-              </label>
-            </div>
-
-            <label>
-              Mensagem para o cliente
-              <textarea
-                defaultValue={request.quote_message ?? ""}
-                onBlur={(event) => void updateRequest(request, { quote_message: event.target.value })}
-                placeholder="Ex.: Consigo produzir essa peça em PLA preto. O valor inclui acabamento e prazo estimado de 3 dias úteis após o pagamento."
-                rows={4}
-              />
-            </label>
-
-            <label>
-              Notas internas
-              <textarea
-                defaultValue={request.admin_notes ?? ""}
-                onBlur={(event) => void updateRequest(request, { admin_notes: event.target.value })}
-                placeholder="Observações visíveis apenas no painel administrativo."
-                rows={3}
-              />
-            </label>
-
-            {savingId === request.id ? <span className="saving-pill">Salvando...</span> : null}
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
 
       {!isLoading && filteredRequests.length === 0 ? (
         <div className="empty-state">
-          <h2>Nenhum orçamento encontrado</h2>
+          <h2>Nenhum orcamento encontrado</h2>
           <p>Novas ideias enviadas pelo site aparecem aqui.</p>
         </div>
       ) : null}
