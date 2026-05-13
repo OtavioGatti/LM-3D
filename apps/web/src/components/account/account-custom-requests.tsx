@@ -12,7 +12,9 @@ import {
   createCustomRequestCheckout,
   quoteCustomRequestShipping
 } from "@/lib/api/custom-requests";
+import { formatBrazilianDocument, formatPostalCode, formatStateCode } from "@/lib/forms/formatters";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
+import { TextField } from "@/components/ui/form-field";
 
 type AccountCustomRequest = {
   id: string;
@@ -489,109 +491,104 @@ export function AccountCustomRequests() {
                 </div>
 
                 <div className="form-grid">
-                  <label>
-                    WhatsApp ou telefone
-                    <input
-                      autoComplete="tel"
-                      inputMode="tel"
-                      onChange={(event) =>
-                        setShippingForm({
-                          ...shippingForm,
-                          phone: formatBrazilianPhone(event.target.value)
-                        })
-                      }
-                      placeholder="(11) 99999-9999"
-                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
-                      value={shippingForm.phone}
-                    />
-                  </label>
-                  <label>
-                    CPF ou CNPJ
-                    <input
-                      inputMode="numeric"
-                      onChange={(event) =>
-                        setShippingForm({ ...shippingForm, document: event.target.value })
-                      }
-                      placeholder="Somente numeros"
-                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
-                      value={shippingForm.document}
-                    />
-                  </label>
-                  <label>
-                    Rua ou avenida
-                    <input
-                      onChange={(event) =>
-                        setShippingForm({ ...shippingForm, addressLine: event.target.value })
-                      }
-                      placeholder="Rua Cardoso de Melo"
-                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
-                      value={shippingForm.addressLine}
-                    />
-                  </label>
-                  <label>
-                    Numero
-                    <input
-                      onChange={(event) =>
-                        setShippingForm({ ...shippingForm, addressNumber: event.target.value })
-                      }
-                      placeholder="940"
-                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
-                      value={shippingForm.addressNumber}
-                    />
-                  </label>
-                  <label>
-                    Bairro
-                    <input
-                      onChange={(event) =>
-                        setShippingForm({ ...shippingForm, district: event.target.value })
-                      }
-                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
-                      value={shippingForm.district}
-                    />
-                  </label>
-                  <label>
-                    Complemento
-                    <input
-                      onChange={(event) =>
-                        setShippingForm({ ...shippingForm, complement: event.target.value })
-                      }
-                      placeholder="Apto, bloco, referencia"
-                      value={shippingForm.complement}
-                    />
-                  </label>
-                  <label>
-                    Cidade
-                    <input
-                      onChange={(event) =>
-                        setShippingForm({ ...shippingForm, city: event.target.value })
-                      }
-                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
-                      value={shippingForm.city}
-                    />
-                  </label>
-                  <label>
-                    Estado
-                    <input
-                      onChange={(event) =>
-                        setShippingForm({ ...shippingForm, state: event.target.value })
-                      }
-                      placeholder="SP"
-                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
-                      value={shippingForm.state}
-                    />
-                  </label>
-                  <label>
-                    CEP
-                    <input
-                      inputMode="numeric"
-                      onChange={(event) =>
-                        setShippingForm({ ...shippingForm, postalCode: event.target.value })
-                      }
-                      placeholder="19800-000"
-                      required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
-                      value={shippingForm.postalCode}
-                    />
-                  </label>
+                  <TextField
+                    autoComplete="tel"
+                    hint="Necessário para transportadora e contato sobre a entrega."
+                    inputMode="tel"
+                    label="WhatsApp ou telefone"
+                    onChange={(event) =>
+                      setShippingForm({
+                        ...shippingForm,
+                        phone: formatBrazilianPhone(event.target.value)
+                      })
+                    }
+                    placeholder="(11) 99999-9999"
+                    required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                    value={shippingForm.phone}
+                  />
+                  <TextField
+                    hint="Usado somente para emissão da etiqueta de envio."
+                    inputMode="numeric"
+                    label="CPF ou CNPJ"
+                    onChange={(event) =>
+                      setShippingForm({
+                        ...shippingForm,
+                        document: formatBrazilianDocument(event.target.value)
+                      })
+                    }
+                    placeholder="000.000.000-00"
+                    required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                    value={shippingForm.document}
+                  />
+                  <TextField
+                    label="Rua ou avenida"
+                    onChange={(event) =>
+                      setShippingForm({ ...shippingForm, addressLine: event.target.value })
+                    }
+                    placeholder="Rua Cardoso de Melo"
+                    required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                    value={shippingForm.addressLine}
+                  />
+                  <TextField
+                    label="Número"
+                    onChange={(event) =>
+                      setShippingForm({ ...shippingForm, addressNumber: event.target.value })
+                    }
+                    placeholder="940"
+                    required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                    value={shippingForm.addressNumber}
+                  />
+                  <TextField
+                    label="Bairro"
+                    onChange={(event) =>
+                      setShippingForm({ ...shippingForm, district: event.target.value })
+                    }
+                    required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                    value={shippingForm.district}
+                  />
+                  <TextField
+                    label="Complemento"
+                    onChange={(event) =>
+                      setShippingForm({ ...shippingForm, complement: event.target.value })
+                    }
+                    placeholder="Apto, bloco, referência"
+                    value={shippingForm.complement}
+                  />
+                  <TextField
+                    label="Cidade"
+                    onChange={(event) =>
+                      setShippingForm({ ...shippingForm, city: event.target.value })
+                    }
+                    required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                    value={shippingForm.city}
+                  />
+                  <TextField
+                    label="Estado"
+                    maxLength={2}
+                    onChange={(event) =>
+                      setShippingForm({
+                        ...shippingForm,
+                        state: formatStateCode(event.target.value)
+                      })
+                    }
+                    placeholder="SP"
+                    required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                    value={shippingForm.state}
+                  />
+                  <TextField
+                    hint="Digite o CEP e calcule o frete antes de pagar."
+                    inputMode="numeric"
+                    label="CEP"
+                    onChange={(event) =>
+                      setShippingForm({
+                        ...shippingForm,
+                        postalCode: formatPostalCode(event.target.value)
+                      })
+                    }
+                    placeholder="19800-000"
+                    required={selectedShippingOptionId !== PICKUP_SHIPPING_OPTION.id}
+                    value={shippingForm.postalCode}
+                  />
                 </div>
 
                 <button

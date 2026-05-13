@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
+import { SelectField, TextareaField, TextField } from "@/components/ui/form-field";
 
 const customRequestStatuses = [
   "todos",
@@ -210,27 +211,23 @@ export function AdminCustomRequestManager() {
       </div>
 
       <div className="catalog-toolbar compact-toolbar">
-        <label>
-          Buscar
-          <input
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Cliente, codigo ou ideia"
-            value={query}
-          />
-        </label>
-        <label>
-          Status
-          <select
-            onChange={(event) => setStatus(event.target.value as CustomRequestStatus)}
-            value={status}
-          >
+        <TextField
+          label="Buscar"
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Cliente, código ou ideia"
+          value={query}
+        />
+        <SelectField
+          label="Status"
+          onChange={(event) => setStatus(event.target.value as CustomRequestStatus)}
+          value={status}
+        >
             {customRequestStatuses.map((item) => (
               <option key={item} value={item}>
                 {item === "todos" ? "Todos" : statusLabels[item]}
               </option>
             ))}
-          </select>
-        </label>
+        </SelectField>
       </div>
 
       {message ? <p className="form-note">{message}</p> : null}
@@ -345,16 +342,15 @@ export function AdminCustomRequestManager() {
                   </div>
 
                   <div className="form-grid">
-                    <label>
-                      Status
-                      <select
-                        onChange={(event) =>
-                          void updateRequest(request, {
-                            status: event.target.value as CustomRequest["status"]
-                          })
-                        }
-                        value={request.status}
-                      >
+                    <SelectField
+                      label="Status"
+                      onChange={(event) =>
+                        void updateRequest(request, {
+                          status: event.target.value as CustomRequest["status"]
+                        })
+                      }
+                      value={request.status}
+                    >
                         {customRequestStatuses
                           .filter((item) => item !== "todos")
                           .map((item) => (
@@ -362,108 +358,93 @@ export function AdminCustomRequestManager() {
                               {statusLabels[item]}
                             </option>
                           ))}
-                      </select>
-                    </label>
-                    <label>
-                      Preco estimado
-                      <input
-                        defaultValue={
-                          request.estimated_price_cents
-                            ? (request.estimated_price_cents / 100).toFixed(2).replace(".", ",")
-                            : ""
-                        }
-                        inputMode="decimal"
-                        onBlur={(event) =>
-                          void updateRequest(request, {
-                            estimated_price_cents: parsePriceToCents(event.target.value)
-                          })
-                        }
-                        placeholder="120,00"
-                      />
-                    </label>
-                    <label>
-                      Prazo informado ao cliente
-                      <input
-                        defaultValue={request.quoted_deadline ?? ""}
-                        onBlur={(event) =>
-                          void updateRequest(request, { quoted_deadline: event.target.value || null })
-                        }
-                        placeholder="Ex.: 3 dias uteis apos o pagamento"
-                      />
-                    </label>
-                    <label>
-                      Peso para envio (g)
-                      <input
-                        defaultValue={request.quoted_weight_grams ?? ""}
-                        inputMode="numeric"
-                        onBlur={(event) =>
-                          void updateRequest(request, {
-                            quoted_weight_grams: event.target.value ? Number(event.target.value) : null
-                          })
-                        }
-                        placeholder="250"
-                      />
-                    </label>
-                    <label>
-                      Largura pacote (cm)
-                      <input
-                        defaultValue={request.quoted_package_width_cm ?? ""}
-                        inputMode="decimal"
-                        onBlur={(event) =>
-                          void updateRequest(request, {
-                            quoted_package_width_cm: parseNullableNumber(event.target.value)
-                          })
-                        }
-                        placeholder="16"
-                      />
-                    </label>
-                    <label>
-                      Altura pacote (cm)
-                      <input
-                        defaultValue={request.quoted_package_height_cm ?? ""}
-                        inputMode="decimal"
-                        onBlur={(event) =>
-                          void updateRequest(request, {
-                            quoted_package_height_cm: parseNullableNumber(event.target.value)
-                          })
-                        }
-                        placeholder="8"
-                      />
-                    </label>
-                    <label>
-                      Comprimento pacote (cm)
-                      <input
-                        defaultValue={request.quoted_package_length_cm ?? ""}
-                        inputMode="decimal"
-                        onBlur={(event) =>
-                          void updateRequest(request, {
-                            quoted_package_length_cm: parseNullableNumber(event.target.value)
-                          })
-                        }
-                        placeholder="20"
-                      />
-                    </label>
+                    </SelectField>
+                    <TextField
+                      defaultValue={
+                        request.estimated_price_cents
+                          ? (request.estimated_price_cents / 100).toFixed(2).replace(".", ",")
+                          : ""
+                      }
+                      hint="Valor que será liberado para pagamento do cliente."
+                      inputMode="decimal"
+                      label="Preço estimado"
+                      onBlur={(event) =>
+                        void updateRequest(request, {
+                          estimated_price_cents: parsePriceToCents(event.target.value)
+                        })
+                      }
+                      placeholder="120,00"
+                    />
+                    <TextField
+                      defaultValue={request.quoted_deadline ?? ""}
+                      label="Prazo informado ao cliente"
+                      onBlur={(event) =>
+                        void updateRequest(request, { quoted_deadline: event.target.value || null })
+                      }
+                      placeholder="Ex.: 3 dias úteis após o pagamento"
+                    />
+                    <TextField
+                      defaultValue={request.quoted_weight_grams ?? ""}
+                      hint="Usado para calcular o frete do orçamento."
+                      inputMode="numeric"
+                      label="Peso para envio (g)"
+                      onBlur={(event) =>
+                        void updateRequest(request, {
+                          quoted_weight_grams: event.target.value ? Number(event.target.value) : null
+                        })
+                      }
+                      placeholder="250"
+                    />
+                    <TextField
+                      defaultValue={request.quoted_package_width_cm ?? ""}
+                      inputMode="decimal"
+                      label="Largura pacote (cm)"
+                      onBlur={(event) =>
+                        void updateRequest(request, {
+                          quoted_package_width_cm: parseNullableNumber(event.target.value)
+                        })
+                      }
+                      placeholder="16"
+                    />
+                    <TextField
+                      defaultValue={request.quoted_package_height_cm ?? ""}
+                      inputMode="decimal"
+                      label="Altura pacote (cm)"
+                      onBlur={(event) =>
+                        void updateRequest(request, {
+                          quoted_package_height_cm: parseNullableNumber(event.target.value)
+                        })
+                      }
+                      placeholder="8"
+                    />
+                    <TextField
+                      defaultValue={request.quoted_package_length_cm ?? ""}
+                      inputMode="decimal"
+                      label="Comprimento pacote (cm)"
+                      onBlur={(event) =>
+                        void updateRequest(request, {
+                          quoted_package_length_cm: parseNullableNumber(event.target.value)
+                        })
+                      }
+                      placeholder="20"
+                    />
                   </div>
 
-                  <label>
-                    Mensagem para o cliente
-                    <textarea
-                      defaultValue={request.quote_message ?? ""}
-                      onBlur={(event) => void updateRequest(request, { quote_message: event.target.value })}
-                      placeholder="Ex.: Consigo produzir essa peca em PLA preto. O valor inclui acabamento e prazo estimado de 3 dias uteis apos o pagamento."
-                      rows={4}
-                    />
-                  </label>
+                  <TextareaField
+                    defaultValue={request.quote_message ?? ""}
+                    label="Mensagem para o cliente"
+                    onBlur={(event) => void updateRequest(request, { quote_message: event.target.value })}
+                    placeholder="Ex.: Consigo produzir essa peça em PLA preto. O valor inclui acabamento e prazo estimado de 3 dias úteis após o pagamento."
+                    rows={4}
+                  />
 
-                  <label>
-                    Notas internas
-                    <textarea
-                      defaultValue={request.admin_notes ?? ""}
-                      onBlur={(event) => void updateRequest(request, { admin_notes: event.target.value })}
-                      placeholder="Observacoes visiveis apenas no painel administrativo."
-                      rows={3}
-                    />
-                  </label>
+                  <TextareaField
+                    defaultValue={request.admin_notes ?? ""}
+                    label="Notas internas"
+                    onBlur={(event) => void updateRequest(request, { admin_notes: event.target.value })}
+                    placeholder="Observações visíveis apenas no painel administrativo."
+                    rows={3}
+                  />
 
                   {savingId === request.id ? <span className="saving-pill">Salvando...</span> : null}
                 </div>

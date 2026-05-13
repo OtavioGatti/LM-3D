@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
+import { SelectField, TextareaField, TextField } from "@/components/ui/form-field";
 
 type OrderItem = {
   id: string;
@@ -271,39 +272,38 @@ export function AdminOrderManager() {
   return (
     <section className="admin-panel admin-management-panel">
       <div className="catalog-toolbar order-toolbar">
-        <label className="search-field">
-          <Search aria-hidden="true" size={18} />
-          <input
-            placeholder="Buscar pedido, cliente ou rastreio"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </label>
-        <label>
-          <span>Status do pedido</span>
-          <select value={status} onChange={(event) => setStatus(event.target.value as OrderStatus | "todos")}>
+        <TextField
+          className="search-field"
+          label="Buscar"
+          leadingIcon={<Search aria-hidden="true" size={18} />}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Buscar pedido, cliente ou rastreio"
+          value={query}
+        />
+        <SelectField
+          label="Status do pedido"
+          value={status}
+          onChange={(event) => setStatus(event.target.value as OrderStatus | "todos")}
+        >
             <option value="todos">Todos</option>
             {ORDER_STATUSES.map((item) => (
               <option key={item} value={item}>
                 {statusLabels[item]}
               </option>
             ))}
-          </select>
-        </label>
-        <label>
-          <span>Pagamento</span>
-          <select
-            value={paymentStatus}
-            onChange={(event) => setPaymentStatus(event.target.value as PaymentStatus | "todos")}
-          >
+        </SelectField>
+        <SelectField
+          label="Pagamento"
+          value={paymentStatus}
+          onChange={(event) => setPaymentStatus(event.target.value as PaymentStatus | "todos")}
+        >
             <option value="todos">Todos</option>
             {PAYMENT_STATUSES.map((item) => (
               <option key={item} value={item}>
                 {paymentStatusLabels[item]}
               </option>
             ))}
-          </select>
-        </label>
+        </SelectField>
       </div>
 
       {message ? <p className="form-note">{message}</p> : null}
@@ -447,57 +447,47 @@ export function AdminOrderManager() {
                   </div>
 
                   <div className="form-grid">
-                    <label>
-                      Status do pedido
-                      <select
-                        value={order.status}
-                        onChange={(event) => void updateOrder(order, { status: event.target.value as OrderStatus })}
-                      >
+                    <SelectField
+                      label="Status do pedido"
+                      value={order.status}
+                      onChange={(event) => void updateOrder(order, { status: event.target.value as OrderStatus })}
+                    >
                         {ORDER_STATUSES.map((item) => (
                           <option key={item} value={item}>
                             {statusLabels[item]}
                           </option>
                         ))}
-                      </select>
-                    </label>
-                    <label>
-                      Status do pagamento
-                      <select
-                        value={order.payment_status}
-                        onChange={(event) =>
-                          void updateOrder(order, { payment_status: event.target.value as PaymentStatus })
-                        }
-                      >
+                    </SelectField>
+                    <SelectField
+                      label="Status do pagamento"
+                      value={order.payment_status}
+                      onChange={(event) =>
+                        void updateOrder(order, { payment_status: event.target.value as PaymentStatus })
+                      }
+                    >
                         {PAYMENT_STATUSES.map((item) => (
                           <option key={item} value={item}>
                             {paymentStatusLabels[item]}
                           </option>
                         ))}
-                      </select>
-                    </label>
-                    <label>
-                      Entrega/retirada
-                      <input
-                        defaultValue={order.delivery_method ?? ""}
-                        onBlur={(event) => void updateOrder(order, { delivery_method: event.target.value })}
-                        placeholder="Ex.: Retirada, Correios, motoboy"
-                      />
-                    </label>
-                    <label>
-                      Código de rastreio
-                      <input
-                        defaultValue={order.tracking_code ?? ""}
-                        onBlur={(event) => void updateOrder(order, { tracking_code: event.target.value })}
-                      />
-                    </label>
-                    <label>
-                      Observação interna
-                      <textarea
-                        defaultValue={order.admin_notes ?? ""}
-                        onBlur={(event) => void updateOrder(order, { admin_notes: event.target.value })}
-                        rows={3}
-                      />
-                    </label>
+                    </SelectField>
+                    <TextField
+                      defaultValue={order.delivery_method ?? ""}
+                      label="Entrega/retirada"
+                      onBlur={(event) => void updateOrder(order, { delivery_method: event.target.value })}
+                      placeholder="Ex.: Retirada, Correios, motoboy"
+                    />
+                    <TextField
+                      defaultValue={order.tracking_code ?? ""}
+                      label="Código de rastreio"
+                      onBlur={(event) => void updateOrder(order, { tracking_code: event.target.value })}
+                    />
+                    <TextareaField
+                      defaultValue={order.admin_notes ?? ""}
+                      label="Observação interna"
+                      onBlur={(event) => void updateOrder(order, { admin_notes: event.target.value })}
+                      rows={3}
+                    />
                   </div>
 
                   <div className="admin-inline-actions">

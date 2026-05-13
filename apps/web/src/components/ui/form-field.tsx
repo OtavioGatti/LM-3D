@@ -25,15 +25,26 @@ function describedBy(id: string, hint: ReactNode, error: ReactNode) {
 }
 
 type TextFieldProps = FieldBaseProps &
-  Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "id">;
+  Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "id"> & {
+    leadingIcon?: ReactNode;
+  };
 
-export function TextField({ className, error, hint, id, label, ...inputProps }: TextFieldProps) {
+export function TextField({
+  className,
+  error,
+  hint,
+  id,
+  label,
+  leadingIcon,
+  ...inputProps
+}: TextFieldProps) {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
 
   return (
     <label className={fieldClassName(className)} htmlFor={fieldId}>
       <span className="form-label-text">{label}</span>
+      {leadingIcon}
       <input
         {...inputProps}
         aria-describedby={describedBy(fieldId, hint, error)}
