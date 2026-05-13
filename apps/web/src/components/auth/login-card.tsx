@@ -4,20 +4,46 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { LockKeyhole } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getFriendlyAuthError } from "@/lib/auth/errors";
+import { validateAccountPassword, validatePasswordConfirmation } from "@/lib/auth/password";
 import { getSupabaseBrowserClient, hasSupabaseBrowserConfig } from "@/lib/supabase/client";
+
+type AuthMode = "signin" | "signup" | "recover";
 
 type LoginCardProps = {
   eyebrow?: string;
   title?: string;
   description?: string;
   redirectTo?: string;
-  initialMode?: "signin" | "signup";
+  initialMode?: AuthMode;
 };
+
+function getAppOrigin() {
+  const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (configuredOrigin) {
+    return configuredOrigin;
+  }
+
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  return "http://localhost:3000";
+}
+
+function buildAuthRedirectUrl(path: string) {
+  try {
+    return new URL(path, getAppOrigin()).toString();
+  } catch {
+    return path;
+  }
+}
 
 export function LoginCard({
   eyebrow = "Conta LM-3D",
   title = "Entrar",
-  description = "Acesse sua conta para acompanhar pedidos, personalizações e atendimento.",
+  description = "Acesse sua conta para acompanhar pedidos, personalizacoes e atendimento.",
   redirectTo = "/conta",
   initialMode = "signin"
 }: LoginCardProps) {
@@ -26,14 +52,31 @@ export function LoginCard({
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isConfigured = hasSupabaseBrowserConfig();
   const isSignUp = mode === "signup";
+  const isRecover = mode === "recover";
+  const heading = isRecover ? "Recuperar senha" : isSignUp ? "Criar conta" : title;
+  const introCopy = isRecover
+    ? "Informe seu e-mail e enviaremos um link seguro para criar uma nova senha."
+    : isSignUp
+      ? "Crie uma conta para finalizar pedidos e acompanhar tudo em Minha conta."
+      : description;
+  const submitCopy = isSubmitting
+    ? "Processando..."
+    : isRecover
+      ? "Enviar link de recuperacao"
+      : isSignUp
+        ? "Criar conta"
+        : "Entrar";
 
-  function switchMode(nextMode: "signin" | "signup") {
+  function switchMode(nextMode: AuthMode) {
     setMode(nextMode);
+    setPassword("");
+    setPasswordConfirmation("");
     setErrorMessage("");
     setSuccessMessage("");
   }
@@ -44,57 +87,99 @@ export function LoginCard({
     setSuccessMessage("");
 
     if (!isConfigured) {
-      setErrorMessage("Configure as variáveis públicas do Supabase antes de entrar.");
+      setErrorMessage("Configure as variaveis publicas do Supabase antes de entrar.");
       return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (isSignUp && fullName.trim().length < 3) {
+      setErrorMessage("Informe seu nome completo.");
+      return;
+    }
+
+    if (isSignUp) {
+      const passwordError = validateAccountPassword(password);
+
+      if (passwordError) {
+        setErrorMessage(passwordError);
+        return;
+      }
+
+      const confirmationError = validatePasswordConfirmation(password, passwordConfirmation);
+
+      if (confirmationError) {
+        setErrorMessage(confirmationError);
+        return;
+      }
     }
 
     setIsSubmitting(true);
 
-    if (isSignUp) {
-      const signUpOptions = {
-        data: {
-          full_name: fullName.trim()
-        },
-        ...(typeof window !== "undefined"
-          ? { emailRedirectTo: `${window.location.origin}${redirectTo}` }
-          : {})
-      };
+    try {
+      if (isRecover) {
+        const { error } = await getSupabaseBrowserClient().auth.resetPasswordForEmail(
+          normalizedEmail,
+          {
+            redirectTo: buildAuthRedirectUrl("/redefinir-senha")
+          }
+        );
 
-      const { data, error } = await getSupabaseBrowserClient().auth.signUp({
-        email,
-        password,
-        options: signUpOptions
+        if (error) {
+          setErrorMessage(
+            getFriendlyAuthError(error.message, "Nao foi possivel enviar o link de recuperacao.")
+          );
+          return;
+        }
+
+        setSuccessMessage(
+          "Se este e-mail estiver cadastrado, voce recebera um link para redefinir a senha."
+        );
+        return;
+      }
+
+      if (isSignUp) {
+        const { data, error } = await getSupabaseBrowserClient().auth.signUp({
+          email: normalizedEmail,
+          password,
+          options: {
+            data: {
+              full_name: fullName.trim()
+            },
+            emailRedirectTo: buildAuthRedirectUrl(redirectTo)
+          }
+        });
+
+        if (error) {
+          setErrorMessage(getFriendlyAuthError(error.message, "Nao foi possivel criar sua conta."));
+          return;
+        }
+
+        if (data.session) {
+          router.replace(redirectTo);
+          return;
+        }
+
+        setSuccessMessage("Conta criada. Confirme seu e-mail para entrar e finalizar o pedido.");
+        return;
+      }
+
+      const { error } = await getSupabaseBrowserClient().auth.signInWithPassword({
+        email: normalizedEmail,
+        password
       });
 
-      setIsSubmitting(false);
-
       if (error) {
-        setErrorMessage(error.message || "Não foi possível criar sua conta.");
+        setErrorMessage(getFriendlyAuthError(error.message, "E-mail ou senha invalidos."));
         return;
       }
 
-      if (data.session) {
-        router.replace(redirectTo);
-        return;
-      }
-
-      setSuccessMessage("Conta criada. Confirme seu e-mail para entrar e finalizar o pedido.");
-      return;
+      router.replace(redirectTo);
+    } catch {
+      setErrorMessage("Nao foi possivel concluir a autenticacao. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const { error } = await getSupabaseBrowserClient().auth.signInWithPassword({
-      email,
-      password
-    });
-
-    setIsSubmitting(false);
-
-    if (error) {
-      setErrorMessage("E-mail ou senha inválidos.");
-      return;
-    }
-
-    router.replace(redirectTo);
   }
 
   return (
@@ -102,17 +187,16 @@ export function LoginCard({
       <section className="admin-auth-card">
         <LockKeyhole aria-hidden="true" size={30} />
         <span className="eyebrow">{eyebrow}</span>
-        <h1>{isSignUp ? "Criar conta" : title}</h1>
-        <p>
-          {isSignUp
-            ? "Crie uma conta para finalizar pedidos e acompanhar tudo em Minha conta."
-            : description}
-        </p>
+        <h1>{heading}</h1>
+        <p>{introCopy}</p>
 
-        <div className="auth-mode-switch" aria-label="Escolha entre entrar ou criar conta">
+        <div
+          className="auth-mode-switch auth-mode-switch-three"
+          aria-label="Escolha uma acao de conta"
+        >
           <button
-            aria-pressed={!isSignUp}
-            className={!isSignUp ? "active" : ""}
+            aria-pressed={mode === "signin"}
+            className={mode === "signin" ? "active" : ""}
             onClick={() => switchMode("signin")}
             type="button"
           >
@@ -126,6 +210,14 @@ export function LoginCard({
           >
             Criar conta
           </button>
+          <button
+            aria-pressed={isRecover}
+            className={isRecover ? "active" : ""}
+            onClick={() => switchMode("recover")}
+            type="button"
+          >
+            Recuperar
+          </button>
         </div>
 
         <form className="admin-auth-form" onSubmit={handleSubmit}>
@@ -134,6 +226,7 @@ export function LoginCard({
               Nome completo
               <input
                 autoComplete="name"
+                minLength={3}
                 name="name"
                 onChange={(event) => setFullName(event.target.value)}
                 required
@@ -153,24 +246,45 @@ export function LoginCard({
               value={email}
             />
           </label>
-          <label>
-            Senha
-            <input
-              autoComplete={isSignUp ? "new-password" : "current-password"}
-              minLength={6}
-              name="password"
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              type="password"
-              value={password}
-            />
-          </label>
+          {!isRecover ? (
+            <label>
+              Senha
+              <input
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+                minLength={isSignUp ? 8 : 6}
+                name="password"
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                type="password"
+                value={password}
+              />
+              {isSignUp ? (
+                <small className="field-hint">
+                  Use pelo menos 8 caracteres, com letras e numeros.
+                </small>
+              ) : null}
+            </label>
+          ) : null}
+          {isSignUp ? (
+            <label>
+              Confirmar senha
+              <input
+                autoComplete="new-password"
+                minLength={8}
+                name="password-confirmation"
+                onChange={(event) => setPasswordConfirmation(event.target.value)}
+                required
+                type="password"
+                value={passwordConfirmation}
+              />
+            </label>
+          ) : null}
 
           {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
           {successMessage ? <p className="form-success">{successMessage}</p> : null}
 
           <button className="button button-primary" disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Processando..." : isSignUp ? "Criar conta" : "Entrar"}
+            {submitCopy}
           </button>
         </form>
 

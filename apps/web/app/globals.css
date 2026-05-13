@@ -179,6 +179,10 @@ img {
   background: var(--surface-strong);
 }
 
+.auth-mode-switch-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .auth-mode-switch button {
   min-height: 40px;
   border: 0;
@@ -1735,6 +1739,13 @@ img {
 .admin-auth-form button:disabled {
   cursor: wait;
   opacity: 0.72;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .form-error {

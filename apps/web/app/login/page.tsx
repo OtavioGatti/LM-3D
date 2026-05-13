@@ -1,4 +1,5 @@
 import { LoginCard } from "@/components/auth/login-card";
+import { getSafeLocalRedirect } from "@/lib/auth/redirect";
 
 export const metadata = {
   title: "Entrar"
@@ -11,24 +12,15 @@ type LoginPageProps = {
   }>;
 };
 
-function getSafeRedirect(value: string | string[] | undefined) {
-  const redirect = Array.isArray(value) ? value[0] : value;
-
-  if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//")) {
-    return "/conta";
-  }
-
-  return redirect;
-}
-
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = searchParams ? await searchParams : {};
   const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
+  const initialMode = mode === "signup" || mode === "recover" ? mode : "signin";
 
   return (
     <LoginCard
-      redirectTo={getSafeRedirect(params.redirect)}
-      initialMode={mode === "signup" ? "signup" : "signin"}
+      redirectTo={getSafeLocalRedirect(params.redirect)}
+      initialMode={initialMode}
     />
   );
 }
