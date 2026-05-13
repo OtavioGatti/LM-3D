@@ -4,6 +4,7 @@ import { formatMoneyBRL } from "@lm-3d/shared";
 import { Plus, Save } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
+import { SelectField, TextField } from "@/components/ui/form-field";
 
 type Coupon = {
   id: string;
@@ -157,85 +158,71 @@ export function AdminCouponManager() {
       {mode === "form" ? (
         <form className="admin-form" onSubmit={handleSubmit}>
           <div className="form-grid">
-            <label>
-              Código
-              <input
-                onChange={(event) => setForm({ ...form, code: event.target.value })}
-                placeholder="LM10"
-                required
-                value={form.code}
-              />
-            </label>
-            <label>
-              Nome interno
-              <input
-                onChange={(event) => setForm({ ...form, name: event.target.value })}
-                placeholder="Promoção de lançamento"
-                required
-                value={form.name}
-              />
-            </label>
+            <TextField
+              label="Código"
+              onChange={(event) => setForm({ ...form, code: event.target.value.toUpperCase() })}
+              placeholder="LM10"
+              required
+              value={form.code}
+            />
+            <TextField
+              label="Nome interno"
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              placeholder="Promoção de lançamento"
+              required
+              value={form.name}
+            />
           </div>
           <div className="form-grid">
-            <label>
-              Tipo
-              <select
-                onChange={(event) =>
-                  setForm({ ...form, discount_type: event.target.value as CouponForm["discount_type"] })
-                }
-                value={form.discount_type}
-              >
-                <option value="percent">Percentual</option>
-                <option value="fixed">Valor fixo</option>
-              </select>
-            </label>
-            <label>
-              Desconto
-              <input
-                inputMode="decimal"
-                onChange={(event) => setForm({ ...form, discount_value: event.target.value })}
-                placeholder={form.discount_type === "percent" ? "10" : "15,00"}
-                required
-                value={form.discount_value}
-              />
-            </label>
-            <label>
-              Pedido mínimo
-              <input
-                inputMode="decimal"
-                onChange={(event) => setForm({ ...form, min_order: event.target.value })}
-                value={form.min_order}
-              />
-            </label>
-            <label>
-              Limite de usos
-              <input
-                disabled={form.unlimited}
-                min="1"
-                onChange={(event) => setForm({ ...form, max_redemptions: event.target.value })}
-                placeholder="100"
-                type="number"
-                value={form.max_redemptions}
-              />
-            </label>
+            <SelectField
+              label="Tipo"
+              onChange={(event) =>
+                setForm({ ...form, discount_type: event.target.value as CouponForm["discount_type"] })
+              }
+              value={form.discount_type}
+            >
+              <option value="percent">Percentual</option>
+              <option value="fixed">Valor fixo</option>
+            </SelectField>
+            <TextField
+              hint={form.discount_type === "percent" ? "Informe o percentual sem %." : "Use vírgula para centavos."}
+              inputMode="decimal"
+              label="Desconto"
+              onChange={(event) => setForm({ ...form, discount_value: event.target.value })}
+              placeholder={form.discount_type === "percent" ? "10" : "15,00"}
+              required
+              value={form.discount_value}
+            />
+            <TextField
+              hint="Valor mínimo do carrinho para aceitar o cupom."
+              inputMode="decimal"
+              label="Pedido mínimo"
+              onChange={(event) => setForm({ ...form, min_order: event.target.value })}
+              value={form.min_order}
+            />
+            <TextField
+              disabled={form.unlimited}
+              label="Limite de usos"
+              min="1"
+              onChange={(event) => setForm({ ...form, max_redemptions: event.target.value })}
+              placeholder="100"
+              type="number"
+              value={form.max_redemptions}
+            />
           </div>
           <div className="form-grid">
-            <label>
-              Início da validade
-              <input
-                onChange={(event) => setForm({ ...form, starts_at: event.target.value })}
-                type="datetime-local"
-                value={form.starts_at}
-              />
-            </label>
-            <label>
-              Fim da validade
-              <input
-                onChange={(event) => setForm({ ...form, ends_at: event.target.value })}
-                type="datetime-local"
-                value={form.ends_at}
-              />
-            </label>
+            <TextField
+              label="Início da validade"
+              onChange={(event) => setForm({ ...form, starts_at: event.target.value })}
+              type="datetime-local"
+              value={form.starts_at}
+            />
+            <TextField
+              label="Fim da validade"
+              onChange={(event) => setForm({ ...form, ends_at: event.target.value })}
+              type="datetime-local"
+              value={form.ends_at}
+            />
           </div>
           <label className="checkbox-row">
             <input

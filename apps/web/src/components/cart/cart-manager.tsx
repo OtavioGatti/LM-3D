@@ -11,6 +11,7 @@ import {
   writeCartItems
 } from "@/lib/cart/cart-storage";
 import { loadPublicCatalogFromBrowser } from "@/lib/catalog/public-catalog";
+import { TextareaField } from "@/components/ui/form-field";
 
 type CartManagerProps = {
   products: ProductDetails[];
@@ -147,15 +148,13 @@ export function CartManager({ products }: CartManagerProps) {
                     <Plus aria-hidden="true" size={16} />
                   </button>
                 </div>
-                <label>
-                  Observações de personalização
-                  <textarea
-                    placeholder="Ex.: nome, cor preferida, detalhe desejado..."
-                    rows={4}
-                    value={item.notes}
-                    onChange={(event) => updateNotes(product.slug, event.target.value)}
-                  />
-                </label>
+                <TextareaField
+                  label="Observações de personalização"
+                  onChange={(event) => updateNotes(product.slug, event.target.value)}
+                  placeholder="Ex.: nome, cor preferida, detalhe desejado..."
+                  rows={4}
+                  value={item.notes}
+                />
               </div>
               <div className="cart-item-price">
                 <span>{formatMoneyBRL(product.priceInCents)} cada</span>

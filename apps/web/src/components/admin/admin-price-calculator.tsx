@@ -4,6 +4,7 @@ import { formatMoneyBRL } from "@lm-3d/shared";
 import { Calculator, Save } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
+import { SelectField, TextField } from "@/components/ui/form-field";
 
 type ProductOption = {
   id: string;
@@ -261,136 +262,105 @@ export function AdminPriceCalculator() {
     <section className="admin-panel split-panel">
       <form className="admin-form" onSubmit={(event) => void saveCalculation(event)}>
         <div className="form-grid">
-          <label>
-            Produto
-            <select
-              onChange={(event) => setForm({ ...form, product_id: event.target.value })}
-              value={form.product_id}
-            >
-              <option value="">Cálculo avulso</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Presets salvos
-            <select
-              onChange={(event) => {
-                const preset = presets.find((item) => item.id === event.target.value);
-                if (preset) applyPreset(preset);
-              }}
-              defaultValue=""
-            >
-              <option value="">Selecionar preset</option>
-              {presets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Valor do kg do filamento
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, filamentKgCost: event.target.value })}
-              value={form.filamentKgCost}
-            />
-          </label>
-          <label>
-            Peso da impressão em gramas
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, weightGrams: event.target.value })}
-              value={form.weightGrams}
-            />
-          </label>
-          <label>
-            Valor do kWh de energia
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, kwhCost: event.target.value })}
-              value={form.kwhCost}
-            />
-          </label>
-          <label>
-            Potência média da impressora em watts
-            <input
-              inputMode="numeric"
-              onChange={(event) => setForm({ ...form, printerPowerWatts: event.target.value })}
-              value={form.printerPowerWatts}
-            />
-          </label>
-          <label>
-            Horas de impressão
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, printHours: event.target.value })}
-              value={form.printHours}
-            />
-          </label>
-          <label>
-            Custo de embalagem
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, packagingCost: event.target.value })}
-              value={form.packagingCost}
-            />
-          </label>
-          <label>
-            Acabamento ou pintura
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, finishingCost: event.target.value })}
-              value={form.finishingCost}
-            />
-          </label>
-          <label>
-            Taxa Mercado Pago %
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, marketplaceFeePercent: event.target.value })}
-              value={form.marketplaceFeePercent}
-            />
-          </label>
-          <label>
-            Margem de lucro desejada %
-            <input
-              aria-describedby="margin-help"
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, desiredMarginPercent: event.target.value })}
-              value={form.desiredMarginPercent}
-            />
-            <small id="margin-help">
-              Margem real precisa ser menor que 100% menos a taxa de pagamento.
-            </small>
-          </label>
-          <label>
-            Perdas ou retrabalho
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, lossesCost: event.target.value })}
-              value={form.lossesCost}
-            />
-          </label>
-          <label>
-            Mão de obra
-            <input
-              inputMode="decimal"
-              onChange={(event) => setForm({ ...form, laborCost: event.target.value })}
-              value={form.laborCost}
-            />
-          </label>
-          <label>
-            Nome do preset
-            <input
-              onChange={(event) => setForm({ ...form, presetName: event.target.value })}
-              value={form.presetName}
-            />
-          </label>
+          <SelectField
+            label="Produto"
+            onChange={(event) => setForm({ ...form, product_id: event.target.value })}
+            value={form.product_id}
+          >
+            <option value="">Cálculo avulso</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.name}
+              </option>
+            ))}
+          </SelectField>
+          <SelectField
+            defaultValue=""
+            label="Presets salvos"
+            onChange={(event) => {
+              const preset = presets.find((item) => item.id === event.target.value);
+              if (preset) applyPreset(preset);
+            }}
+          >
+            <option value="">Selecionar preset</option>
+            {presets.map((preset) => (
+              <option key={preset.id} value={preset.id}>
+                {preset.name}
+              </option>
+            ))}
+          </SelectField>
+          <TextField
+            inputMode="decimal"
+            label="Valor do kg do filamento"
+            onChange={(event) => setForm({ ...form, filamentKgCost: event.target.value })}
+            value={form.filamentKgCost}
+          />
+          <TextField
+            inputMode="decimal"
+            label="Peso da impressão em gramas"
+            onChange={(event) => setForm({ ...form, weightGrams: event.target.value })}
+            value={form.weightGrams}
+          />
+          <TextField
+            inputMode="decimal"
+            label="Valor do kWh de energia"
+            onChange={(event) => setForm({ ...form, kwhCost: event.target.value })}
+            value={form.kwhCost}
+          />
+          <TextField
+            inputMode="numeric"
+            label="Potência média da impressora em watts"
+            onChange={(event) => setForm({ ...form, printerPowerWatts: event.target.value })}
+            value={form.printerPowerWatts}
+          />
+          <TextField
+            inputMode="decimal"
+            label="Horas de impressão"
+            onChange={(event) => setForm({ ...form, printHours: event.target.value })}
+            value={form.printHours}
+          />
+          <TextField
+            inputMode="decimal"
+            label="Custo de embalagem"
+            onChange={(event) => setForm({ ...form, packagingCost: event.target.value })}
+            value={form.packagingCost}
+          />
+          <TextField
+            inputMode="decimal"
+            label="Acabamento ou pintura"
+            onChange={(event) => setForm({ ...form, finishingCost: event.target.value })}
+            value={form.finishingCost}
+          />
+          <TextField
+            inputMode="decimal"
+            label="Taxa Mercado Pago %"
+            onChange={(event) => setForm({ ...form, marketplaceFeePercent: event.target.value })}
+            value={form.marketplaceFeePercent}
+          />
+          <TextField
+            hint="Margem real precisa ser menor que 100% menos a taxa de pagamento."
+            inputMode="decimal"
+            label="Margem de lucro desejada %"
+            onChange={(event) => setForm({ ...form, desiredMarginPercent: event.target.value })}
+            value={form.desiredMarginPercent}
+          />
+          <TextField
+            inputMode="decimal"
+            label="Perdas ou retrabalho"
+            onChange={(event) => setForm({ ...form, lossesCost: event.target.value })}
+            value={form.lossesCost}
+          />
+          <TextField
+            inputMode="decimal"
+            label="Mão de obra"
+            onChange={(event) => setForm({ ...form, laborCost: event.target.value })}
+            value={form.laborCost}
+          />
+          <TextField
+            label="Nome do preset"
+            onChange={(event) => setForm({ ...form, presetName: event.target.value })}
+            value={form.presetName}
+          />
         </div>
 
         {message ? <p className="form-note">{message}</p> : null}

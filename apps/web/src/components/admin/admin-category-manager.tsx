@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { GripVertical, Plus, Save, Trash2 } from "lucide-react";
 import { adminApiFetch } from "@/lib/api/admin";
+import { TextareaField, TextField } from "@/components/ui/form-field";
 
 type AdminCategory = {
   id: string;
@@ -137,41 +138,33 @@ export function AdminCategoryManager() {
 
       {mode === "form" ? (
         <form className="admin-form" onSubmit={handleSubmit}>
-          <label>
-            Nome
-            <input
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              placeholder="Ex.: Presentes"
-              required
-              value={form.name}
-            />
-          </label>
-          <label>
-            Slug
-            <input
-              onChange={(event) => setForm({ ...form, slug: event.target.value })}
-              placeholder="Gerado pelo backend se ficar vazio"
-              value={form.slug}
-            />
-          </label>
-          <label>
-            Descrição
-            <textarea
-              onChange={(event) => setForm({ ...form, description: event.target.value })}
-              rows={3}
-              value={form.description}
-            />
-          </label>
+          <TextField
+            label="Nome"
+            onChange={(event) => setForm({ ...form, name: event.target.value })}
+            placeholder="Ex.: Presentes"
+            required
+            value={form.name}
+          />
+          <TextField
+            label="Slug"
+            onChange={(event) => setForm({ ...form, slug: event.target.value })}
+            placeholder="Gerado pelo backend se ficar vazio"
+            value={form.slug}
+          />
+          <TextareaField
+            label="Descrição"
+            onChange={(event) => setForm({ ...form, description: event.target.value })}
+            rows={3}
+            value={form.description}
+          />
           <div className="form-grid">
-            <label>
-              Ordem
-              <input
-                min="0"
-                onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
-                type="number"
-                value={form.sort_order}
-              />
-            </label>
+            <TextField
+              label="Ordem"
+              min="0"
+              onChange={(event) => setForm({ ...form, sort_order: event.target.value })}
+              type="number"
+              value={form.sort_order}
+            />
             <label className="checkbox-row">
               <input
                 checked={form.is_active}

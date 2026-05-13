@@ -5,6 +5,7 @@ import type { Category, ProductDetails, ProductStatus } from "@lm-3d/shared";
 import { ProductCard } from "@/components/product-card";
 import { useEffect, useMemo, useState } from "react";
 import { loadPublicCatalogFromBrowser } from "@/lib/catalog/public-catalog";
+import { SelectField, TextField } from "@/components/ui/form-field";
 
 type CatalogExplorerProps = {
   categories: Category[];
@@ -61,45 +62,37 @@ export function CatalogExplorer({ categories, products }: CatalogExplorerProps) 
   return (
     <>
       <div className="catalog-toolbar" aria-label="Filtros do catálogo">
-        <label className="search-field">
-          <Search aria-hidden="true" size={18} />
-          <input
-            type="search"
-            placeholder="Buscar por nome, presente, escritório..."
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </label>
-        <label>
-          <span>Categoria</span>
-          <select value={categorySlug} onChange={(event) => setCategorySlug(event.target.value)}>
-            <option value="todos">Todas</option>
-            {liveCategories.map((category) => (
-              <option value={category.slug} key={category.slug}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>Disponibilidade</span>
-          <select
-            value={status}
-            onChange={(event) => setStatus(event.target.value as ProductStatus | "todos")}
-          >
-            <option value="todos">Todos</option>
-            <option value="active">Pronta entrega</option>
-            <option value="made_to_order">Sob encomenda</option>
-          </select>
-        </label>
-        <label>
-          <span>Personalização</span>
-          <select value={customizable} onChange={(event) => setCustomizable(event.target.value)}>
-            <option value="todos">Todos</option>
-            <option value="sim">Personalizáveis</option>
-            <option value="nao">Sem personalização</option>
-          </select>
-        </label>
+        <TextField
+          className="search-field"
+          label="Buscar"
+          leadingIcon={<Search aria-hidden="true" size={18} />}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Buscar por nome, presente, escritório..."
+          type="search"
+          value={query}
+        />
+        <SelectField label="Categoria" value={categorySlug} onChange={(event) => setCategorySlug(event.target.value)}>
+          <option value="todos">Todas</option>
+          {liveCategories.map((category) => (
+            <option value={category.slug} key={category.slug}>
+              {category.name}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField
+          label="Disponibilidade"
+          value={status}
+          onChange={(event) => setStatus(event.target.value as ProductStatus | "todos")}
+        >
+          <option value="todos">Todos</option>
+          <option value="active">Pronta entrega</option>
+          <option value="made_to_order">Sob encomenda</option>
+        </SelectField>
+        <SelectField label="Personalização" value={customizable} onChange={(event) => setCustomizable(event.target.value)}>
+          <option value="todos">Todos</option>
+          <option value="sim">Personalizáveis</option>
+          <option value="nao">Sem personalização</option>
+        </SelectField>
         <button className="icon-button" type="button" aria-label="Ajustar filtros">
           <SlidersHorizontal aria-hidden="true" size={20} />
         </button>

@@ -4,6 +4,7 @@ import { PRODUCT_STATUSES, ProductStatus, formatMoneyBRL } from "@lm-3d/shared";
 import { Archive, Plus, Save } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { adminApiFetch } from "@/lib/api/admin";
+import { SelectField, TextareaField, TextField } from "@/components/ui/form-field";
 import { ProductImageManager } from "./product-image-manager";
 
 type AdminCategory = {
@@ -256,186 +257,150 @@ export function AdminProductManager() {
 
       {mode === "form" ? (
         <form className="admin-form" onSubmit={handleSubmit}>
-          <label>
-            Nome
-            <input
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              required
-              value={form.name}
-            />
-          </label>
+          <TextField
+            label="Nome"
+            onChange={(event) => setForm({ ...form, name: event.target.value })}
+            required
+            value={form.name}
+          />
           <div className="form-grid">
-            <label>
-              Slug
-              <input
-                onChange={(event) => setForm({ ...form, slug: event.target.value })}
-                placeholder="Gerado pelo backend"
-                value={form.slug}
-              />
-            </label>
-            <label>
-              Status
-              <select
-                onChange={(event) => setForm({ ...form, status: event.target.value as ProductStatus })}
-                value={form.status}
-              >
-                {PRODUCT_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <TextField
+              label="Slug"
+              onChange={(event) => setForm({ ...form, slug: event.target.value })}
+              placeholder="Gerado pelo backend"
+              value={form.slug}
+            />
+            <SelectField
+              label="Status"
+              onChange={(event) => setForm({ ...form, status: event.target.value as ProductStatus })}
+              value={form.status}
+            >
+              {PRODUCT_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </SelectField>
           </div>
-          <label>
-            Resumo do card
-            <input
-              onChange={(event) => setForm({ ...form, short_description: event.target.value })}
-              required
-              value={form.short_description}
-            />
-          </label>
-          <label>
-            Descrição completa
-            <textarea
-              onChange={(event) => setForm({ ...form, description: event.target.value })}
-              required
-              rows={4}
-              value={form.description}
-            />
-          </label>
+          <TextField
+            label="Resumo do card"
+            onChange={(event) => setForm({ ...form, short_description: event.target.value })}
+            required
+            value={form.short_description}
+          />
+          <TextareaField
+            label="Descrição completa"
+            onChange={(event) => setForm({ ...form, description: event.target.value })}
+            required
+            rows={4}
+            value={form.description}
+          />
           <div className="form-grid">
-            <label>
-              Preço
-              <input
-                inputMode="decimal"
-                onChange={(event) => setForm({ ...form, price: event.target.value })}
-                placeholder="89,90"
-                required
-                value={form.price}
-              />
-            </label>
-            <label>
-              Material
-              <input
-                onChange={(event) => setForm({ ...form, material: event.target.value })}
-                value={form.material}
-              />
-            </label>
-            <label>
-              Peso em gramas
-              <input
-                min="0"
-                onChange={(event) => setForm({ ...form, weight_grams: event.target.value })}
-                required
-                type="number"
-                value={form.weight_grams}
-              />
-            </label>
-            <label>
-              Largura pacote (cm)
-              <input
-                min="0"
-                onChange={(event) => setForm({ ...form, package_width_cm: event.target.value })}
-                required
-                step="0.1"
-                type="number"
-                value={form.package_width_cm}
-              />
-            </label>
-            <label>
-              Altura pacote (cm)
-              <input
-                min="0"
-                onChange={(event) => setForm({ ...form, package_height_cm: event.target.value })}
-                required
-                step="0.1"
-                type="number"
-                value={form.package_height_cm}
-              />
-            </label>
-            <label>
-              Comprimento pacote (cm)
-              <input
-                min="0"
-                onChange={(event) => setForm({ ...form, package_length_cm: event.target.value })}
-                required
-                step="0.1"
-                type="number"
-                value={form.package_length_cm}
-              />
-            </label>
-            <label>
-              Estoque
-              <input
-                min="0"
-                onChange={(event) => setForm({ ...form, stock_quantity: event.target.value })}
-                type="number"
-                value={form.stock_quantity}
-              />
-            </label>
-            <label>
-              Prazo minimo
-              <input
-                min="0"
-                onChange={(event) =>
-                  setForm({ ...form, production_time_days_min: event.target.value })
-                }
-                type="number"
-                value={form.production_time_days_min}
-              />
-            </label>
-            <label>
-              Prazo maximo
-              <input
-                min="0"
-                onChange={(event) =>
-                  setForm({ ...form, production_time_days_max: event.target.value })
-                }
-                type="number"
-                value={form.production_time_days_max}
-              />
-            </label>
+            <TextField
+              inputMode="decimal"
+              label="Preço"
+              onChange={(event) => setForm({ ...form, price: event.target.value })}
+              placeholder="89,90"
+              required
+              value={form.price}
+            />
+            <TextField
+              label="Material"
+              onChange={(event) => setForm({ ...form, material: event.target.value })}
+              value={form.material}
+            />
+            <TextField
+              hint="Usado no cálculo do frete."
+              label="Peso em gramas"
+              min="0"
+              onChange={(event) => setForm({ ...form, weight_grams: event.target.value })}
+              required
+              type="number"
+              value={form.weight_grams}
+            />
+            <TextField
+              label="Largura pacote (cm)"
+              min="0"
+              onChange={(event) => setForm({ ...form, package_width_cm: event.target.value })}
+              required
+              step="0.1"
+              type="number"
+              value={form.package_width_cm}
+            />
+            <TextField
+              label="Altura pacote (cm)"
+              min="0"
+              onChange={(event) => setForm({ ...form, package_height_cm: event.target.value })}
+              required
+              step="0.1"
+              type="number"
+              value={form.package_height_cm}
+            />
+            <TextField
+              label="Comprimento pacote (cm)"
+              min="0"
+              onChange={(event) => setForm({ ...form, package_length_cm: event.target.value })}
+              required
+              step="0.1"
+              type="number"
+              value={form.package_length_cm}
+            />
+            <TextField
+              label="Estoque"
+              min="0"
+              onChange={(event) => setForm({ ...form, stock_quantity: event.target.value })}
+              type="number"
+              value={form.stock_quantity}
+            />
+            <TextField
+              label="Prazo mínimo"
+              min="0"
+              onChange={(event) => setForm({ ...form, production_time_days_min: event.target.value })}
+              type="number"
+              value={form.production_time_days_min}
+            />
+            <TextField
+              label="Prazo máximo"
+              min="0"
+              onChange={(event) => setForm({ ...form, production_time_days_max: event.target.value })}
+              type="number"
+              value={form.production_time_days_max}
+            />
           </div>
           <p className="form-note">
             Peso e medidas de pacote sao usados diretamente no calculo do Melhor Envio para este produto.
           </p>
-          <label>
-            Dimensoes
-            <input
-              onChange={(event) => setForm({ ...form, dimensions: event.target.value })}
-              value={form.dimensions}
-            />
-          </label>
-          <label>
-            Categorias
-            <select
-              multiple
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  category_ids: Array.from(event.target.selectedOptions).map((option) => option.value)
-                })
-              }
-              value={form.category_ids}
-            >
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <TextField
+            label="Dimensões"
+            onChange={(event) => setForm({ ...form, dimensions: event.target.value })}
+            value={form.dimensions}
+          />
+          <SelectField
+            hint="Use Ctrl para selecionar mais de uma categoria."
+            label="Categorias"
+            multiple
+            onChange={(event) =>
+              setForm({
+                ...form,
+                category_ids: Array.from(event.target.selectedOptions).map((option) => option.value)
+              })
+            }
+            value={form.category_ids}
+          >
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </SelectField>
           {!form.id ? (
-            <label>
-              URLs de imagens externas
-              <textarea
-                onChange={(event) => setForm({ ...form, image_urls: event.target.value })}
-                placeholder="Uma URL por linha"
-                rows={3}
-                value={form.image_urls}
-              />
-            </label>
+            <TextareaField
+              label="URLs de imagens externas"
+              onChange={(event) => setForm({ ...form, image_urls: event.target.value })}
+              placeholder="Uma URL por linha"
+              rows={3}
+              value={form.image_urls}
+            />
           ) : null}
           {form.id && editingProduct ? (
             <ProductImageManager
@@ -451,15 +416,13 @@ export function AdminProductManager() {
               Salve o produto antes de enviar imagens pelo upload.
             </p>
           )}
-          <label>
-            Cores disponíveis
-            <textarea
-              onChange={(event) => setForm({ ...form, color_options: event.target.value })}
-              placeholder="Uma cor por linha"
-              rows={3}
-              value={form.color_options}
-            />
-          </label>
+          <TextareaField
+            label="Cores disponíveis"
+            onChange={(event) => setForm({ ...form, color_options: event.target.value })}
+            placeholder="Uma cor por linha"
+            rows={3}
+            value={form.color_options}
+          />
           <label className="checkbox-row">
             <input
               checked={form.accepts_customization}
@@ -469,14 +432,12 @@ export function AdminProductManager() {
             Aceita personalização
           </label>
           {form.accepts_customization ? (
-            <label>
-              Orientação de personalização
-              <textarea
-                onChange={(event) => setForm({ ...form, customization_prompt: event.target.value })}
-                rows={3}
-                value={form.customization_prompt}
-              />
-            </label>
+            <TextareaField
+              label="Orientação de personalização"
+              onChange={(event) => setForm({ ...form, customization_prompt: event.target.value })}
+              rows={3}
+              value={form.customization_prompt}
+            />
           ) : null}
           <div className="admin-inline-actions">
             <button className="button button-primary" disabled={isSaving} type="submit">
