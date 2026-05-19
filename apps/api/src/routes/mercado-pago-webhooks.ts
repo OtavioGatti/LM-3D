@@ -91,7 +91,7 @@ mercadoPagoWebhooksRouter.post("/mercado-pago", async (req, res, next) => {
     eventRowId = insertedEvent.id as string;
 
     if (!signatureValid) {
-      throw new HttpError(401, "INVALID_MERCADO_PAGO_SIGNATURE", "Assinatura invalida.");
+      throw new HttpError(401, "INVALID_MERCADO_PAGO_SIGNATURE", "Assinatura inválida.");
     }
 
     if (!resourceId) {
@@ -107,7 +107,7 @@ mercadoPagoWebhooksRouter.post("/mercado-pago", async (req, res, next) => {
       throw new HttpError(
         400,
         "MERCADO_PAGO_EVENT_WITHOUT_REFERENCE",
-        "Evento sem referencia de pedido."
+        "Evento sem referência de pedido."
       );
     }
 
@@ -124,7 +124,7 @@ mercadoPagoWebhooksRouter.post("/mercado-pago", async (req, res, next) => {
     const order = orderData as OrderRow | null;
 
     if (!order) {
-      throw new HttpError(404, "ORDER_NOT_FOUND", "Pedido do pagamento nao encontrado.");
+      throw new HttpError(404, "ORDER_NOT_FOUND", "Pedido do pagamento não encontrado.");
     }
 
     const { payment: paymentRow } = await applyMercadoPagoPaymentToOrder({

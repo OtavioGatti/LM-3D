@@ -90,7 +90,7 @@ async function claimNotification({
   }
 
   if (isMissingNotificationsTable(error)) {
-    console.warn("[email] tabela email_notifications ainda nao existe; envio ignorado.");
+    console.warn("[email] tabela email_notifications ainda não existe; envio ignorado.");
     return null;
   }
 
@@ -170,7 +170,7 @@ async function sendNotificationOnce(input: SendOnceInput) {
   }
 
   if (!isEmailConfigured()) {
-    console.warn("[email] SMTP nao configurado; envio ignorado.", {
+    console.warn("[email] SMTP não configurado; envio ignorado.", {
       entityType: input.entityType,
       entityId: input.entityId,
       eventType: input.eventType
@@ -219,7 +219,7 @@ async function sendNotificationOnce(input: SendOnceInput) {
       });
     }
   } catch (error) {
-    console.error("[email] notificacao ignorada para nao interromper o fluxo principal", {
+    console.error("[email] notificação ignorada para não interromper o fluxo principal", {
       entityType: input.entityType,
       entityId: input.entityId,
       eventType: input.eventType,

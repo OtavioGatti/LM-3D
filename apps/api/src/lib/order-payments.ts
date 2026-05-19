@@ -165,7 +165,7 @@ export async function applyMercadoPagoPaymentToOrder({
     throw new HttpError(
       400,
       "PAYMENT_ORDER_MISMATCH",
-      "O pagamento recebido nao pertence a este pedido."
+      "O pagamento recebido não pertence a este pedido."
     );
   }
 
@@ -177,7 +177,7 @@ export async function applyMercadoPagoPaymentToOrder({
     throw new HttpError(
       400,
       "PAYMENT_AMOUNT_MISMATCH",
-      "O valor aprovado no Mercado Pago nao confere com o total do pedido."
+      "O valor aprovado no Mercado Pago não confere com o total do pedido."
     );
   }
 

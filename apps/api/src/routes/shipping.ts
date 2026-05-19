@@ -57,7 +57,7 @@ shippingRouter.post("/quote", async (req, res, next) => {
     } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessao expirou. Entre novamente.");
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessão expirou. Entre novamente.");
     }
 
     const destinationPostalCode = normalizePostalCode(payload.address.postalCode);
@@ -75,7 +75,7 @@ shippingRouter.post("/quote", async (req, res, next) => {
         throw new HttpError(
           400,
           "PRODUCT_UNAVAILABLE",
-          "Um dos produtos do carrinho nao esta disponivel para frete."
+          "Um dos produtos do carrinho não está disponível para frete."
         );
       }
 
@@ -109,7 +109,7 @@ shippingRouter.post("/quote", async (req, res, next) => {
             message:
               error instanceof Error
                 ? error.message
-                : "Nao foi possivel calcular fretes por transportadora agora."
+                : "Não foi possível calcular fretes por transportadora agora."
           }
         ]
       });

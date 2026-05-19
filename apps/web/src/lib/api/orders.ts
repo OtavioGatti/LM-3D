@@ -132,7 +132,7 @@ export async function syncMercadoPagoPayment(orderCode: string, paymentId: strin
       error?: { message?: string };
     } | null;
 
-    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel atualizar o pagamento.");
+    throw new Error(errorPayload?.error?.message ?? "Não foi possível atualizar o pagamento.");
   }
 
   return response.json() as Promise<{

@@ -368,7 +368,7 @@ export function AdminProductManager() {
             />
           </div>
           <p className="form-note">
-            Peso e medidas de pacote sao usados diretamente no calculo do Melhor Envio para este produto.
+            Peso e medidas de pacote são usados diretamente no cálculo do Melhor Envio para este produto.
           </p>
           <TextField
             label="Dimensões"

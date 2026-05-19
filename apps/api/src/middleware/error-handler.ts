@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { HttpError } from "../lib/http.js";
 
 export const notFoundHandler: RequestHandler = (_req, _res, next) => {
-  next(new HttpError(404, "NOT_FOUND", "Rota nao encontrada"));
+  next(new HttpError(404, "NOT_FOUND", "Rota não encontrada"));
 };
 
 export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
@@ -32,7 +32,7 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   res.status(500).json({
     error: {
       code: "INTERNAL_SERVER_ERROR",
-      message: "Nao foi possivel concluir a operacao agora."
+      message: "Não foi possível concluir a operação agora."
     }
   });
 };

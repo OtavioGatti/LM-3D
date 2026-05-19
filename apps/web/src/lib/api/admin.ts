@@ -346,7 +346,7 @@ export async function adminApiFetch<T>(path: string, init?: RequestInit): Promis
   } = await getSupabaseBrowserClient().auth.getSession();
 
   if (!session) {
-    throw new Error("Sessao administrativa expirada.");
+    throw new Error("Sessão administrativa expirada.");
   }
 
   if (shouldUseDirectSupabase()) {

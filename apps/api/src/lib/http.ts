@@ -9,6 +9,6 @@ export class HttpError extends Error {
   }
 }
 
-export function notFound(message = "Recurso nao encontrado") {
+export function notFound(message = "Recurso não encontrado") {
   return new HttpError(404, "NOT_FOUND", message);
 }

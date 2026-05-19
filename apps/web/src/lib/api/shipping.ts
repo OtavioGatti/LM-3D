@@ -39,7 +39,7 @@ export async function quoteShippingOptions(payload: ShippingQuotePayload) {
       error?: { message?: string };
     } | null;
 
-    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel calcular o frete.");
+    throw new Error(errorPayload?.error?.message ?? "Não foi possível calcular o frete.");
   }
 
   return response.json() as Promise<ShippingQuoteResponse>;

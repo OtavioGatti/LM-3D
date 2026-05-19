@@ -195,7 +195,7 @@ export function AdminCustomRequestManager() {
       );
       setMessage(`Orcamento ${request.code} atualizado.`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel atualizar.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível atualizar.");
     } finally {
       setSavingId("");
     }
@@ -206,7 +206,7 @@ export function AdminCustomRequestManager() {
       <div className="admin-management-header">
         <div>
           <h2>Solicitacoes recebidas</h2>
-          <p>Ideias fora do catalogo para Lucas avaliar, orcar e converter em pedido.</p>
+          <p>Ideias fora do catálogo para Lucas avaliar, orçar e converter em pedido.</p>
         </div>
       </div>
 
@@ -231,10 +231,10 @@ export function AdminCustomRequestManager() {
       </div>
 
       {message ? <p className="form-note">{message}</p> : null}
-      {isLoading ? <p>Carregando orcamentos...</p> : null}
+      {isLoading ? <p>Carregando orçamentos...</p> : null}
 
       <div className="admin-order-summary-strip">
-        <span>{filteredRequests.length} orcamento(s) na visao atual</span>
+        <span>{filteredRequests.length} orçamento(s) na visão atual</span>
         <strong>
           {formatMoneyBRL(
             filteredRequests.reduce(
@@ -274,7 +274,7 @@ export function AdminCustomRequestManager() {
                   <strong>
                     {request.estimated_price_cents
                       ? formatMoneyBRL(request.estimated_price_cents)
-                      : "Sem preco"}
+                      : "Sem preço"}
                   </strong>
                   <span>{new Intl.DateTimeFormat("pt-BR").format(new Date(request.created_at))}</span>
                   <span className="admin-order-summary-status">
@@ -456,7 +456,7 @@ export function AdminCustomRequestManager() {
 
       {!isLoading && filteredRequests.length === 0 ? (
         <div className="empty-state">
-          <h2>Nenhum orcamento encontrado</h2>
+          <h2>Nenhum orçamento encontrado</h2>
           <p>Novas ideias enviadas pelo site aparecem aqui.</p>
         </div>
       ) : null}

@@ -262,7 +262,7 @@ export function AdminOrderManager() {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Nao foi possivel verificar o pagamento no Mercado Pago."
+          : "Não foi possível verificar o pagamento no Mercado Pago."
       );
     } finally {
       setCheckingPaymentId("");
@@ -406,7 +406,7 @@ export function AdminOrderManager() {
                       <small>{formatDeliveryAddress(order)}</small>
                       {order.shipping_delivery_time_days !== null &&
                       order.shipping_delivery_time_days !== undefined ? (
-                        <small>Prazo: {order.shipping_delivery_time_days} dia(s) util(eis)</small>
+                        <small>Prazo: {order.shipping_delivery_time_days} dia(s) útil(eis)</small>
                       ) : null}
                       {order.shipping_destination_postal_code ? (
                         <small>CEP destino: {order.shipping_destination_postal_code}</small>

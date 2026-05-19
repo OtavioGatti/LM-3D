@@ -171,7 +171,7 @@ async function loadPayableCustomRequest({
   }
 
   if (!data) {
-    throw new HttpError(404, "CUSTOM_REQUEST_NOT_FOUND", "Orcamento nao encontrado.");
+    throw new HttpError(404, "CUSTOM_REQUEST_NOT_FOUND", "Orçamento não encontrado.");
   }
 
   const request = data as CustomRequestRow;
@@ -180,7 +180,7 @@ async function loadPayableCustomRequest({
     throw new HttpError(
       400,
       "CUSTOM_REQUEST_NOT_PAYABLE",
-      "Este orcamento ainda nao esta liberado para pagamento."
+      "Este orçamento ainda não está liberado para pagamento."
     );
   }
 
@@ -221,7 +221,7 @@ function ensureCustomRequestCanQuoteShipping(request: CustomRequestRow) {
     throw new HttpError(
       400,
       "CUSTOM_REQUEST_SHIPPING_PACKAGE_REQUIRED",
-      "Este orcamento ainda precisa de peso e medidas de pacote para calcular frete."
+      "Este orçamento ainda precisa de peso e medidas de pacote para calcular frete."
     );
   }
 }
@@ -264,12 +264,12 @@ function resolveCustomRequestAddress(payload: CustomRequestCheckoutPayload) {
     throw new HttpError(
       400,
       "SHIPPING_ADDRESS_REQUIRED",
-      "Preencha rua, numero, bairro, cidade, estado e CEP para envio."
+      "Preencha rua, número, bairro, cidade, estado e CEP para envio."
     );
   }
 
   if (payload.shipping?.provider !== "melhor_envio" || !payload.shipping.serviceId) {
-    throw new HttpError(400, "SHIPPING_OPTION_REQUIRED", "Escolha uma opcao de frete.");
+    throw new HttpError(400, "SHIPPING_OPTION_REQUIRED", "Escolha uma opção de frete.");
   }
 
   return null;
@@ -306,7 +306,7 @@ async function resolveCustomRequestShippingSelection({
     throw new HttpError(
       400,
       "SHIPPING_OPTION_UNAVAILABLE",
-      "A opcao de frete escolhida nao esta mais disponivel. Calcule o frete novamente."
+      "A opção de frete escolhida não está mais disponível. Calcule o frete novamente."
     );
   }
 
@@ -360,7 +360,7 @@ async function resolveCustomRequestGroupShippingSelection({
     throw new HttpError(
       400,
       "SHIPPING_OPTION_UNAVAILABLE",
-      "A opcao de frete escolhida nao esta mais disponivel. Calcule o frete novamente."
+      "A opção de frete escolhida não está mais disponível. Calcule o frete novamente."
     );
   }
 
@@ -465,14 +465,14 @@ async function loadExistingCustomRequestOrder({
     throw new HttpError(
       400,
       "CUSTOM_REQUEST_ALREADY_IN_CHECKOUT",
-      "Um ou mais orcamentos selecionados ja estao em outro pagamento."
+      "Um ou mais orçamentos selecionados já estão em outro pagamento."
     );
   }
 
   const existingOrder = [...existingOrders.values()][0]!;
 
   if (existingOrder.payment_status === "approved") {
-    throw new HttpError(400, "CUSTOM_REQUEST_ALREADY_PAID", "Um dos orcamentos selecionados ja foi pago.");
+    throw new HttpError(400, "CUSTOM_REQUEST_ALREADY_PAID", "Um dos orçamentos selecionados já foi pago.");
   }
 
   const { data: existingItems, error: itemsError } = await supabase
@@ -498,7 +498,7 @@ async function loadExistingCustomRequestOrder({
     throw new HttpError(
       400,
       "CUSTOM_REQUEST_ALREADY_IN_CHECKOUT",
-      "Um dos orcamentos selecionados ja esta vinculado a outro pagamento pendente."
+      "Um dos orçamentos selecionados já está vinculado a outro pagamento pendente."
     );
   }
 
@@ -569,7 +569,7 @@ customRequestsRouter.post("/group/shipping-quote", async (req, res, next) => {
     const token = getBearerToken(req.header("authorization"));
 
     if (!token) {
-      throw new HttpError(401, "LOGIN_REQUIRED", "Entre para calcular o frete dos orcamentos.");
+      throw new HttpError(401, "LOGIN_REQUIRED", "Entre para calcular o frete dos orçamentos.");
     }
 
     const {
@@ -578,7 +578,7 @@ customRequestsRouter.post("/group/shipping-quote", async (req, res, next) => {
     } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessao expirou. Entre novamente.");
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessão expirou. Entre novamente.");
     }
 
     const requests = await loadPayableCustomRequestsByCodes({
@@ -610,7 +610,7 @@ customRequestsRouter.post("/group/checkout", async (req, res, next) => {
     const token = getBearerToken(req.header("authorization"));
 
     if (!token) {
-      throw new HttpError(401, "LOGIN_REQUIRED", "Entre para pagar os orcamentos.");
+      throw new HttpError(401, "LOGIN_REQUIRED", "Entre para pagar os orçamentos.");
     }
 
     const {
@@ -619,7 +619,7 @@ customRequestsRouter.post("/group/checkout", async (req, res, next) => {
     } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessao expirou. Entre novamente.");
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessão expirou. Entre novamente.");
     }
 
     const requests = await loadPayableCustomRequestsByCodes({
@@ -641,7 +641,7 @@ customRequestsRouter.post("/group/checkout", async (req, res, next) => {
       throw new HttpError(
         400,
         "CUSTOM_REQUEST_WITHOUT_EMAIL",
-        "Estes orcamentos precisam de um e-mail para gerar o pagamento."
+        "Estes orçamentos precisam de um e-mail para gerar o pagamento."
       );
     }
 
@@ -682,7 +682,7 @@ customRequestsRouter.post("/group/checkout", async (req, res, next) => {
           total_cents: totalCents,
           delivery_method: shippingSelection.deliveryMethod,
           delivery_address: shippingSelection.deliveryAddress,
-          customer_notes: `Pagamento agrupado de orcamentos: ${requests
+          customer_notes: `Pagamento agrupado de orçamentos: ${requests
             .map((request) => request.code)
             .join(", ")}`,
           admin_notes: null,
@@ -822,7 +822,7 @@ customRequestsRouter.post("/:code/shipping-quote", async (req, res, next) => {
     const token = getBearerToken(req.header("authorization"));
 
     if (!token) {
-      throw new HttpError(401, "LOGIN_REQUIRED", "Entre para calcular o frete do orcamento.");
+      throw new HttpError(401, "LOGIN_REQUIRED", "Entre para calcular o frete do orçamento.");
     }
 
     const {
@@ -831,7 +831,7 @@ customRequestsRouter.post("/:code/shipping-quote", async (req, res, next) => {
     } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessao expirou. Entre novamente.");
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessão expirou. Entre novamente.");
     }
 
     const request = await loadPayableCustomRequest({

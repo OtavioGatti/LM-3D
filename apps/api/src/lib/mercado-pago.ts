@@ -112,7 +112,7 @@ export async function createMercadoPagoPreference(input: CreatePreferenceInput) 
     throw new HttpError(
       503,
       "MERCADO_PAGO_NOT_CONFIGURED",
-      "Mercado Pago ainda nao foi configurado no backend."
+      "Mercado Pago ainda não foi configurado no backend."
     );
   }
 
@@ -187,7 +187,7 @@ export async function createMercadoPagoPreference(input: CreatePreferenceInput) 
     throw new HttpError(
       502,
       "MERCADO_PAGO_PREFERENCE_FAILED",
-      data?.message ?? "Nao foi possivel criar o pagamento no Mercado Pago."
+      data?.message ?? "Não foi possível criar o pagamento no Mercado Pago."
     );
   }
 
@@ -204,7 +204,7 @@ export async function getMercadoPagoPayment(paymentId: string) {
     throw new HttpError(
       503,
       "MERCADO_PAGO_NOT_CONFIGURED",
-      "Mercado Pago ainda nao foi configurado no backend."
+      "Mercado Pago ainda não foi configurado no backend."
     );
   }
 
@@ -222,7 +222,7 @@ export async function getMercadoPagoPayment(paymentId: string) {
     throw new HttpError(
       502,
       "MERCADO_PAGO_PAYMENT_FETCH_FAILED",
-      data?.message ?? "Nao foi possivel consultar o pagamento no Mercado Pago."
+      data?.message ?? "Não foi possível consultar o pagamento no Mercado Pago."
     );
   }
 
@@ -234,7 +234,7 @@ export async function searchMercadoPagoPaymentsByExternalReference(externalRefer
     throw new HttpError(
       503,
       "MERCADO_PAGO_NOT_CONFIGURED",
-      "Mercado Pago ainda nao foi configurado no backend."
+      "Mercado Pago ainda não foi configurado no backend."
     );
   }
 
@@ -257,7 +257,7 @@ export async function searchMercadoPagoPaymentsByExternalReference(externalRefer
     throw new HttpError(
       502,
       "MERCADO_PAGO_PAYMENT_SEARCH_FAILED",
-      data?.message ?? "Nao foi possivel buscar pagamentos no Mercado Pago."
+      data?.message ?? "Não foi possível buscar pagamentos no Mercado Pago."
     );
   }
 

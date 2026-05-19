@@ -67,7 +67,7 @@ function getShipmentMessage(
   }
 
   if (shipment.status === "in_progress") {
-    return " A etiqueta ja esta sendo sincronizada.";
+    return " A etiqueta já está sendo sincronizada.";
   }
 
   return ` Melhor Envio: ${shipment.message}`;
@@ -151,7 +151,7 @@ adminOrdersRouter.post("/:id/verify-payment", async (req, res, next) => {
     const order = orderData as OrderPaymentCheckRow | null;
 
     if (!order) {
-      res.status(404).json({ message: "Pedido nao encontrado." });
+      res.status(404).json({ message: "Pedido não encontrado." });
       return;
     }
 

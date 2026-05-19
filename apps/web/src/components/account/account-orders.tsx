@@ -209,7 +209,7 @@ export function AccountOrders() {
             {formatShippingLabel(order) ? <span>{formatShippingLabel(order)}</span> : null}
             {order.shipping_delivery_time_days !== null &&
             order.shipping_delivery_time_days !== undefined ? (
-              <span>Prazo: {order.shipping_delivery_time_days} dia(s) util(eis)</span>
+              <span>Prazo: {order.shipping_delivery_time_days} dia(s) útil(eis)</span>
             ) : null}
             {order.tracking_code ? <span>Rastreio: {order.tracking_code}</span> : null}
           </div>

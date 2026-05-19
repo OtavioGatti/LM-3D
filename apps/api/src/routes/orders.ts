@@ -140,7 +140,7 @@ function buildQuoteProducts(
       throw new HttpError(
         400,
         "PRODUCT_UNAVAILABLE",
-        "Um dos produtos do carrinho nao esta disponivel para compra."
+        "Um dos produtos do carrinho não está disponível para compra."
       );
     }
 
@@ -212,12 +212,12 @@ async function resolveShippingSelection({
     throw new HttpError(
       400,
       "SHIPPING_ADDRESS_REQUIRED",
-      "Preencha rua, numero, bairro, cidade, estado e CEP para envio."
+      "Preencha rua, número, bairro, cidade, estado e CEP para envio."
     );
   }
 
   if (payload.shipping?.provider !== "melhor_envio" || !payload.shipping.serviceId) {
-    throw new HttpError(400, "SHIPPING_OPTION_REQUIRED", "Escolha uma opcao de frete.");
+    throw new HttpError(400, "SHIPPING_OPTION_REQUIRED", "Escolha uma opção de frete.");
   }
 
   const destinationPostalCode = normalizePostalCode(postalCode);
@@ -236,7 +236,7 @@ async function resolveShippingSelection({
     throw new HttpError(
       400,
       "SHIPPING_OPTION_UNAVAILABLE",
-      "A opcao de frete escolhida nao esta mais disponivel. Calcule o frete novamente."
+      "A opção de frete escolhida não está mais disponível. Calcule o frete novamente."
     );
   }
 
@@ -329,7 +329,7 @@ function calculateCouponDiscount(coupon: CouponRow, subtotalCents: number) {
 
   const now = Date.now();
   if (coupon.starts_at && new Date(coupon.starts_at).getTime() > now) {
-    throw new HttpError(400, "COUPON_NOT_STARTED", "Cupom ainda nao esta ativo.");
+    throw new HttpError(400, "COUPON_NOT_STARTED", "Cupom ainda não está ativo.");
   }
 
   if (coupon.ends_at && new Date(coupon.ends_at).getTime() < now) {
@@ -341,7 +341,7 @@ function calculateCouponDiscount(coupon: CouponRow, subtotalCents: number) {
   }
 
   if (subtotalCents < coupon.min_order_cents) {
-    throw new HttpError(400, "COUPON_MIN_ORDER", "O pedido nao atinge o valor minimo do cupom.");
+    throw new HttpError(400, "COUPON_MIN_ORDER", "O pedido não atinge o valor mínimo do cupom.");
   }
 
   const discount =
@@ -397,7 +397,7 @@ ordersRouter.post("/", async (req, res, next) => {
         throw new HttpError(
           400,
           "PRODUCT_UNAVAILABLE",
-          "Um dos produtos do carrinho nao esta disponivel para compra."
+          "Um dos produtos do carrinho não está disponível para compra."
         );
       }
 
@@ -442,7 +442,7 @@ ordersRouter.post("/", async (req, res, next) => {
       }
 
       if (!couponData) {
-        throw new HttpError(400, "COUPON_NOT_FOUND", "Cupom nao encontrado.");
+        throw new HttpError(400, "COUPON_NOT_FOUND", "Cupom não encontrado.");
       }
 
       coupon = couponData as CouponRow;
@@ -588,7 +588,7 @@ ordersRouter.post("/:code/payment-sync", async (req, res, next) => {
     } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessao expirou. Entre novamente.");
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessão expirou. Entre novamente.");
     }
 
     const { data: order, error: orderError } = await supabase
@@ -603,7 +603,7 @@ ordersRouter.post("/:code/payment-sync", async (req, res, next) => {
     }
 
     if (!order) {
-      throw new HttpError(404, "ORDER_NOT_FOUND", "Pedido nao encontrado para esta conta.");
+      throw new HttpError(404, "ORDER_NOT_FOUND", "Pedido não encontrado para esta conta.");
     }
 
     const { order: updatedOrder } = await syncMercadoPagoPaymentForOrder({

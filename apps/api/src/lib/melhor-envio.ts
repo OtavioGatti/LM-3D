@@ -301,7 +301,7 @@ function getAllowedServicesPayload() {
 
 function mapQuoteItem(item: MelhorEnvioQuoteItem): MelhorEnvioShippingOption | null {
   const serviceId = item.id === undefined || item.id === null ? null : String(item.id);
-  const serviceName = item.name?.trim() || "Servico de entrega";
+  const serviceName = item.name?.trim() || "Serviço de entrega";
   const companyName = item.company?.name?.trim() || null;
   const priceCents = toMoneyCents(item.custom_price ?? item.price);
 
@@ -329,7 +329,7 @@ function mapUnavailableQuoteItem(item: MelhorEnvioQuoteItem) {
   }
 
   return {
-    serviceName: item.name?.trim() || "Servico de entrega",
+    serviceName: item.name?.trim() || "Serviço de entrega",
     companyName: item.company?.name?.trim() || null,
     message: item.error
   };
@@ -458,7 +458,7 @@ export async function createMelhorEnvioCartItem(payload: MelhorEnvioCartPayload)
     path: "/api/v2/me/cart",
     body: payload,
     errorCode: "MELHOR_ENVIO_CART_FAILED",
-    fallbackMessage: "Nao foi possivel inserir o frete no carrinho do Melhor Envio."
+    fallbackMessage: "Não foi possível inserir o frete no carrinho do Melhor Envio."
   });
   const orderId = response.id === undefined || response.id === null ? "" : String(response.id);
 
@@ -466,7 +466,7 @@ export async function createMelhorEnvioCartItem(payload: MelhorEnvioCartPayload)
     throw new HttpError(
       502,
       "MELHOR_ENVIO_CART_INVALID_RESPONSE",
-      "O Melhor Envio nao retornou o ID da etiqueta criada."
+      "O Melhor Envio não retornou o ID da etiqueta criada."
     );
   }
 
@@ -483,7 +483,7 @@ export async function checkoutMelhorEnvioShipment(orderIds: string[]) {
       orders: orderIds
     },
     errorCode: "MELHOR_ENVIO_CHECKOUT_FAILED",
-    fallbackMessage: "Nao foi possivel comprar a etiqueta no Melhor Envio."
+    fallbackMessage: "Não foi possível comprar a etiqueta no Melhor Envio."
   });
 }
 
@@ -494,7 +494,7 @@ export async function trackMelhorEnvioShipments(orderIds: string[]) {
       orders: orderIds
     },
     errorCode: "MELHOR_ENVIO_TRACKING_FAILED",
-    fallbackMessage: "Nao foi possivel consultar o rastreio no Melhor Envio."
+    fallbackMessage: "Não foi possível consultar o rastreio no Melhor Envio."
   });
 }
 
@@ -553,7 +553,7 @@ export async function quoteMelhorEnvioShipping({
     const providerMessage =
       data && typeof data === "object" && "message" in data
         ? String(data.message)
-        : "Nao foi possivel calcular o frete no Melhor Envio.";
+        : "Não foi possível calcular o frete no Melhor Envio.";
     const message =
       response.status === 401 || /^unauthenticated\.?$/i.test(providerMessage.trim())
         ? "Melhor Envio recusou o token de API. Confira MELHOR_ENVIO_ACCESS_TOKEN e MELHOR_ENVIO_BASE_URL no Render."

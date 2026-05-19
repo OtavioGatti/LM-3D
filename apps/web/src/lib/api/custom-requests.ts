@@ -120,7 +120,7 @@ async function getSessionOrThrow(message: string) {
 }
 
 async function createCustomRequestDirect(payload: CustomRequestPayload) {
-  const session = await getSessionOrThrow("Entre ou crie uma conta para enviar um orcamento.");
+  const session = await getSessionOrThrow("Entre ou crie uma conta para enviar um orçamento.");
 
   const { data, error } = await getSupabaseBrowserClient()
     .from("custom_requests")
@@ -143,7 +143,7 @@ async function createCustomRequestDirect(payload: CustomRequestPayload) {
 
 export async function createCustomRequest(payload: CustomRequestPayload) {
   const session = await getSessionOrThrow(
-    "Entre ou crie uma conta para enviar um orcamento."
+    "Entre ou crie uma conta para enviar um orçamento."
   );
 
   if (isPagesWithoutBackend()) {
@@ -165,7 +165,7 @@ export async function createCustomRequest(payload: CustomRequestPayload) {
         error?: { message?: string };
       } | null;
 
-      throw new Error(errorPayload?.error?.message ?? "Nao foi possivel enviar o orcamento.");
+      throw new Error(errorPayload?.error?.message ?? "Não foi possível enviar o orçamento.");
     }
 
     return response.json() as Promise<CustomRequestResponse>;
@@ -179,7 +179,7 @@ export async function createCustomRequest(payload: CustomRequestPayload) {
 }
 
 export async function quoteCustomRequestShipping(code: string, postalCode: string) {
-  const session = await getSessionOrThrow("Entre para calcular o frete do orcamento.");
+  const session = await getSessionOrThrow("Entre para calcular o frete do orçamento.");
 
   const response = await fetch(
     `${apiBaseUrl}/custom-requests/${encodeURIComponent(code)}/shipping-quote`,
@@ -202,14 +202,14 @@ export async function quoteCustomRequestShipping(code: string, postalCode: strin
       error?: { message?: string };
     } | null;
 
-    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel calcular o frete.");
+    throw new Error(errorPayload?.error?.message ?? "Não foi possível calcular o frete.");
   }
 
   return response.json() as Promise<ShippingQuoteResponse>;
 }
 
 export async function quoteCustomRequestGroupShipping(requestCodes: string[], postalCode: string) {
-  const session = await getSessionOrThrow("Entre para calcular o frete dos orcamentos.");
+  const session = await getSessionOrThrow("Entre para calcular o frete dos orçamentos.");
 
   const response = await fetch(`${apiBaseUrl}/custom-requests/group/shipping-quote`, {
     method: "POST",
@@ -230,7 +230,7 @@ export async function quoteCustomRequestGroupShipping(requestCodes: string[], po
       error?: { message?: string };
     } | null;
 
-    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel calcular o frete.");
+    throw new Error(errorPayload?.error?.message ?? "Não foi possível calcular o frete.");
   }
 
   return response.json() as Promise<ShippingQuoteResponse>;
@@ -240,7 +240,7 @@ export async function createCustomRequestCheckout(
   code: string,
   payload: CustomRequestCheckoutPayload
 ) {
-  const session = await getSessionOrThrow("Entre para pagar o orcamento.");
+  const session = await getSessionOrThrow("Entre para pagar o orçamento.");
 
   const response = await fetch(`${apiBaseUrl}/custom-requests/${encodeURIComponent(code)}/checkout`, {
     method: "POST",
@@ -256,7 +256,7 @@ export async function createCustomRequestCheckout(
       error?: { message?: string };
     } | null;
 
-    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel iniciar o pagamento.");
+    throw new Error(errorPayload?.error?.message ?? "Não foi possível iniciar o pagamento.");
   }
 
   return response.json() as Promise<CustomRequestCheckoutResponse>;
@@ -266,7 +266,7 @@ export async function createCustomRequestGroupCheckout(
   requestCodes: string[],
   payload: CustomRequestCheckoutPayload
 ) {
-  const session = await getSessionOrThrow("Entre para pagar os orcamentos.");
+  const session = await getSessionOrThrow("Entre para pagar os orçamentos.");
 
   const response = await fetch(`${apiBaseUrl}/custom-requests/group/checkout`, {
     method: "POST",
@@ -285,7 +285,7 @@ export async function createCustomRequestGroupCheckout(
       error?: { message?: string };
     } | null;
 
-    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel iniciar o pagamento.");
+    throw new Error(errorPayload?.error?.message ?? "Não foi possível iniciar o pagamento.");
   }
 
   return response.json() as Promise<CustomRequestGroupCheckoutResponse>;

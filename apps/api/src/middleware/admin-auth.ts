@@ -33,7 +33,7 @@ export const requireAdmin: RequestHandler = async (req, res, next) => {
     } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
-      throw new HttpError(401, "INVALID_SESSION", "Sessao invalida ou expirada.");
+      throw new HttpError(401, "INVALID_SESSION", "Sessão inválida ou expirada.");
     }
 
     const { data: profile, error: profileError } = await supabase

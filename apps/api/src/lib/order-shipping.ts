@@ -109,7 +109,7 @@ function normalizeState(value: string) {
     throw new HttpError(
       400,
       "ORDER_SHIPPING_DATA_REQUIRED",
-      "Preencha o estado do destinatario com 2 letras, por exemplo SP."
+      "Preencha o estado do destinatário com 2 letras, por exemplo SP."
     );
   }
 
@@ -157,20 +157,20 @@ function buildRecipientAddress(order: PaidShippingOrder): MelhorEnvioAddressPayl
   const phone = normalizePhone(order.customer_phone);
   const complement = asString(address.complement);
   const recipient: MelhorEnvioAddressPayload = {
-    name: requireOrderValue(order.customer_name.trim(), "o nome do destinatario"),
-    phone: requireOrderValue(phone, "o telefone do destinatario"),
-    email: requireOrderValue(order.customer_email.trim(), "o e-mail do destinatario"),
-    document: requireOrderValue(document, "o CPF ou CNPJ do destinatario"),
-    address: requireOrderValue(street, "a rua/avenida do destinatario"),
-    number: requireOrderValue(number, "o numero do endereco do destinatario"),
-    district: requireOrderValue(district, "o bairro do destinatario"),
-    city: requireOrderValue(asString(address.city), "a cidade do destinatario"),
+    name: requireOrderValue(order.customer_name.trim(), "o nome do destinatário"),
+    phone: requireOrderValue(phone, "o telefone do destinatário"),
+    email: requireOrderValue(order.customer_email.trim(), "o e-mail do destinatário"),
+    document: requireOrderValue(document, "o CPF ou CNPJ do destinatário"),
+    address: requireOrderValue(street, "a rua/avenida do destinatário"),
+    number: requireOrderValue(number, "o número do endereço do destinatário"),
+    district: requireOrderValue(district, "o bairro do destinatário"),
+    city: requireOrderValue(asString(address.city), "a cidade do destinatário"),
     country_id: "BR",
     postal_code: normalizePostalCode(
-      requireOrderValue(asString(address.postalCode), "o CEP do destinatario")
+      requireOrderValue(asString(address.postalCode), "o CEP do destinatário")
     ),
     state_abbr: normalizeState(
-      requireOrderValue(asString(address.state), "o estado do destinatario")
+      requireOrderValue(asString(address.state), "o estado do destinatário")
     )
   };
 
@@ -228,7 +228,7 @@ function buildCartVolumes(order: PaidShippingOrder): MelhorEnvioCartVolumePayloa
     throw new HttpError(
       400,
       "ORDER_SHIPPING_PACKAGES_REQUIRED",
-      "A cotacao salva nao tem os volumes necessarios para criar a etiqueta. Recalcule o frete e crie um novo pedido."
+      "A cotação salva não tem os volumes necessários para criar a etiqueta. Recalcule o frete e crie um novo pedido."
     );
   }
 
@@ -257,7 +257,7 @@ function getServiceId(order: PaidShippingOrder) {
     throw new HttpError(
       400,
       "ORDER_SHIPPING_SERVICE_REQUIRED",
-      "A opcao de frete do pedido nao tem um servico valido do Melhor Envio."
+      "A opção de frete do pedido não tem um serviço válido do Melhor Envio."
     );
   }
 
@@ -382,7 +382,7 @@ async function updateShipmentFailure({
   const message =
     error instanceof Error
       ? error.message
-      : "Nao foi possivel sincronizar a etiqueta com o Melhor Envio.";
+      : "Não foi possível sincronizar a etiqueta com o Melhor Envio.";
 
   const { error: updateError } = await supabase
     .from("orders")
@@ -421,21 +421,21 @@ export async function ensureMelhorEnvioShipmentForPaidOrder({
   if (!order) {
     return {
       status: "skipped",
-      reason: "As colunas de etiqueta do Melhor Envio ainda nao existem no banco."
+      reason: "As colunas de etiqueta do Melhor Envio ainda não existem no banco."
     };
   }
 
   if (order.payment_status !== "approved") {
     return {
       status: "skipped",
-      reason: "Pedido ainda nao esta com pagamento aprovado."
+      reason: "Pedido ainda não está com pagamento aprovado."
     };
   }
 
   if (order.shipping_provider !== "melhor_envio") {
     return {
       status: "skipped",
-      reason: "Pedido nao usa frete do Melhor Envio."
+      reason: "Pedido não usa frete do Melhor Envio."
     };
   }
 
@@ -456,7 +456,7 @@ export async function ensureMelhorEnvioShipmentForPaidOrder({
     if (!claimed) {
       return {
         status: "in_progress",
-        reason: "Outra verificacao ja esta criando a etiqueta."
+        reason: "Outra verificação já está criando a etiqueta."
       };
     }
 
@@ -495,7 +495,7 @@ export async function ensureMelhorEnvioShipmentForPaidOrder({
   if (!melhorEnvioOrderId) {
     return {
       status: "failed",
-      message: "O Melhor Envio nao retornou o ID da etiqueta."
+      message: "O Melhor Envio não retornou o ID da etiqueta."
     };
   }
 

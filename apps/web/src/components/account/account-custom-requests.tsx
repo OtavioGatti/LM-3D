@@ -284,7 +284,7 @@ export function AccountCustomRequests() {
       return "prazo informado pela transportadora";
     }
 
-    return `${option.deliveryTimeDays} dia(s) util(eis)`;
+    return `${option.deliveryTimeDays} dia(s) útil(eis)`;
   }
 
   async function calculateCustomRequestShipping(request: AccountCustomRequest) {
@@ -307,12 +307,12 @@ export function AccountCustomRequests() {
       setShippingMessage(
         carrierOption
           ? "Fretes atualizados."
-          : response.unavailableServices[0]?.message ?? "Nao encontramos frete para este CEP agora."
+          : response.unavailableServices[0]?.message ?? "Não encontramos frete para este CEP agora."
       );
     } catch (error) {
       setShippingOptions([PICKUP_SHIPPING_OPTION]);
       setSelectedShippingOptionId(PICKUP_SHIPPING_OPTION.id);
-      setShippingMessage(error instanceof Error ? error.message : "Nao foi possivel calcular o frete.");
+      setShippingMessage(error instanceof Error ? error.message : "Não foi possível calcular o frete.");
     } finally {
       setIsQuotingShipping(false);
     }
@@ -324,7 +324,7 @@ export function AccountCustomRequests() {
 
     try {
       if (selectedPayableRequests.length === 0) {
-        throw new Error("Selecione ao menos um orcamento para calcular o frete.");
+        throw new Error("Selecione ao menos um orçamento para calcular o frete.");
       }
 
       if (!shippingForm.postalCode.trim()) {
@@ -344,13 +344,13 @@ export function AccountCustomRequests() {
       setSelectedShippingOptionId(carrierOption?.id ?? PICKUP_SHIPPING_OPTION.id);
       setShippingMessage(
         carrierOption
-          ? "Fretes atualizados para os orcamentos selecionados."
-          : response.unavailableServices[0]?.message ?? "Nao encontramos frete para este CEP agora."
+          ? "Fretes atualizados para os orçamentos selecionados."
+          : response.unavailableServices[0]?.message ?? "Não encontramos frete para este CEP agora."
       );
     } catch (error) {
       setShippingOptions([PICKUP_SHIPPING_OPTION]);
       setSelectedShippingOptionId(PICKUP_SHIPPING_OPTION.id);
-      setShippingMessage(error instanceof Error ? error.message : "Nao foi possivel calcular o frete.");
+      setShippingMessage(error instanceof Error ? error.message : "Não foi possível calcular o frete.");
     } finally {
       setIsQuotingShipping(false);
     }
@@ -366,7 +366,7 @@ export function AccountCustomRequests() {
       );
 
       if (!selectedShippingOption) {
-        throw new Error("Escolha retirada em Assis/SP ou uma opcao de frete.");
+        throw new Error("Escolha retirada em Assis/SP ou uma opção de frete.");
       }
 
       if (
@@ -380,7 +380,7 @@ export function AccountCustomRequests() {
           !shippingForm.state.trim() ||
           !shippingForm.postalCode.trim())
       ) {
-        throw new Error("Preencha telefone, CPF/CNPJ e endereco completo para envio.");
+        throw new Error("Preencha telefone, CPF/CNPJ e endereço completo para envio.");
       }
 
       const payload = await createCustomRequestCheckout(request.code, {
@@ -428,7 +428,7 @@ export function AccountCustomRequests() {
 
     try {
       if (selectedPayableRequests.length === 0) {
-        throw new Error("Selecione ao menos um orcamento para pagar.");
+        throw new Error("Selecione ao menos um orçamento para pagar.");
       }
 
       const selectedShippingOption = shippingOptions.find(
@@ -436,7 +436,7 @@ export function AccountCustomRequests() {
       );
 
       if (!selectedShippingOption) {
-        throw new Error("Escolha retirada em Assis/SP ou uma opcao de frete.");
+        throw new Error("Escolha retirada em Assis/SP ou uma opção de frete.");
       }
 
       if (
@@ -450,7 +450,7 @@ export function AccountCustomRequests() {
           !shippingForm.state.trim() ||
           !shippingForm.postalCode.trim())
       ) {
-        throw new Error("Preencha telefone, CPF/CNPJ e endereco completo para envio.");
+        throw new Error("Preencha telefone, CPF/CNPJ e endereço completo para envio.");
       }
 
       const payload = await createCustomRequestGroupCheckout(
@@ -484,12 +484,12 @@ export function AccountCustomRequests() {
       );
 
       if (!payload.payment.checkoutUrl) {
-        throw new Error("O Mercado Pago nao retornou uma URL de pagamento.");
+        throw new Error("O Mercado Pago não retornou uma URL de pagamento.");
       }
 
       window.location.assign(payload.payment.checkoutUrl);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Nao foi possivel iniciar o pagamento.");
+      setMessage(error instanceof Error ? error.message : "Não foi possível iniciar o pagamento.");
     } finally {
       setPayingCode("");
     }
@@ -519,8 +519,8 @@ export function AccountCustomRequests() {
         <article className="account-order-card">
           <header>
             <div>
-              <strong>Pagar varios orcamentos juntos</strong>
-              <span>Selecione os orcamentos prontos e finalize em um unico pagamento.</span>
+              <strong>Pagar vários orçamentos juntos</strong>
+              <span>Selecione os orçamentos prontos e finalize em um único pagamento.</span>
             </div>
             <strong>{formatMoneyBRL(groupSubtotalCents)}</strong>
           </header>
@@ -542,7 +542,7 @@ export function AccountCustomRequests() {
           </div>
 
           <div className="summary-total">
-            <span>{selectedPayableRequests.length} orcamento(s) selecionado(s)</span>
+            <span>{selectedPayableRequests.length} orçamento(s) selecionado(s)</span>
             <strong>{formatMoneyBRL(groupSubtotalCents)}</strong>
           </div>
 
@@ -553,7 +553,7 @@ export function AccountCustomRequests() {
             type="button"
           >
             <CreditCard aria-hidden="true" size={18} />
-            {paymentPanelCode === "group" ? "Fechar opcoes de entrega" : "Pagar selecionados"}
+            {paymentPanelCode === "group" ? "Fechar opções de entrega" : "Pagar selecionados"}
           </button>
 
           {paymentPanelCode === "group" ? (
@@ -561,8 +561,8 @@ export function AccountCustomRequests() {
               <div className="shipping-box-header">
                 <Truck aria-hidden="true" size={22} />
                 <div>
-                  <h2>Entrega dos orcamentos</h2>
-                  <p>Escolha retirada gratuita ou calcule um frete unico para todos os itens.</p>
+                  <h2>Entrega dos orçamentos</h2>
+                  <p>Escolha retirada gratuita ou calcule um frete único para todos os itens.</p>
                 </div>
               </div>
 
@@ -597,7 +597,7 @@ export function AccountCustomRequests() {
               <div className="form-grid">
                 <TextField
                   autoComplete="tel"
-                  hint="Necessario para transportadora e contato sobre a entrega."
+                  hint="Necessário para transportadora e contato sobre a entrega."
                   inputMode="tel"
                   label="WhatsApp ou telefone"
                   onChange={(event) =>
@@ -611,7 +611,7 @@ export function AccountCustomRequests() {
                   value={shippingForm.phone}
                 />
                 <TextField
-                  hint="Usado somente para emissao da etiqueta de envio."
+                  hint="Usado somente para emissão da etiqueta de envio."
                   inputMode="numeric"
                   label="CPF ou CNPJ"
                   onChange={(event) =>
@@ -634,7 +634,7 @@ export function AccountCustomRequests() {
                   value={shippingForm.addressLine}
                 />
                 <TextField
-                  label="Numero"
+                  label="Número"
                   onChange={(event) =>
                     setShippingForm({ ...shippingForm, addressNumber: event.target.value })
                   }
@@ -655,7 +655,7 @@ export function AccountCustomRequests() {
                   onChange={(event) =>
                     setShippingForm({ ...shippingForm, complement: event.target.value })
                   }
-                  placeholder="Apto, bloco, referencia"
+                  placeholder="Apto, bloco, referência"
                   value={shippingForm.complement}
                 />
                 <TextField
@@ -807,14 +807,14 @@ export function AccountCustomRequests() {
               type="button"
             >
               <CreditCard aria-hidden="true" size={18} />
-              {paymentPanelCode === request.code ? "Fechar opcoes de entrega" : "Pagar orcamento"}
+              {paymentPanelCode === request.code ? "Fechar opções de entrega" : "Pagar orçamento"}
             </button>
             {paymentPanelCode === request.code ? (
               <div className="shipping-box">
                 <div className="shipping-box-header">
                   <Truck aria-hidden="true" size={22} />
                   <div>
-                    <h2>Entrega do orcamento</h2>
+                    <h2>Entrega do orçamento</h2>
                     <p>Escolha retirada gratuita ou calcule o frete antes do Mercado Pago.</p>
                   </div>
                 </div>

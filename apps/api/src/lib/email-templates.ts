@@ -96,7 +96,7 @@ function baseLayout({
             </tr>
             <tr>
               <td style="padding:18px 28px;background:#eef6f1;color:#52645b;font-size:13px;line-height:1.5;">
-                Este e um e-mail automatico sobre seu pedido/orcamento na LM-3D.
+                Este é um e-mail automático sobre seu pedido/orçamento na LM-3D.
               </td>
             </tr>
           </table>
@@ -143,7 +143,7 @@ export function quoteReadyTemplate(request: CustomRequestEmailData): EmailTempla
   const deadline = request.quoted_deadline || "Prazo informado no orçamento";
   const message = request.quote_message?.trim();
   const title = `Seu orçamento ${request.code} foi respondido`;
-  const intro = `Oi, ${request.customer_name}. O orçamento do seu pedido personalizado ja esta pronto.`;
+  const intro = `Oi, ${request.customer_name}. O orçamento do seu pedido personalizado já está pronto.`;
   const children = [
     paragraph(intro),
     message ? paragraph(message) : "",
@@ -184,9 +184,9 @@ export function paymentApprovedTemplate(order: OrderEmailData): EmailTemplate {
     `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:18px 0;border-top:1px solid #d8e0d8;border-bottom:1px solid #d8e0d8;">`,
     detailLine("Pedido", order.code),
     detailLine("Total", formatMoneyBRL(order.total_cents)),
-    detailLine("Proximo passo", "Produção e preparo"),
+    detailLine("Próximo passo", "Produção e preparo"),
     `</table>`,
-    paragraph("Agora vamos preparar tudo por aqui. Voce pode acompanhar a evolução do pedido em Minha conta.")
+    paragraph("Agora vamos preparar tudo por aqui. Você pode acompanhar a evolução do pedido em Minha conta.")
   ].join("");
 
   return {
@@ -208,21 +208,21 @@ export function paymentApprovedTemplate(order: OrderEmailData): EmailTemplate {
 export function trackingAvailableTemplate(order: OrderEmailData): EmailTemplate {
   const trackingCode = order.tracking_code?.trim() || "";
   const title = `Seu pedido ${order.code} foi enviado`;
-  const intro = `Oi, ${order.customer_name}. Seu pedido ja foi enviado e o rastreio esta disponivel.`;
+  const intro = `Oi, ${order.customer_name}. Seu pedido já foi enviado e o rastreio está disponível.`;
   const children = [
     paragraph(intro),
     `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:18px 0;border-top:1px solid #d8e0d8;border-bottom:1px solid #d8e0d8;">`,
     detailLine("Pedido", order.code),
     detailLine("Codigo de rastreio", trackingCode),
     `</table>`,
-    paragraph("Use o codigo acima para acompanhar a entrega pela transportadora ou pelo Melhor Rastreio.")
+    paragraph("Use o código acima para acompanhar a entrega pela transportadora ou pelo Melhor Rastreio.")
   ].join("");
 
   return {
     subject: title,
     html: baseLayout({
       title,
-      preview: `Rastreio disponivel para o pedido ${order.code}.`,
+      preview: `Rastreio disponível para o pedido ${order.code}.`,
       children
     }),
     text: [

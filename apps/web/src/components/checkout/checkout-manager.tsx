@@ -251,7 +251,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
       return "prazo informado pela transportadora";
     }
 
-    return `${option.deliveryTimeDays} dia(s) util(eis)`;
+    return `${option.deliveryTimeDays} dia(s) útil(eis)`;
   }
 
   function selectShippingOption(option: ShippingQuoteOption) {
@@ -303,7 +303,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
       } else {
         setShippingMessage(
           response.unavailableServices[0]?.message ??
-            "Nao encontramos frete por transportadora para este CEP agora."
+            "Não encontramos frete por transportadora para este CEP agora."
         );
       }
     } catch (error) {
@@ -334,7 +334,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
       }
 
       if (!selectedShippingOption) {
-        throw new Error("Escolha retirada em Assis/SP ou uma opcao de frete.");
+        throw new Error("Escolha retirada em Assis/SP ou uma opção de frete.");
       }
 
       if (
@@ -348,7 +348,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           !form.state.trim() ||
           !form.postalCode.trim())
       ) {
-        throw new Error("Preencha telefone, CPF/CNPJ e endereco completo para envio.");
+        throw new Error("Preencha telefone, CPF/CNPJ e endereço completo para envio.");
       }
 
       const response = await createCheckoutOrder({
@@ -723,7 +723,7 @@ export function CheckoutManager({ products }: CheckoutManagerProps) {
           <div className="summary-line">
             <span>{selectedShippingOption?.label ?? "Entrega"}</span>
             <strong>
-              {selectedShippingOption ? formatMoneyBRL(shippingCents) : "Escolha uma opcao"}
+              {selectedShippingOption ? formatMoneyBRL(shippingCents) : "Escolha uma opção"}
             </strong>
           </div>
           <div className="summary-total">

@@ -132,7 +132,7 @@ async function getGmailAccessToken() {
     throw new Error(
       body?.error_description ||
         body?.error ||
-        `Gmail API nao retornou access token (${response.status}).`
+        `Gmail API não retornou access token (${response.status}).`
     );
   }
 
@@ -180,7 +180,7 @@ function buildMimeMessage({ to, subject, html, text }: SendEmailInput) {
 
 async function sendWithGmailApi(input: SendEmailInput) {
   if (!isGmailApiConfigured()) {
-    throw new Error("Gmail API nao configurada para envio de e-mails transacionais.");
+    throw new Error("Gmail API não configurada para envio de e-mails transacionais.");
   }
 
   const accessToken = await getGmailAccessToken();
@@ -210,7 +210,7 @@ async function sendWithGmailApi(input: SendEmailInput) {
     throw new Error(
       body?.error?.message ||
         body?.error?.status ||
-        `Gmail API nao enviou a mensagem (${response.status}).`
+        `Gmail API não enviou a mensagem (${response.status}).`
     );
   }
 
@@ -223,7 +223,7 @@ async function sendWithSmtp({ to, subject, html, text }: SendEmailInput) {
   const smtp = getTransporter();
 
   if (!smtp) {
-    throw new Error("SMTP nao configurado para envio de e-mails transacionais.");
+    throw new Error("SMTP não configurado para envio de e-mails transacionais.");
   }
 
   return smtp.sendMail({

@@ -15,7 +15,7 @@ export function getSupabaseAdminClient() {
     throw new HttpError(
       503,
       "SUPABASE_NOT_CONFIGURED",
-      "Supabase ainda nao foi configurado no backend."
+      "Supabase ainda não foi configurado no backend."
     );
   }
 
