@@ -13,6 +13,10 @@ const envSchema = z.object({
   MERCADO_PAGO_ACCESS_TOKEN: z.string().optional(),
   MERCADO_PAGO_WEBHOOK_SECRET: z.string().optional(),
   EMAIL_NOTIFICATIONS_ENABLED: z.string().default("true"),
+  EMAIL_PROVIDER: z.enum(["smtp", "gmail_api"]).default("smtp"),
+  EMAIL_FROM_EMAIL: z.string().email().optional().or(z.literal("")),
+  EMAIL_FROM_NAME: z.string().default("LM-3D"),
+  EMAIL_REPLY_TO: z.string().email().optional().or(z.literal("")),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.preprocess(
     (value) => (value === "" ? undefined : value),
@@ -24,6 +28,10 @@ const envSchema = z.object({
   SMTP_FROM_EMAIL: z.string().email().optional().or(z.literal("")),
   SMTP_FROM_NAME: z.string().default("LM-3D"),
   SMTP_REPLY_TO: z.string().email().optional().or(z.literal("")),
+  GMAIL_API_CLIENT_ID: z.string().optional(),
+  GMAIL_API_CLIENT_SECRET: z.string().optional(),
+  GMAIL_API_REFRESH_TOKEN: z.string().optional(),
+  GMAIL_API_USER_ID: z.string().default("me"),
   MELHOR_ENVIO_BASE_URL: z
     .string()
     .url()

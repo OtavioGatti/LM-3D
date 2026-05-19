@@ -1,5 +1,5 @@
 import type { SupabaseAdminClient } from "./supabase.js";
-import { isEmailConfigured, sendEmail } from "./mailer.js";
+import { getEmailProvider, isEmailConfigured, sendEmail } from "./mailer.js";
 import {
   paymentApprovedTemplate,
   quoteReadyTemplate,
@@ -150,7 +150,7 @@ async function markNotification({
     .from("email_notifications")
     .update({
       status,
-      provider: "smtp",
+      provider: getEmailProvider(),
       provider_message_id: providerMessageId ?? null,
       error_message: errorMessage ?? null,
       sent_at: status === "sent" ? new Date().toISOString() : null
