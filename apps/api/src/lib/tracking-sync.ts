@@ -1,4 +1,5 @@
 import { env } from "../config/env.js";
+import { notifyOrderTrackingAvailable } from "./email-notifications.js";
 import { trackMelhorEnvioShipments } from "./melhor-envio.js";
 import { getSupabaseAdminClient, hasSupabaseAdminConfig, type SupabaseAdminClient } from "./supabase.js";
 
@@ -166,7 +167,7 @@ async function saveTrackingUpdates({
       continue;
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("orders")
       .update({
         tracking_code: update.trackingCode,
@@ -178,10 +179,19 @@ async function saveTrackingUpdates({
         }
       })
       .eq("id", update.order.id)
-      .is("tracking_code", null);
+      .is("tracking_code", null)
+      .select("id")
+      .maybeSingle();
 
     if (error) {
       throw error;
+    }
+
+    if (data) {
+      await notifyOrderTrackingAvailable({
+        supabase,
+        orderId: update.order.id
+      });
     }
   }
 }

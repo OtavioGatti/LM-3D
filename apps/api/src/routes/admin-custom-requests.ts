@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { notifyCustomRequestQuoted } from "../lib/email-notifications.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
 
 const CUSTOM_REQUEST_STATUSES = [
@@ -45,8 +46,9 @@ adminCustomRequestsRouter.get("/", async (_req, res, next) => {
 adminCustomRequestsRouter.patch("/:id", async (req, res, next) => {
   try {
     const payload = customRequestUpdateSchema.parse(req.body);
+    const supabase = getSupabaseAdminClient();
 
-    const { data, error } = await getSupabaseAdminClient()
+    const { data, error } = await supabase
       .from("custom_requests")
       .update(payload)
       .eq("id", req.params.id)
@@ -56,6 +58,11 @@ adminCustomRequestsRouter.patch("/:id", async (req, res, next) => {
     if (error) {
       throw error;
     }
+
+    await notifyCustomRequestQuoted({
+      supabase,
+      request: data
+    });
 
     res.json({ request: data });
   } catch (error) {

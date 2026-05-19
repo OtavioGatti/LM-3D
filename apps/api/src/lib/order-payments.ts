@@ -8,6 +8,7 @@ import {
   type MercadoPagoPreferenceItem
 } from "./mercado-pago.js";
 import { HttpError } from "./http.js";
+import { notifyOrderPaymentApproved } from "./email-notifications.js";
 import { ensureMelhorEnvioShipmentForPaidOrder } from "./order-shipping.js";
 import type { SupabaseAdminClient } from "./supabase.js";
 
@@ -272,6 +273,13 @@ export async function applyMercadoPagoPaymentToOrder({
         error: error instanceof Error ? error.message : error
       });
     }
+  }
+
+  if (paymentStatus === "approved") {
+    await notifyOrderPaymentApproved({
+      supabase,
+      orderId: order.id
+    });
   }
 
   return {

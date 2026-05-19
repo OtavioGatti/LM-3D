@@ -1,6 +1,10 @@
 import { ORDER_STATUSES, PAYMENT_STATUSES } from "@lm-3d/shared";
 import { Router } from "express";
 import { z } from "zod";
+import {
+  notifyOrderPaymentApproved,
+  notifyOrderTrackingAvailable
+} from "../lib/email-notifications.js";
 import { searchMercadoPagoPaymentsByExternalReference } from "../lib/mercado-pago.js";
 import { syncMercadoPagoPaymentForOrder } from "../lib/order-payments.js";
 import { getSupabaseAdminClient } from "../lib/supabase.js";
@@ -97,8 +101,9 @@ adminOrdersRouter.get("/", async (_req, res, next) => {
 adminOrdersRouter.patch("/:id", async (req, res, next) => {
   try {
     const payload = orderUpdateSchema.parse(req.body);
+    const supabase = getSupabaseAdminClient();
 
-    const { data, error } = await getSupabaseAdminClient()
+    const { data, error } = await supabase
       .from("orders")
       .update(payload)
       .eq("id", req.params.id)
@@ -107,6 +112,20 @@ adminOrdersRouter.patch("/:id", async (req, res, next) => {
 
     if (error) {
       throw error;
+    }
+
+    if (data.payment_status === "approved") {
+      await notifyOrderPaymentApproved({
+        supabase,
+        orderId: data.id
+      });
+    }
+
+    if (data.tracking_code) {
+      await notifyOrderTrackingAvailable({
+        supabase,
+        orderId: data.id
+      });
     }
 
     res.json({ order: data });
