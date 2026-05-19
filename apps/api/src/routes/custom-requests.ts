@@ -33,6 +33,10 @@ const customRequestShippingQuoteSchema = z.object({
   })
 });
 
+const customRequestGroupShippingQuoteSchema = customRequestShippingQuoteSchema.extend({
+  requestCodes: z.array(z.string().trim().min(1).max(40)).min(1).max(20)
+});
+
 const customRequestCheckoutSchema = z.object({
   customer: z.object({
     phone: z.string().trim().max(40).optional().nullable(),
@@ -61,6 +65,10 @@ const customRequestCheckoutSchema = z.object({
     })
     .optional()
     .nullable()
+});
+
+const customRequestGroupCheckoutSchema = customRequestCheckoutSchema.extend({
+  requestCodes: z.array(z.string().trim().min(1).max(40)).min(1).max(20)
 });
 
 export const customRequestsRouter = Router();
@@ -96,6 +104,7 @@ type CustomRequestRow = {
 };
 
 type CustomRequestCheckoutPayload = z.infer<typeof customRequestCheckoutSchema>;
+type CustomRequestGroupCheckoutPayload = z.infer<typeof customRequestGroupCheckoutSchema>;
 
 function isMissingCustomRequestShippingColumn(error: unknown) {
   if (!error || typeof error !== "object" || !("message" in error)) {
@@ -116,6 +125,10 @@ function buildCustomRequestQuoteProduct(request: CustomRequestRow) {
     package_height_cm: request.quoted_package_height_cm ?? null,
     package_length_cm: request.quoted_package_length_cm ?? null
   };
+}
+
+function buildCustomRequestQuoteProducts(requests: CustomRequestRow[]) {
+  return requests.map(buildCustomRequestQuoteProduct);
 }
 
 async function loadPayableCustomRequest({
@@ -174,6 +187,29 @@ async function loadPayableCustomRequest({
   return request;
 }
 
+async function loadPayableCustomRequestsByCodes({
+  supabase,
+  codes,
+  userId
+}: {
+  supabase: ReturnType<typeof getSupabaseAdminClient>;
+  codes: string[];
+  userId: string;
+}) {
+  const uniqueCodes = [...new Set(codes)];
+  const requests = await Promise.all(
+    uniqueCodes.map((code) =>
+      loadPayableCustomRequest({
+        supabase,
+        code,
+        userId
+      })
+    )
+  );
+
+  return requests;
+}
+
 function ensureCustomRequestCanQuoteShipping(request: CustomRequestRow) {
   const missing =
     !request.quoted_weight_grams ||
@@ -187,6 +223,12 @@ function ensureCustomRequestCanQuoteShipping(request: CustomRequestRow) {
       "CUSTOM_REQUEST_SHIPPING_PACKAGE_REQUIRED",
       "Este orcamento ainda precisa de peso e medidas de pacote para calcular frete."
     );
+  }
+}
+
+function ensureCustomRequestsCanQuoteShipping(requests: CustomRequestRow[]) {
+  for (const request of requests) {
+    ensureCustomRequestCanQuoteShipping(request);
   }
 }
 
@@ -287,6 +329,192 @@ async function resolveCustomRequestShippingSelection({
   };
 }
 
+async function resolveCustomRequestGroupShippingSelection({
+  requests,
+  payload
+}: {
+  requests: CustomRequestRow[];
+  payload: CustomRequestGroupCheckoutPayload;
+}) {
+  const pickup = resolveCustomRequestAddress(payload);
+
+  if (pickup) {
+    return pickup;
+  }
+
+  ensureCustomRequestsCanQuoteShipping(requests);
+
+  const destinationPostalCode = normalizePostalCode(payload.delivery.address!.postalCode!);
+  const originPostalCode = getStoreOriginPostalCode();
+  const quote = await quoteMelhorEnvioShipping({
+    destinationPostalCode,
+    products: buildCustomRequestQuoteProducts(requests)
+  });
+  const selectedOption = quote.options.find(
+    (option) =>
+      option.serviceId === payload.shipping?.serviceId ||
+      option.id === payload.shipping?.optionId
+  );
+
+  if (!selectedOption) {
+    throw new HttpError(
+      400,
+      "SHIPPING_OPTION_UNAVAILABLE",
+      "A opcao de frete escolhida nao esta mais disponivel. Calcule o frete novamente."
+    );
+  }
+
+  return {
+    shippingCents: selectedOption.priceCents,
+    deliveryMethod: selectedOption.label,
+    deliveryAddress: payload.delivery.address ?? null,
+    provider: "melhor_envio" as const,
+    serviceId: selectedOption.serviceId,
+    serviceName: selectedOption.serviceName,
+    companyName: selectedOption.companyName,
+    deliveryTimeDays: selectedOption.deliveryTimeDays,
+    originPostalCode,
+    destinationPostalCode,
+    quoteSnapshot: {
+      selected: toPublicShippingOption(selectedOption),
+      rawQuote: selectedOption.rawQuote,
+      packages: selectedOption.packages
+    }
+  };
+}
+
+function buildCustomRequestOrderItem(request: CustomRequestRow) {
+  return {
+    product_id: null,
+    product_snapshot: {
+      type: "custom_request",
+      custom_request_id: request.id,
+      custom_request_code: request.code,
+      name: request.title,
+      description: request.description,
+      quantity_requested: request.quantity,
+      desired_material: request.desired_material,
+      desired_colors: request.desired_colors,
+      quoted_deadline: request.quoted_deadline ?? null,
+      quoted_weight_grams: request.quoted_weight_grams ?? null,
+      quoted_package_width_cm: request.quoted_package_width_cm ?? null,
+      quoted_package_height_cm: request.quoted_package_height_cm ?? null,
+      quoted_package_length_cm: request.quoted_package_length_cm ?? null,
+      reference_url: request.reference_url
+    },
+    quantity: 1,
+    unit_price_cents: request.estimated_price_cents ?? 0,
+    line_total_cents: request.estimated_price_cents ?? 0,
+    customization_notes:
+      request.quoted_deadline || request.deadline
+        ? [
+            request.quoted_deadline ? `Prazo informado: ${request.quoted_deadline}` : null,
+            request.deadline ? `Prazo desejado: ${request.deadline}` : null
+          ]
+            .filter(Boolean)
+            .join("\n")
+        : null
+  };
+}
+
+function getCustomRequestIdFromSnapshot(snapshot: unknown) {
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) {
+    return null;
+  }
+
+  const value = (snapshot as Record<string, unknown>).custom_request_id;
+
+  return typeof value === "string" ? value : null;
+}
+
+async function loadExistingCustomRequestOrder({
+  supabase,
+  requestIds
+}: {
+  supabase: ReturnType<typeof getSupabaseAdminClient>;
+  requestIds: string[];
+}) {
+  const existingOrders = new Map<string, { id: string; payment_status: string; status: string }>();
+
+  for (const requestId of requestIds) {
+    const { data, error } = await supabase
+      .from("order_items")
+      .select("order:orders(id, payment_status, status)")
+      .contains("product_snapshot", { custom_request_id: requestId });
+
+    if (error) {
+      throw error;
+    }
+
+    for (const item of data ?? []) {
+      const order = Array.isArray(item.order) ? item.order[0] : item.order;
+
+      if (!order || ["canceled", "refunded"].includes(order.status)) {
+        continue;
+      }
+
+      existingOrders.set(order.id, order);
+    }
+  }
+
+  if (existingOrders.size === 0) {
+    return null;
+  }
+
+  if (existingOrders.size > 1) {
+    throw new HttpError(
+      400,
+      "CUSTOM_REQUEST_ALREADY_IN_CHECKOUT",
+      "Um ou mais orcamentos selecionados ja estao em outro pagamento."
+    );
+  }
+
+  const existingOrder = [...existingOrders.values()][0]!;
+
+  if (existingOrder.payment_status === "approved") {
+    throw new HttpError(400, "CUSTOM_REQUEST_ALREADY_PAID", "Um dos orcamentos selecionados ja foi pago.");
+  }
+
+  const { data: existingItems, error: itemsError } = await supabase
+    .from("order_items")
+    .select("product_snapshot")
+    .eq("order_id", existingOrder.id);
+
+  if (itemsError) {
+    throw itemsError;
+  }
+
+  const existingRequestIds = new Set(
+    (existingItems ?? [])
+      .map((item) => getCustomRequestIdFromSnapshot(item.product_snapshot))
+      .filter((value): value is string => Boolean(value))
+  );
+  const requestedIds = new Set(requestIds);
+  const sameSelection =
+    existingRequestIds.size === requestedIds.size &&
+    [...requestedIds].every((requestId) => existingRequestIds.has(requestId));
+
+  if (!sameSelection) {
+    throw new HttpError(
+      400,
+      "CUSTOM_REQUEST_ALREADY_IN_CHECKOUT",
+      "Um dos orcamentos selecionados ja esta vinculado a outro pagamento pendente."
+    );
+  }
+
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", existingOrder.id)
+    .single();
+
+  if (orderError) {
+    throw orderError;
+  }
+
+  return order;
+}
+
 customRequestsRouter.post("/", async (req, res, next) => {
   try {
     const payload = customRequestSchema.parse(req.body);
@@ -329,6 +557,258 @@ customRequestsRouter.post("/", async (req, res, next) => {
     }
 
     res.status(201).json({ request: data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+customRequestsRouter.post("/group/shipping-quote", async (req, res, next) => {
+  try {
+    const payload = customRequestGroupShippingQuoteSchema.parse(req.body);
+    const supabase = getSupabaseAdminClient();
+    const token = getBearerToken(req.header("authorization"));
+
+    if (!token) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Entre para calcular o frete dos orcamentos.");
+    }
+
+    const {
+      data: { user },
+      error: authError
+    } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessao expirou. Entre novamente.");
+    }
+
+    const requests = await loadPayableCustomRequestsByCodes({
+      supabase,
+      codes: payload.requestCodes,
+      userId: user.id
+    });
+
+    ensureCustomRequestsCanQuoteShipping(requests);
+
+    const quote = await quoteMelhorEnvioShipping({
+      destinationPostalCode: normalizePostalCode(payload.address.postalCode),
+      products: buildCustomRequestQuoteProducts(requests)
+    });
+
+    res.json({
+      options: [PICKUP_SHIPPING_OPTION, ...quote.options.map(toPublicShippingOption)],
+      unavailableServices: quote.unavailableServices
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+customRequestsRouter.post("/group/checkout", async (req, res, next) => {
+  try {
+    const payload = customRequestGroupCheckoutSchema.parse(req.body);
+    const supabase = getSupabaseAdminClient();
+    const token = getBearerToken(req.header("authorization"));
+
+    if (!token) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Entre para pagar os orcamentos.");
+    }
+
+    const {
+      data: { user },
+      error: authError
+    } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      throw new HttpError(401, "LOGIN_REQUIRED", "Sua sessao expirou. Entre novamente.");
+    }
+
+    const requests = await loadPayableCustomRequestsByCodes({
+      supabase,
+      codes: payload.requestCodes,
+      userId: user.id
+    });
+    const subtotalCents = requests.reduce(
+      (total, request) => total + (request.estimated_price_cents ?? 0),
+      0
+    );
+    const customerEmail = requests.find((request) => request.customer_email)?.customer_email ?? user.email;
+    const customerPhone = payload.customer.phone
+      ? formatBrazilianPhone(payload.customer.phone)
+      : requests.find((request) => request.customer_phone)?.customer_phone ?? null;
+    const customerDocument = payload.customer.document?.replace(/\D/g, "") || null;
+
+    if (!customerEmail) {
+      throw new HttpError(
+        400,
+        "CUSTOM_REQUEST_WITHOUT_EMAIL",
+        "Estes orcamentos precisam de um e-mail para gerar o pagamento."
+      );
+    }
+
+    if (payload.delivery.method === "melhor_envio" && !customerPhone) {
+      throw new HttpError(400, "CUSTOMER_PHONE_REQUIRED", "Informe o telefone para gerar a etiqueta.");
+    }
+
+    if (payload.delivery.method === "melhor_envio" && !customerDocument) {
+      throw new HttpError(400, "CUSTOMER_DOCUMENT_REQUIRED", "Informe CPF ou CNPJ para gerar a etiqueta.");
+    }
+
+    const requestIds = requests.map((request) => request.id);
+    const shippingSelection = await resolveCustomRequestGroupShippingSelection({
+      requests,
+      payload
+    });
+    const totalCents = subtotalCents + shippingSelection.shippingCents;
+    let order = await loadExistingCustomRequestOrder({
+      supabase,
+      requestIds
+    });
+
+    if (!order) {
+      const { data: createdOrder, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          code: createOrderCode(),
+          user_id: user.id,
+          customer_name: requests[0]!.customer_name,
+          customer_email: customerEmail,
+          customer_phone: customerPhone,
+          customer_document: customerDocument,
+          status: "pending_payment",
+          payment_status: "pending",
+          subtotal_cents: subtotalCents,
+          shipping_cents: shippingSelection.shippingCents,
+          discount_cents: 0,
+          total_cents: totalCents,
+          delivery_method: shippingSelection.deliveryMethod,
+          delivery_address: shippingSelection.deliveryAddress,
+          customer_notes: `Pagamento agrupado de orcamentos: ${requests
+            .map((request) => request.code)
+            .join(", ")}`,
+          admin_notes: null,
+          shipping_provider: shippingSelection.provider,
+          shipping_service_id: shippingSelection.serviceId,
+          shipping_service_name: shippingSelection.serviceName,
+          shipping_company_name: shippingSelection.companyName,
+          shipping_delivery_time_days: shippingSelection.deliveryTimeDays,
+          shipping_origin_postal_code: shippingSelection.originPostalCode,
+          shipping_destination_postal_code: shippingSelection.destinationPostalCode,
+          shipping_quote: shippingSelection.quoteSnapshot
+        })
+        .select("*")
+        .single();
+
+      if (orderError) {
+        throw orderError;
+      }
+
+      const { error: itemError } = await supabase.from("order_items").insert(
+        requests.map((request) => ({
+          ...buildCustomRequestOrderItem(request),
+          order_id: createdOrder.id
+        }))
+      );
+
+      if (itemError) {
+        await supabase.from("orders").delete().eq("id", createdOrder.id);
+        throw itemError;
+      }
+
+      order = createdOrder;
+    } else {
+      const { data: updatedOrder, error: updateOrderError } = await supabase
+        .from("orders")
+        .update({
+          customer_phone: customerPhone,
+          customer_document: customerDocument,
+          subtotal_cents: subtotalCents,
+          shipping_cents: shippingSelection.shippingCents,
+          discount_cents: 0,
+          total_cents: totalCents,
+          delivery_method: shippingSelection.deliveryMethod,
+          delivery_address: shippingSelection.deliveryAddress,
+          shipping_provider: shippingSelection.provider,
+          shipping_service_id: shippingSelection.serviceId,
+          shipping_service_name: shippingSelection.serviceName,
+          shipping_company_name: shippingSelection.companyName,
+          shipping_delivery_time_days: shippingSelection.deliveryTimeDays,
+          shipping_origin_postal_code: shippingSelection.originPostalCode,
+          shipping_destination_postal_code: shippingSelection.destinationPostalCode,
+          shipping_quote: shippingSelection.quoteSnapshot,
+          shipping_melhor_envio_order_id: null,
+          shipping_melhor_envio_protocol: null,
+          shipping_melhor_envio_purchase_id: null,
+          shipping_melhor_envio_purchase_protocol: null,
+          shipping_melhor_envio_purchase_status: null,
+          shipping_label_status: null,
+          shipping_label_created_at: null,
+          shipping_label_purchased_at: null,
+          shipping_label_error: null,
+          shipping_label_payload: {}
+        })
+        .eq("id", order.id)
+        .select("*")
+        .single();
+
+      if (updateOrderError) {
+        throw updateOrderError;
+      }
+
+      const { error: paymentDeleteError } = await supabase
+        .from("payments")
+        .delete()
+        .eq("order_id", order.id)
+        .neq("status", "approved");
+
+      if (paymentDeleteError) {
+        throw paymentDeleteError;
+      }
+
+      order = updatedOrder;
+    }
+
+    const preference = await ensureMercadoPagoPreferenceForOrder({
+      supabase,
+      order: {
+        id: order.id,
+        code: order.code,
+        customer_name: order.customer_name,
+        customer_email: order.customer_email,
+        customer_phone: order.customer_phone,
+        total_cents: order.total_cents
+      },
+      items: [
+        {
+          title: `Orcamentos ${requests.map((request) => request.code).join(", ")} - LM-3D`,
+          quantity: 1,
+          unitPriceCents: order.total_cents
+        }
+      ]
+    });
+
+    res.status(201).json({
+      requests: requests.map((request) => ({
+        id: request.id,
+        code: request.code,
+        status: request.status,
+        estimatedPriceCents: request.estimated_price_cents
+      })),
+      order: {
+        id: order.id,
+        code: order.code,
+        status: order.status,
+        paymentStatus: order.payment_status,
+        totalCents: order.total_cents,
+        shippingCents: order.shipping_cents,
+        deliveryMethod: order.delivery_method
+      },
+      payment: {
+        provider: "mercado_pago",
+        preferenceId: preference.id,
+        checkoutUrl: preference.checkoutUrl,
+        sandboxCheckoutUrl: preference.sandboxCheckoutUrl
+      }
+    });
   } catch (error) {
     next(error);
   }

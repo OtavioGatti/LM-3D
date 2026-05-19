@@ -117,7 +117,7 @@ export async function ensureMercadoPagoPreferenceForOrder({
   return preference;
 }
 
-export async function findCustomRequestIdForOrder(
+export async function findCustomRequestIdsForOrder(
   supabase: SupabaseAdminClient,
   orderId: string
 ) {
@@ -130,15 +130,17 @@ export async function findCustomRequestIdForOrder(
     throw error;
   }
 
+  const requestIds = new Set<string>();
+
   for (const item of data ?? []) {
     const snapshot = item.product_snapshot as { custom_request_id?: unknown } | null;
 
     if (typeof snapshot?.custom_request_id === "string") {
-      return snapshot.custom_request_id;
+      requestIds.add(snapshot.custom_request_id);
     }
   }
 
-  return null;
+  return [...requestIds];
 }
 
 function getPaymentOrderCode(payment: MercadoPagoPaymentResponse) {
@@ -246,13 +248,13 @@ export async function applyMercadoPagoPaymentToOrder({
     throw orderUpdateError;
   }
 
-  const customRequestId = await findCustomRequestIdForOrder(supabase, order.id);
+  const customRequestIds = await findCustomRequestIdsForOrder(supabase, order.id);
 
-  if (paymentStatus === "approved" && customRequestId) {
+  if (paymentStatus === "approved" && customRequestIds.length > 0) {
     const { error: requestUpdateError } = await supabase
       .from("custom_requests")
       .update({ status: "converted" })
-      .eq("id", customRequestId);
+      .in("id", customRequestIds);
 
     if (requestUpdateError) {
       throw requestUpdateError;

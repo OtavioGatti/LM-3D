@@ -50,6 +50,17 @@ export type CustomRequestCheckoutResponse = {
   };
 };
 
+export type CustomRequestGroupCheckoutResponse = {
+  requests: Array<{
+    id: string;
+    code: string;
+    status: string;
+    estimatedPriceCents: number;
+  }>;
+  order: CustomRequestCheckoutResponse["order"];
+  payment: CustomRequestCheckoutResponse["payment"];
+};
+
 export type CustomRequestCheckoutPayload = {
   customer: {
     phone?: string | null;
@@ -197,6 +208,34 @@ export async function quoteCustomRequestShipping(code: string, postalCode: strin
   return response.json() as Promise<ShippingQuoteResponse>;
 }
 
+export async function quoteCustomRequestGroupShipping(requestCodes: string[], postalCode: string) {
+  const session = await getSessionOrThrow("Entre para calcular o frete dos orcamentos.");
+
+  const response = await fetch(`${apiBaseUrl}/custom-requests/group/shipping-quote`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({
+      requestCodes,
+      address: {
+        postalCode
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errorPayload = (await response.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
+
+    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel calcular o frete.");
+  }
+
+  return response.json() as Promise<ShippingQuoteResponse>;
+}
+
 export async function createCustomRequestCheckout(
   code: string,
   payload: CustomRequestCheckoutPayload
@@ -221,4 +260,33 @@ export async function createCustomRequestCheckout(
   }
 
   return response.json() as Promise<CustomRequestCheckoutResponse>;
+}
+
+export async function createCustomRequestGroupCheckout(
+  requestCodes: string[],
+  payload: CustomRequestCheckoutPayload
+) {
+  const session = await getSessionOrThrow("Entre para pagar os orcamentos.");
+
+  const response = await fetch(`${apiBaseUrl}/custom-requests/group/checkout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({
+      ...payload,
+      requestCodes
+    })
+  });
+
+  if (!response.ok) {
+    const errorPayload = (await response.json().catch(() => null)) as {
+      error?: { message?: string };
+    } | null;
+
+    throw new Error(errorPayload?.error?.message ?? "Nao foi possivel iniciar o pagamento.");
+  }
+
+  return response.json() as Promise<CustomRequestGroupCheckoutResponse>;
 }
